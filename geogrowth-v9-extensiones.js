@@ -70,7 +70,15 @@
   }
   const originalRender=render;
   render=function(){
+    // El perfil Analista tiene como espacio de trabajo únicamente las cinco etapas V9.
+    // Administrador conserva todas las opciones del dashboard original.
+    if(role==="analista" && !STAGES.has(state.view))state.view="work";
     originalRender();
+    if(role==="analista"){
+      document.querySelectorAll("#sidenav [data-view],#mobilemenu [data-view]").forEach(item=>{
+        if(!STAGES.has(item.dataset.view))item.remove();
+      });
+    }
     roles();
     // Solo la etapa 01 muestra el mapa ampliado. El Explorador original mantiene el suyo.
     // Las etapas 02-05 no deben duplicar cartografía ni paneles de selección.
