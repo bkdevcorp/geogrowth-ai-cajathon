@@ -77,11 +77,34 @@ async function test(){
  check(exported.data.iit.peso_empresas_pct===70,'Exportación no refleja peso IIT');
  check(exported.data.territorio.ubigeo==='040101','Exportación no refleja distrito seleccionado');
  check(exported.data.investigacion.sectores.some(x=>x.sector==='Comercio'&&x.registros===422),'El JSON pierde evidencia municipal');
+ check(exported.data.agentes_demo?.especialista?.length===4,'JSON no contiene los cuatro agentes simulados');
+ check(doc.querySelectorAll('#gg-agent-simulation .gg-team-card').length===4,'No aparecen los especialistas de la demo');
+ check(doc.querySelector('#gg-agent-simulation').textContent.includes('DEMO · sin LLM conectado'),'Falta el estado de simulación');
+ // Verificar navegación real a los otros casos sin sustituir V9 ni inventar licencias.
+ for(const [ubigeo,departamento,sourceState] of [
+   ['130101','La Libertad','sin_cobertura'],
+   ['150101','Lima','expedientes_sin_identificacion'],
+   ['060101','Cajamarca','sin_cobertura'],
+   ['040101','Arequipa','individualizada']
+ ]){
+   const btn=doc.querySelector('#gg-agent-simulation [data-gg-case="'+ubigeo+'"]');
+   check(btn,'Falta acceso de demostración '+ubigeo);
+   btn.click();
+   await until(()=>doc.querySelector('#gg-agent-simulation [data-gg-case="'+ubigeo+'"][data-gg-case-active="true"]'), 'Cambiar a '+ubigeo);
+   check(doc.querySelector('#gg-opportunity-brief').textContent.includes(departamento),'El territorio no cambió '+ubigeo);
+   doc.querySelector('[data-gg-export-brief]').click();
+   check(exported?.data?.territorio?.ubigeo===ubigeo,'La exportación del brief no coincide con '+ubigeo);
+   check(exported.data.agentes_demo?.fuentes?.licencias===sourceState,'Atribución incorrecta de licencias '+ubigeo);
+   check(exported.data.agentes_demo?.especialista?.length===4,'No hay análisis de agentes para '+ubigeo);
+ }
+ check(doc.querySelector('#gg-agent-simulation [data-gg-case="040101"][data-gg-case-active="true"]'),'No regresó a Arequipa');
  check(!doc.querySelector('#v9-safe-map'),'El mapa no debe aparecer en Opportunity Brief');
  doc.querySelector('[data-go-section="plan"]').click();
  await until(()=>doc.querySelector('#gg-campaign-guide [data-go-model="M0"]')&&doc.querySelector('#gg-campaign-guide [data-go-model="M1"]')&&doc.querySelector('#gg-campaign-guide [data-go-model="M2"]'),'benchmark M0/M1/M2');
  check(doc.querySelector('#gg-campaign-guide').textContent.includes('Cada distrito es una decisión binaria'),'No se explica la optimización 0/1');
  check(doc.querySelector('#gg-campaign-guide').textContent.includes('Para esta simulación el costo'),'No se declaran los costos simulados');
+ check(doc.querySelector('#gg-campaign-agent'),'Falta coordinación comercial de los agentes en campaña');
+ check(doc.querySelector('#gg-campaign-agent').textContent.includes('Arequipa'),'Campaña sin contexto territorial');
  check(!doc.querySelector('#v9-safe-map'),'El mapa no debe aparecer en Campañas');
  doc.querySelector('[data-go-model="M2"]').click();
  await until(()=>doc.querySelector('#gg-campaign-guide [data-go-campaign-export]'),'JSON de campaña');

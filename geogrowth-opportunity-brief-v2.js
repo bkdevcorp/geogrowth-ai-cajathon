@@ -137,6 +137,9 @@ function build(r,weight){
     sbs_2025:{oficinas:r.sbs_oficinas_2025??null,puntos:r.sbs_puntos_2025??null,atm:r.sbs_atm_2025??null,pos:r.sbs_pos_2025??null},
     licencias:licenses,ids:String(r.evidencia||"").split("|").filter(Boolean)},
   hipotesis,productos,acciones,criterios,faltantes,investigacion,
+  agentes_demo:window.GeoGrowthAgentDemo?.create(r,{
+    puntuacion:entry?.score??null,puesto:rank,total:n,peso:w,categoria,investigacion
+  })||null,
   limitacion:"PRODUCE 2015 y SBS 2025 son fuentes de años distintos. No indican negocios activos, demanda ni elegibilidad crediticia."
  };
 }
@@ -249,7 +252,7 @@ function agentHtml(b){
     '<div class="gg-brief-metrics">'+stat(score,"IIT seleccionado")+stat(rank,"Posición departamental")+
     stat(dec(i.aporte_empresarial),"Aporte empresas E")+stat(dec(i.aporte_oficinas),"Aporte oficinas B")+'</div>')+
   sec("2. Evidencia territorial y segmentos observables",'<p>'+esc(sectorText)+'</p>'+sectorHtml+
-    '<div class="gg-ai-insight"><b>Foco comercial para contrastar</b><p>'+esc(a.foco_comercial)+'</p></div>'+
+    '<div class="gg-ai-insight"><b>Foco comercial para contrastar</b><p>'+esc(b.agentes_demo?.hipotesis_territorial||a.foco_comercial)+'</p></div>'+
     '<p class="gg-brief-fine">PRODUCE 2015: '+esc(fmt(e.produce_2015.micro))+' microempresas. SBS 2025: '+esc(fmt(e.sbs_2025.oficinas))+
     ' oficinas y '+esc(fmt(e.sbs_2025.puntos))+' puntos. Licencias: '+esc(e.licencias)+'</p>'+examples)+
   sec("3. Hipótesis que el asesor debe investigar",'<div class="gg-brief-grid">'+b.hipotesis.map(h=>
