@@ -80,5 +80,5 @@ if(missing){
  assert.match(result.especialista[3].conclusion,/no comparable/);
 }
 assert.match(html,/geogrowth-agent-demo-v1\.js\?v=1/);
-assert.match(html,/geogrowth-opportunity-brief-v2\.js\?v=1/);
+assert.match(html,/geogrowth-opportunity-brief-v2\.js\?v=\d+/);
 console.log("OK: 4 casos distintos, 25 departamentos, licencias agregadas/individuales/ausentes y casos sin IIT.");
