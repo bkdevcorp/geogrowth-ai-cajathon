@@ -83,4 +83,5 @@ document.addEventListener('click',e=>{
 });
 fetch('./data/negocios_demo_sinteticos.json').then(r=>{if(!r.ok)throw Error('No disponible');return r.json()}).then(d=>{st.cases=Array.isArray(d.casos)?d.casos:[];st.loaded=true;if(state.view==='story')render();}).catch(()=>{st.sourceError=true;});
 renderNav();
+if(new URLSearchParams(window.location.search).get('demo')==='1'){selectDemo();}
 })();
