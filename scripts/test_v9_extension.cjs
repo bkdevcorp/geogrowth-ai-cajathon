@@ -16,12 +16,17 @@ assert.equal(hash("GeoGrowth_AI_Campo_V3.html"),"1286bfe49223444dbb6adea8f134734
 const html=read("GeoGrowth_AI_Dashboard_V3.html");
 assert.match(html,/<script src="geogrowth-map\.js\?v=50"><\/script>/);
 assert.match(html,/<script src="geogrowth-operacion-v9\.js\?v=90"><\/script>/);
-assert.match(html,/<script defer src="geogrowth-v9-extensiones\.js\?v=1"><\/script>/);
+assert.match(html,/<script defer src="geogrowth-v9-extensiones\.js\?v=2"><\/script>/);
 assert.match(read("index.html"),/href="GeoGrowth_AI_Dashboard_V3\.html"/,"Stable link must be preserved");
 const code=read("geogrowth-v9-extensiones.js");
 
 function environment(search){
-  const logs={renders:0,mapRenders:0,requests:0,click:null,lastShell:null,roleButtons:""};
+  const logs={renders:0,mapRenders:0,requests:0,click:null,lastShell:null,roleButtons:"",navItems:[]};
+  const menu=["home","work","score","opportunity","plan","execution","explore","sources","readiness"];
+  const resetNav=()=>{logs.navItems=[...menu,...menu].map(view=>({
+    dataset:{view},removed:false,remove(){this.removed=true;}
+  }));};
+  const visibleNav=()=>logs.navItems.filter(item=>!item.removed).map(item=>item.dataset.view);
   const nav={insertAdjacentElement(where,el){assert.equal(where,"afterend");logs.lastShell=el;}};
   const content={querySelector(s){return s===".v9-stages"?nav:null;}};
   const top={parentNode:{insertBefore(el){logs.roleButtons=el;}}};
@@ -30,6 +35,7 @@ function environment(search){
     head:{appendChild(){}},
     createElement(){return {className:"",id:"",innerHTML:"",style:{}};},
     querySelector(s){return s===".top .date"?top:null;},
+    querySelectorAll(s){assert.equal(s,"#sidenav [data-view],#mobilemenu [data-view]");return logs.navItems;},
     getElementById(id){return elements[id]||null;},
     addEventListener(type,handler,capture){if(type==="click"&&capture)logs.click=handler;}
   };
@@ -40,7 +46,7 @@ function environment(search){
     DATA:[{ubigeo:"040101",departamento:"Arequipa",nombre_distrito:"Arequipa Cercado",micro_2015:1500,sbs_oficinas_2025:12,licencias_municipales_ref:894}],
     URLSearchParams,
     Event:class{constructor(type,args){this.type=type;this.bubbles=args.bubbles;}},
-    render(){logs.renders++;},
+    render(){logs.renders++;resetNav();},
     fetch:async ()=>{logs.requests++;return {ok:true,json:async()=>({metadata:{total:1},registros:[{
       id:"LIC-AQP-1",nombre:"Comercio publicado",departamento:"Arequipa",ubigeo:"040101",
       fecha:"2025-12-31",giro:"Comercio",estado:"ACTIVA",fuente:"Municipalidad provincial",puntaje:91
@@ -48,7 +54,7 @@ function environment(search){
     console
   };
   vm.runInNewContext(code,sandbox,{filename:"geogrowth-v9-extensiones.js"});
-  return {logs,sandbox};
+  return {logs,sandbox,visibleNav};
 }
 const stable=environment("");
 assert.equal(stable.logs.renders,0,"Optional extension must do nothing in stable mode");
@@ -62,6 +68,10 @@ assert.equal(extended.logs.mapRenders,1,"Original V5 initializer must be invoked
 assert.equal(extended.logs.requests,1);
 assert.equal(typeof extended.logs.click,"function");
 assert.match(extended.logs.roleButtons.innerHTML,/Administrador/);
+assert.deepEqual([...new Set(extended.visibleNav())].sort(),
+  ["work","score","opportunity","plan","execution"].sort(),
+  "Analista solo muestra el flujo de cinco etapas en escritorio y móvil");
+assert.equal(extended.visibleNav().length,10,"Cinco etapas por menú: lateral y móvil");
 
 const evt={
   target:{closest(selector){return selector==="[data-v9-role]"?{dataset:{v9Role:"admin"}}:null;}},
@@ -71,6 +81,20 @@ extended.logs.click(evt);
 assert.match(extended.logs.lastShell.innerHTML,/Administrador · fuentes y decisiones/);
 assert.equal(extended.logs.renders,2);
 assert.equal(extended.logs.mapRenders,2);
+assert.deepEqual([...new Set(extended.visibleNav())].sort(),
+  ["home","work","score","opportunity","plan","execution","explore","sources","readiness"].sort(),
+  "Administrador conserva el menú completo");
+const evtAnalyst={
+  target:{closest(selector){return selector==="[data-v9-role]"?{dataset:{v9Role:"analista"}}:null;}},
+  preventDefault(){},stopPropagation(){}
+};
+extended.logs.click(evtAnalyst);
+assert.equal(extended.visibleNav().length,10,"Volver al perfil Analista oculta el resto de menús");
+extended.sandbox.state.view="explore";
+extended.sandbox.render();
+assert.equal(extended.sandbox.state.view,"work","Un enlace externo no abre secciones fuera del flujo Analista");
+assert.equal(extended.visibleNav().length,10,"El filtrado se conserva tras navegar");
+extended.logs.click(evt);
 // El mapa ampliado se monta únicamente en la etapa 01; las demás preservan sus vistas.
 for (const stage of ["score","opportunity","plan","execution"]) {
   extended.sandbox.state.view=stage;
@@ -82,5 +106,5 @@ extended.sandbox.render();
 assert.equal(extended.logs.mapRenders,3,"El mapa vuelve a montarse solo en territorio");
 Promise.resolve().then(()=>new Promise(resolve=>setImmediate(resolve))).then(()=>{
   assert.match(extended.logs.lastShell.innerHTML,/Administrador/);
-  console.log("OK: V5, V9 and Campo unchanged; stable mode isolated; role switch and embedded map available");
+  console.log("OK: V5/V9/Campo unchanged; analyst menu only five stages; admin menu intact; map only in territory");
 }).catch(err=>{console.error(err);process.exitCode=1;});
