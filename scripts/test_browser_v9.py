@@ -43,16 +43,20 @@ async function test(){
  await until(()=>doc.querySelector('#go-ubigeo')?.value==='040101','distrito de licencia no seleccionado');
  doc.querySelector('[data-go-section="score"]').click();
  await until(()=>doc.querySelector('.v9-formula'),'fórmula IIT');
- check(doc.querySelector('#v9-safe-map #ggv5'),'mapa no integrado en scoring');
+ check(!doc.querySelector('#v9-safe-map'),'El mapa no debe aparecer en Scoring IIT');
  doc.querySelector('[data-go-section="opportunity"]').click();
- await until(()=>doc.querySelector('.v9-stack')&&doc.querySelector('#v9-safe-map'),'Opportunity Brief');
+ await until(()=>doc.querySelector('.v9-stack'),'Opportunity Brief');
+ check(!doc.querySelector('#v9-safe-map'),'El mapa no debe aparecer en Opportunity Brief');
  doc.querySelector('[data-go-section="plan"]').click();
  await until(()=>doc.querySelector('[data-go-model="M0"]')&&doc.querySelector('[data-go-model="M1"]')&&doc.querySelector('[data-go-model="M2"]'),'benchmark M0/M1/M2');
+ check(!doc.querySelector('#v9-safe-map'),'El mapa no debe aparecer en Campañas');
  doc.querySelector('[data-go-model="M2"]').click();
  await until(()=>doc.querySelector('[data-go-campaign-export]'),'JSON de campaña');
  doc.querySelector('[data-go-section="execution"]').click();
  await until(()=>doc.querySelector('#go-import-results'),'importar resultados JSON');
- check(doc.querySelector('#v9-safe-map #ggv5'),'mapa no integrado en ejecución');
+ check(!doc.querySelector('#v9-safe-map'),'El mapa no debe aparecer en Ejecución y resultados');
+ doc.querySelector('[data-go-section="work"]').click();
+ await until(()=>doc.querySelector('#v9-safe-map #ggv5 svg'),'restauración de mapa en Seleccionar territorio');
  status.textContent='RESULTADO_BROWSER_V9_OK: mapa, roles, licencias, selección, scoring, brief, modelos, campo';
 }
 window.addEventListener('load',()=>test().catch(e=>{status.textContent='RESULTADO_BROWSER_V9_FALLO: '+e.message}));
