@@ -13,6 +13,10 @@
   style.textContent=
     ".v9-role-switch{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:11px}.v9-role-switch button{border:1px solid #d3dfec;background:#fff;color:#25476d;border-radius:8px;padding:8px 11px;cursor:pointer;font-weight:700}.v9-role-switch button[aria-pressed=true]{background:#173c68;color:#fff;border-color:#173c68}.v9-sidecar{margin:12px 0 19px;border:1px solid #dce7f3;background:#fff;border-radius:15px;padding:17px}.v9-extended-title{display:flex;justify-content:space-between;flex-wrap:wrap;gap:7px;align-items:center;margin-bottom:12px}.v9-extended-title h3{font-size:15px;margin:0;color:#193d63}.v9-extra-grid{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(285px,.92fr);gap:15px;align-items:stretch}.v9-extra-map{min-height:380px;min-width:0}.v9-extra-map .ggv5{min-height:370px}.v9-extra-map .ggv5-menu{max-height:170px}.v9-extra-panel{background:#f7faff;border:1px solid #e0eaf5;border-radius:12px;padding:13px;min-width:0;overflow:auto;max-height:450px}.v9-extra-panel h4{font-size:13px;color:#183b61;margin:0 0 7px}.v9-extra-panel p{font-size:11px;line-height:1.6;color:#526982;margin:5px 0 10px}.v9-extra-row{display:flex;justify-content:space-between;gap:10px;border-bottom:1px solid #e0eaf1;padding:9px 0;font-size:11px;color:#4c6680}.v9-extra-row strong{color:#17395d;text-align:right}.v9-extra-license{border:1px solid #dce6ef;background:#fff;border-radius:10px;padding:11px;margin:9px 0}.v9-extra-license b{font-size:12px;color:#204165}.v9-extra-license small{display:block;font-size:10px;color:#667e95;margin:5px 0;overflow-wrap:anywhere}.v9-extra-license button,.v9-extra-links button{background:#fff;color:#245792;border:1px solid #cbdbe9;border-radius:8px;padding:8px 9px;cursor:pointer;font-size:11px;font-weight:700;margin-top:5px}.v9-extra-links{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px}.v9-extra-note{font-size:10px;color:#637b90;line-height:1.6;margin-top:8px}.v9-extra-label{font-size:10px;color:#446c8e;font-weight:800;letter-spacing:.06em;text-transform:uppercase}@media(max-width:1050px){.v9-extra-grid{grid-template-columns:1fr}.v9-extra-map{min-height:320px}.v9-extra-map .ggv5{min-height:310px}.v9-extra-panel{max-height:none}}";
   document.head.appendChild(style);
+  // El formulario es el punto de entrada; el mapa es una ayuda visual posterior.
+  const compact=document.createElement("style");
+  compact.textContent=".v9-sidecar{margin-top:12px;padding:14px}.v9-extra-map{min-height:305px}.v9-extra-map .ggv5{min-height:295px}.v9-extra-panel{max-height:355px}.v9-extra-grid{grid-template-columns:minmax(0,1.6fr) minmax(285px,.9fr)}@media(max-width:1050px){.v9-extra-grid{grid-template-columns:1fr}.v9-extra-map{min-height:295px}.v9-extra-panel{max-height:340px}}";
+  document.head.appendChild(compact);
 
   function territory(){
     const chooser=document.getElementById("go-ubigeo");
@@ -40,7 +44,7 @@
     const rows=licenses.filter(l=>
       r?String(l.ubigeo)===String(r.ubigeo):
       dep==="Todo el Perú" || !dep || l.departamento===dep
-    ).slice(0,6);
+    ).slice(0,4);
     const title=r?(r.nombre_distrito||r.ubigeo):dep;
     const count=licenses.filter(l=>
       r?String(l.ubigeo)===String(r.ubigeo):
@@ -99,7 +103,9 @@
         (typeof window.mapSvg==="function"?window.mapSvg():'<p>Mapa V5 no disponible. Continúa el análisis desde los controles existentes.</p>')+
       '</div><aside class="v9-extra-panel">'+(role==="admin"?sourcePanel(r):licensesPanel(r))+'</aside></div>'+
       '<p class="v9-extra-note">Los marcadores representan coordenadas medias de infraestructura SBS 2025. Para seleccionar un distrito, pulsa su marcador; las funciones de scoring, brief y campaña siguen utilizando el motor V9.</p>';
-    nav.insertAdjacentElement("afterend",shell);
+    // Mantener los selectores ANTES del mapa. No se crean filtros duplicados.
+    const form=root.querySelector(".go-pick");
+    (form||nav).insertAdjacentElement("afterend",shell);
     if(typeof window.initLeaflet==="function" && typeof window.mapSvg==="function")window.initLeaflet();
   };
   function openDistrict(ubigeo){
@@ -145,6 +151,8 @@
     .then(data=>{
       if(!Array.isArray(data?.registros))throw Error("formato de licencias inválido");
       licenses=data.registros.slice().sort((a,b)=>String(b.fecha||"").localeCompare(String(a.fecha||"")));
+      // Datos municipales publicados de solo lectura para el brief basado en evidencia.
+      window.GeoGrowthPublicLicenses={registros:licenses,metadata:data.metadata||{}};
       meta=data.metadata||null;
       loading=false;
       if(STAGES.has(state.view))render();

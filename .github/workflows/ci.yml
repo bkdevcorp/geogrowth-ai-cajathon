@@ -33,6 +33,11 @@ jobs:
         run: node scripts/test_map.cjs
       - name: Regresión del mapa V5 y flujo V9 ampliado
         run: node scripts/test_v9_extension.cjs
+      - name: Verificar sintaxis de módulos opcionales V9
+        run: |
+          node --check geogrowth-v9-extensiones.js
+          node --check geogrowth-opportunity-brief-v2.js
+          node --check geogrowth-campaign-guide-v1.js
       - name: Validar Opportunity Brief por territorio e IIT
         run: node scripts/test_opportunity_brief.cjs
       - name: Prueba real de navegador de V9 ampliado
