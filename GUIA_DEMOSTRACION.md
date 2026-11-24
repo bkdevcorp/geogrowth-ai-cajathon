@@ -1,26 +1,39 @@
-# GeoGrowth AI — Guía de demostración comercial (V6)
+# GeoGrowth AI — Flujo operativo con datos territoriales reales (V8)
 
-## Objetivo
-Demostrar el reto COM-01 del Eje 2: identificar y priorizar nuevas oportunidades de captación e inclusión financiera para Caja Trujillo.
+## Propósito
+Resolver el reto COM-01 del Eje 2 de Caja Trujillo: investigar y priorizar territorios de captación con datos verificables.
 
-**La cartografía V5 no fue modificada.** Esta actualización mejora el recorrido de análisis y recuperación de escenarios de capacitación.
+El **mapa V5 se conserva sin modificaciones**. Se retiró del menú la demostración guiada. La vista inicial ahora es **Analizar territorio**.
 
-## Recorrido recomendado
-1. **Contexto territorial.** Seleccionar Trujillo (UBIGEO 130101). Revisar por separado el total de empresas registradas en PRODUCE 2015 y los puntos de atención SBS 2025.
-2. **Investigación de señales.** Explicar el índice exploratorio IIT y sus límites: no es probabilidad de conversión ni calificación crediticia.
-3. **Oportunidades simuladas.** Consultar los 442 negocios ficticios de entrenamiento de la V2 (18 zonas). Son ejemplos, no establecimientos detectados por las fuentes públicas.
-4. **Plan de campaña.** Comparar M0, M1 y M2, seleccionar territorios y exportar una campaña JSON para GeoGrowth Campo.
-5. **Trabajo de campo y retorno.** En la aplicación del asesor, seleccionar un caso de entrenamiento, registrar resultado, exportar JSON e importarlo en el dashboard. Alternativamente, pulsar “Cargar resultados de muestra”.
+## Uso
+1. Abrir [GeoGrowth AI](https://bkdevcorp.github.io/geogrowth-ai-cajathon/GeoGrowth_AI_Dashboard_V3.html?v=80).
+2. Elegir un departamento y un distrito/UBIGEO, o un acceso directo (Trujillo, Lima Cercado, Arequipa, Cajamarca).
+3. La interfaz ejecuta el análisis del distrito sin botones de paso a paso:
+   - Cruce con el Data Pack PRODUCE 2015 + SBS 2025 y, donde existe, licencias municipales.
+   - Diagnóstico de cobertura y calidad.
+   - IIT exploratorio, cuando ambas fuentes están disponibles.
+   - Opportunity Brief con hechos, hipótesis, producto candidato por verificar y próximas acciones.
+   - Comparación M0/M1/M2 y selección de campaña según presupuesto **hipotético**.
+4. Exportar la campaña JSON, o abrir directamente la app de campo con el UBIGEO seleccionado.
+5. Registrar solo visitas **efectivamente realizadas** en la app de campo. Exportar resultados JSON e importarlos en Campañas y retorno.
 
-## Separación de fuentes
-- **PRODUCE 2015:** registros históricos por UBIGEO. No es un padrón actual de negocios.
-- **SBS 2025:** puntos de atención; no equivale a inclusión financiera efectiva.
-- **Licencias municipales:** solo ciertas jurisdicciones disponibles, no cobertura nacional por establecimiento.
-- **Escenarios V2:** 442 negocios completamente ficticios, usados únicamente para enseñar el flujo.
+## Datos y limitaciones
+- PRODUCE 2015: registro empresarial histórico, no padrón actual de negocios.
+- SBS diciembre 2025: infraestructura financiera por UBIGEO; no equivale a inclusión financiera real.
+- Licencias municipales: solo Cercado de Lima (expedientes 2024–2026) y Arequipa Cercado (registros 2025), no cobertura nacional.
+- El índice IIT no es predicción de captación, riesgo ni elegibilidad crediticia.
+- M0, M1 y M2 emplean costos de campaña **ilustrativos**; no se han medido desembolsos ni conversiones.
+- Se preserva el consentimiento y la revisión humana para cualquier contacto comercial.
 
-## Límites de la demo
-No hay clientes reales, direcciones comprobadas, contacto comercial real, predicción validada, oferta de crédito ni integración con CRM. El envío automático de comunicaciones está deshabilitado.
+## Ejemplos con información real
+- Trujillo, La Libertad: UBIGEO 130101.
+- Lima Cercado, Lima: UBIGEO 150101.
+- Arequipa Cercado, Arequipa: UBIGEO 040101.
+- Cajamarca, Cajamarca: UBIGEO 060101.
 
-## Accesos
-- Dashboard: https://bkdevcorp.github.io/geogrowth-ai-cajathon/GeoGrowth_AI_Dashboard_V3.html?demo=1
-- Campo: https://bkdevcorp.github.io/geogrowth-ai-cajathon/GeoGrowth_AI_Campo_V3.html
+## Componentes principales
+- `GeoGrowth_AI_Dashboard_V3.html` + `geogrowth-operacion-v8.js`: proceso analítico.
+- `geogrowth-map.js`: mapa aprobado V5, **intacto**.
+- `GeoGrowth_AI_Campo_V3.html` + `geogrowth-campo-operacion-v8.js`: observaciones de campo.
+- `data/territorios_reales.json`: datos territoriales agregados.
+- `data/fuentes_y_transformaciones.json`: manifiesto de procedencia y transformaciones.
