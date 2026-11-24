@@ -33,7 +33,7 @@ function scenario(ubigeo){
  const sectores=[...count].sort((a,b)=>b[1]-a[1]).map(([sector,registros])=>({sector,registros}));
  const comparable=DATA.filter(x=>x.departamento===r.departamento&&x.ambas_fuentes);
  const result=create(r,{puntuacion:55,puesto:10,total:comparable.length,peso:55,categoria:"observacion",
-   investigacion:{licencias_individuales:members.length,sectores}});
+   investigacion:{licencias_individuales:members.length,licencias_con_sector_y_nombre:sectorRows.length,sectores}});
  assert.equal(result.ubigeo,ubigeo);
  assert.equal(result.departamento,r.departamento);
  assert.equal(result.especialista.length,4);
@@ -53,7 +53,8 @@ assert.match(arequipa.hipotesis_territorial,/Arequipa Cercado/);
 assert.match(cajamarca.hipotesis_territorial,/Cajamarca/);
 assert.equal(arequipa.fuentes.licencias,"individualizada");
 assert.match(arequipa.segmento_demo,/Comercio/);
-assert.equal(lima.fuentes.licencias,"agregada");
+assert.equal(lima.fuentes.licencias,"expedientes_sin_identificacion");
+assert.match(lima.especialista[0].conclusion,/sin nombre comercial, giro ni dirección/);
 assert.match(lima.segmento_demo,/no un padrón comercial/);
 assert.equal(trujillo.fuentes.licencias,"sin_cobertura");
 assert.equal(cajamarca.fuentes.licencias,"sin_cobertura");
