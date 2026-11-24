@@ -65,6 +65,63 @@ function build(r,weight){
   "Cobertura propia de Caja Trujillo y datos de competidores desagregados.",
   "Resultados reales de prospección, demanda, costos, contactos consentidos y conversiones observadas."
  ];
+
+ // 3 especialistas analíticos: señales, propuesta comercial y control de evidencia.
+ // Son reglas trazables; ningún LLM está conectado al sitio estático.
+ const published=Array.isArray(window.GeoGrowthPublicLicenses?.registros)?window.GeoGrowthPublicLicenses.registros:[];
+ const registros=published.filter(x=>String(x.ubigeo)===String(r.ubigeo));
+ const sectorRows=registros.filter(x=>x.sector&&x.sector!=="Actividad por verificar"&&x.nombre);
+ const sectorCounts=new Map();
+ for(const x of sectorRows)sectorCounts.set(x.sector,(sectorCounts.get(x.sector)||0)+1);
+ const sectores=[...sectorCounts].sort((a,b)=>b[1]-a[1]).slice(0,4)
+   .map(([sector,n])=>({sector,registros:n,porcion:registros.length?round(n*100/registros.length):null}));
+ const ejemplos=sectorRows.slice(0,3).map(x=>({nombre:x.nombre,giro:x.giro||null,fecha_licencia:x.fecha||null,sector:x.sector}));
+ const topSector=sectores[0]?.sector||null;
+ const foco=topSector==="Comercio"
+   ?"Investigar establecimientos comerciales vigentes y contrastar rotación de inventarios, reposición de mercadería y medios de cobro. La necesidad debe ser expresada por el negocio."
+   :topSector==="Alimentos y gastronomía"
+   ?"Investigar negocios gastronómicos actuales y contrastar compra de insumos, equipamiento y estacionalidad; no inferir demanda de crédito por una licencia."
+   :topSector==="Servicios"
+   ?"Investigar prestadores de servicios operativos y contrastar necesidades de equipamiento o liquidez estacional."
+   :topSector
+   ?"Investigar establecimientos de "+topSector+" únicamente tras verificar su actividad vigente y necesidades expresadas."
+   :"Sin actividades municipales individuales suficientes para focalizar un giro. Empezar validando fuentes vigentes y segmentación real antes de asignar productos.";
+ const lecturaOficinas=entry&&B===0
+   ?"La contribución B es cero porque las oficinas del distrito alcanzan el máximo departamental usado para normalizar. No significa que no haya oportunidad comercial."
+   :entry&&B!==null
+   ?"La contribución B interpreta únicamente la presencia relativa de oficinas SBS; no prueba bancarización, atención de Caja Trujillo ni necesidades no cubiertas."
+   :"No hay evidencia comparable para estimar el componente B.";
+ const lecturaPesos=w===100
+   ?"Se asignó 100 % de peso a microempresas históricas; la infraestructura financiera no interviene en este resultado."
+   :w===0
+   ?"Se asignó 100 % de peso a menor presencia relativa de oficinas; el volumen empresarial no interviene en este resultado."
+   :"Se usan los pesos definidos en Scoring IIT (E "+w+" %, B "+(100-w)+" %).";
+ const alternativas=cohort.filter(x=>x.ubigeo!==r.ubigeo).slice(0,3)
+   .map(x=>({ubigeo:x.ubigeo,distrito:x.nombre_distrito||null,iit:x.score,micro_2015:x.micro_2015,oficinas_2025:x.sbs_oficinas_2025}));
+ const sensibilidad=[];
+ for(const alternateW of [...new Set([Math.max(0,w-20),w,Math.min(100,w+20)])]){
+   const oldD=state.dep,oldW=state.w;let seq;
+   try{state.dep=r.departamento;state.w=alternateW;seq=getScored();}
+   finally{state.dep=oldD;state.w=oldW;}
+   const ind=seq.findIndex(x=>x.ubigeo===r.ubigeo);
+   sensibilidad.push({peso_empresarial_pct:alternateW,puesto:ind<0?null:ind+1,puntuacion:ind<0?null:seq[ind].score});
+ }
+ const investigacion={
+   estado_evidencia:registros.length?"Licencias publicadas para el distrito, no confirmación de empresas vigentes.":"No hay licencias individuales vinculables al distrito en la bandeja publicada.",
+   licencias_individuales:registros.length,licencias_con_sector_y_nombre:sectorRows.length,
+   sectores,ejemplos_publicados:ejemplos,foco_comercial:foco,
+   diagnostico:"IIT "+(entry?dec(entry.score):"no comparable")+", posición "+(rank||"N/D")+
+     " de "+n+". "+lecturaPesos+" "+lecturaOficinas,
+   alternativas_departamentales:alternativas,sensibilidad,
+   preguntas_asesor:[
+     "¿Qué actividad desarrolla actualmente el establecimiento y desde cuándo opera?",
+     "¿Tiene hoy alguna necesidad específica de capital de trabajo o inversión? ¿Cuál y para cuándo?",
+     "¿Qué canales financieros utiliza y qué barreras identifica, si las hubiera?",
+     "¿Autoriza que un asesor lo contacte para evaluar alternativas sin compromiso?"
+   ],
+   criterio_aprobacion:"Recomendar piloto solo con negocios actuales, autorización de contacto e interés declarado. El IIT no sustituye una evaluación comercial.",
+   limite:"Los sectores proceden de licencias municipales individuales cuando están disponibles; no representan la estructura empresarial vigente ni tasas de captación."
+ };
  return {
   formato:"GeoGrowthTerritoryOpportunityBriefV2",version:"2.0",generado_en:new Date().toISOString(),
   generador:"Motor de reglas territoriales auditables, sin LLM conectado",
@@ -79,7 +136,7 @@ function build(r,weight){
   evidencia:{produce_2015:{micro:r.micro_2015??null,pequenas:r.pequena_2015??null,empresas:r.empresas_2015??null},
     sbs_2025:{oficinas:r.sbs_oficinas_2025??null,puntos:r.sbs_puntos_2025??null,atm:r.sbs_atm_2025??null,pos:r.sbs_pos_2025??null},
     licencias:licenses,ids:String(r.evidencia||"").split("|").filter(Boolean)},
-  hipotesis,productos,acciones,criterios,faltantes,
+  hipotesis,productos,acciones,criterios,faltantes,investigacion,
   limitacion:"PRODUCE 2015 y SBS 2025 son fuentes de años distintos. No indican negocios activos, demanda ni elegibilidad crediticia."
  };
 }
