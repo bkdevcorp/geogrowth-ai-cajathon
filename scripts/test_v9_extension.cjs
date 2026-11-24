@@ -71,6 +71,15 @@ extended.logs.click(evt);
 assert.match(extended.logs.lastShell.innerHTML,/Administrador · fuentes y decisiones/);
 assert.equal(extended.logs.renders,2);
 assert.equal(extended.logs.mapRenders,2);
+// El mapa ampliado se monta únicamente en la etapa 01; las demás preservan sus vistas.
+for (const stage of ["score","opportunity","plan","execution"]) {
+  extended.sandbox.state.view=stage;
+  extended.sandbox.render();
+  assert.equal(extended.logs.mapRenders,2,"No se debe montar mapa en "+stage);
+}
+extended.sandbox.state.view="work";
+extended.sandbox.render();
+assert.equal(extended.logs.mapRenders,3,"El mapa vuelve a montarse solo en territorio");
 Promise.resolve().then(()=>new Promise(resolve=>setImmediate(resolve))).then(()=>{
   assert.match(extended.logs.lastShell.innerHTML,/Administrador/);
   console.log("OK: V5, V9 and Campo unchanged; stable mode isolated; role switch and embedded map available");

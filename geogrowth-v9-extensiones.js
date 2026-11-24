@@ -72,7 +72,9 @@
   render=function(){
     originalRender();
     roles();
-    if(!STAGES.has(state.view))return;
+    // Solo la etapa 01 muestra el mapa ampliado. El Explorador original mantiene el suyo.
+    // Las etapas 02-05 no deben duplicar cartografía ni paneles de selección.
+    if(state.view!=="work")return;
     const root=document.getElementById("content"),nav=root?.querySelector(".v9-stages");
     if(!nav)return;
     const chooser=document.getElementById("go-dep");
