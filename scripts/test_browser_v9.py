@@ -56,8 +56,22 @@ async function test(){
  await until(()=>doc.querySelector('.v9-formula'),'fórmula IIT');
  check(same(nav('#sidenav'),stages),'Analista debe conservar su menú de cinco etapas en Scoring');
  check(!doc.querySelector('#v9-safe-map'),'El mapa no debe aparecer en Scoring IIT');
+ // Ajustar ponderación IIT debe modificar también la recomendación y exportación del brief.
+ const weight=doc.querySelector('#go-score-weight');
+ check(weight,'Control de peso E ausente');
+ weight.value='70';
+ weight.dispatchEvent(new frame.contentWindow.Event('change',{bubbles:true}));
  doc.querySelector('[data-go-section="opportunity"]').click();
- await until(()=>doc.querySelector('.v9-stack'),'Opportunity Brief');
+ await until(()=>doc.querySelector('#gg-opportunity-brief'),'Opportunity Brief territorial');
+ check(doc.querySelector('#gg-opportunity-brief')?.textContent.includes('Peso E: 70%'),'Brief no refleja IIT seleccionado');
+ check(doc.querySelector('#gg-opportunity-brief .gg-brief-callout')?.textContent.length>50,'No hay recomendación ejecutiva');
+ check(doc.querySelectorAll('#gg-opportunity-brief .gg-brief-section').length===8,'Faltan secciones del Brief');
+ let exported=null;
+ frame.contentWindow.download=(filename,data)=>{exported={filename,data}};
+ doc.querySelector('[data-gg-export-brief]').click();
+ check(exported?.data?.formato==='GeoGrowthTerritoryOpportunityBriefV2','No exporta brief estructurado');
+ check(exported.data.iit.peso_empresas_pct===70,'Exportación no refleja peso IIT');
+ check(exported.data.territorio.ubigeo==='040101','Exportación no refleja distrito seleccionado');
  check(!doc.querySelector('#v9-safe-map'),'El mapa no debe aparecer en Opportunity Brief');
  doc.querySelector('[data-go-section="plan"]').click();
  await until(()=>doc.querySelector('[data-go-model="M0"]')&&doc.querySelector('[data-go-model="M1"]')&&doc.querySelector('[data-go-model="M2"]'),'benchmark M0/M1/M2');
