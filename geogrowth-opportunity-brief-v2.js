@@ -11,9 +11,9 @@ const round=v=>Math.round(v*10)/10;
 function build(r,weight){
  if(!r || !/^\d{6}$/.test(String(r.ubigeo||"")))return null;
  const w=Math.max(0,Math.min(100,Number(weight)||0));
- const prev=state.dep;
+ const prev=state.dep,prevWeight=state.w;
  let cohort=[];
- try{state.dep=r.departamento;cohort=getScored();}finally{state.dep=prev;}
+ try{state.dep=r.departamento;state.w=w;cohort=getScored();}finally{state.dep=prev;state.w=prevWeight;}
  const complete=r.ambas_fuentes===true&&has(r.micro_2015)&&has(r.sbs_oficinas_2025);
  const entry=complete?cohort.find(x=>x.ubigeo===r.ubigeo):null;
  const rank=entry?cohort.findIndex(x=>x.ubigeo===r.ubigeo)+1:null;
