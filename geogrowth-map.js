@@ -85,3 +85,118 @@ window.initLeaflet=function(){
 };
 try{render()}catch(e){console.warn('GeoGrowth cartographic fallback:',e)}
 })();
+
+/* GeoGrowth Google Maps runtime adapter v3.3
+   La clave se ingresa en el navegador y NO se guarda en GitHub ni en el almacenamiento local.
+   OpenFreeMap sigue siendo el mapa predeterminado para todos los visitantes. */
+(()=>{
+  "use strict";
+  const previousInit=window.initLeaflet;
+  if(typeof previousInit!=="function")return;
+  let mode="openfree", runtimeKey="", loader=null, seq=0;
+  const esc=(v)=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+  const css=document.createElement("style");
+  css.textContent=".gg-switch{position:absolute;bottom:13px;right:12px;z-index:10;max-width:270px;background:rgba(255,255,255,.96);padding:10px;border:1px solid #dce4f0;border-radius:10px;box-shadow:0 5px 24px #1b304033;color:#24405a;font-size:11px}.gg-switch button{min-height:29px;padding:5px 8px;border-radius:7px;border:1px solid #c6d5e7;background:#fff;color:#244d9e;font-weight:700;cursor:pointer}.gg-switch .chosen{color:#fff;background:#2459c7;border-color:#2459c7}.gg-switch input{min-height:35px;padding:7px;width:100%;margin:7px 0;border:1px solid #cbd5e3;border-radius:6px}.gg-switch small{display:block;margin-top:7px;line-height:1.35;color:#51677d}.gg-switch-row{display:flex;gap:6px;align-items:center;flex-wrap:wrap}@media(max-width:600px){.gg-switch{right:6px;bottom:6px;max-width:220px}}";
+  document.head.appendChild(css);
+  function cleanup(){
+    if(activeMap){try{activeMap.remove()}catch(e){} activeMap=null;}
+  }
+  function status(t,warning){
+    const s=document.getElementById("geogrowth-map-state");
+    if(s){s.textContent=t;s.className="geogrowth-map-state "+(warning?"warn":"ok");}
+  }
+  function controls(){
+    const host=document.getElementById("geogrowth-real-map")?.parentElement;
+    if(!host)return;
+    host.querySelector(".gg-switch")?.remove();
+    const box=document.createElement("div");box.className="gg-switch";
+    box.innerHTML='<b>Mapa territorial</b><div class="gg-switch-row" style="margin-top:7px">'+
+      '<button type="button" id="gg-ofm" class="'+(mode==="openfree"?"chosen":"")+'">OpenFreeMap</button>'+
+      '<button type="button" id="gg-gm" class="'+(mode==="google"?"chosen":"")+'">Google Maps</button></div>'+
+      (mode==="google"&&!runtimeKey?'<label style="display:block;margin-top:7px">Clave API restringida<input type="password" id="gg-key" autocomplete="off" spellcheck="false" placeholder="Clave de Maps JavaScript API"></label><button id="gg-use" type="button">Activar Google Maps</button><small>No se guarda ni se publica. Requiere Maps JavaScript API y facturación.</small>':
+       mode==="google"?'<small>Google Maps · clave temporal en esta pestaña.</small>':'<small>Base cartográfica pública. Datos de distritos SBS 2025.</small>')+
+      '<small id="gg-message" style="color:#a05d2b" role="status"></small>';
+    host.appendChild(box);
+    box.querySelector("#gg-ofm").onclick=()=>{mode="openfree";cleanup();window.initLeaflet()};
+    box.querySelector("#gg-gm").onclick=()=>{
+      if(mode==="google"&&runtimeKey)return;
+      mode="google";cleanup();window.initLeaflet();
+    };
+    const activate=box.querySelector("#gg-use");
+    if(activate)activate.onclick=()=>{
+      const candidate=box.querySelector("#gg-key")?.value.trim()||"";
+      if(!/^AIza[\w-]+$/.test(candidate)){box.querySelector("#gg-message").textContent="Introduce una clave API válida.";return;}
+      if(loader&&candidate!==runtimeKey){box.querySelector("#gg-message").textContent="Para cambiar de clave recarga la página.";return;}
+      runtimeKey=candidate;cleanup();window.initLeaflet();
+    };
+  }
+  function loadGoogle(){
+    if(window.google?.maps?.Map)return Promise.resolve();
+    if(loader)return loader;
+    loader=new Promise((resolve,reject)=>{
+      const cb="__geogrowthGoogleReady";
+      window[cb]=()=>{delete window[cb];resolve();};
+      window.gm_authFailure=()=>reject(Error("Google rechazó la clave o el dominio."));
+      const tag=document.createElement("script");
+      tag.async=true;
+      tag.src="https://maps.googleapis.com/maps/api/js?key="+encodeURIComponent(runtimeKey)+"&v=weekly&loading=async&language=es&region=PE&callback="+cb;
+      tag.onerror=()=>reject(Error("No se pudo cargar Maps JavaScript API."));
+      document.head.appendChild(tag);
+    }).catch(e=>{loader=null;throw e;});
+    return loader;
+  }
+  const valid=(r)=>r&&Number.isFinite(Number(r.latitud_ref_sbs))&&Number.isFinite(Number(r.longitud_ref_sbs))&&
+    r.latitud_ref_sbs!==null&&r.longitud_ref_sbs!==null&&Number(r.latitud_ref_sbs)>-19&&Number(r.latitud_ref_sbs)<1&&Number(r.longitud_ref_sbs)>-82.5&&Number(r.longitud_ref_sbs)<-68;
+  function gmInit(){
+    const el=document.getElementById("geogrowth-real-map");
+    if(!el)return;
+    const mySeq=++seq;
+    status("Cargando Google Maps…");
+    loadGoogle().then(()=>{
+      if(mySeq!==seq||mode!=="google"||document.getElementById("geogrowth-real-map")!==el)return;
+      const rows=(window.__geogrowthVisibleCoordinates||[]).filter(valid);
+      if(!rows.length)throw Error("Sin coordenadas SBS para este filtro.");
+      const national=state.dep==="Todo el Perú";
+      const map=new google.maps.Map(el,{center:{lat:-9.2,lng:-75.2},zoom:national?5:8,
+        mapTypeControl:true,streetViewControl:false,fullscreenControl:true,gestureHandling:"cooperative",clickableIcons:false});
+      const infowindow=new google.maps.InfoWindow();
+      const bounds=new google.maps.LatLngBounds();
+      const pins=[];
+      let locs=[];
+      if(national){
+        const byDept=new Map();
+        for(const r of rows){
+          const d=r.departamento,w=Math.max(1,Math.sqrt(Number(r.sbs_puntos_2025)||0));
+          if(!byDept.has(d))byDept.set(d,{name:d,lat:0,lng:0,w:0,num:0,points:0});
+          const a=byDept.get(d);
+          a.lat+=Number(r.latitud_ref_sbs)*w;a.lng+=Number(r.longitud_ref_sbs)*w;a.w+=w;a.num++;a.points+=Number(r.sbs_puntos_2025)||0;
+        }
+        locs=[...byDept.values()].map(a=>({position:{lat:a.lat/a.w,lng:a.lng/a.w},label:a.name,
+          info:'<b>'+esc(a.name)+'</b><p>'+a.num+' distritos SBS · '+a.points.toLocaleString("es-PE")+' puntos reportados</p><button data-map-dep="'+esc(a.name)+'" type="button">Explorar departamento</button>'}));
+      }else{
+        locs=rows.map(r=>({position:{lat:Number(r.latitud_ref_sbs),lng:Number(r.longitud_ref_sbs)},
+          label:(r.nombre_distrito||r.ubigeo),info:'<b>'+esc(r.nombre_distrito||r.ubigeo)+' · '+esc(r.ubigeo)+'</b><p>'+esc(r.departamento)+' · '+Number(r.sbs_puntos_2025||0).toLocaleString("es-PE")+' puntos SBS 2025</p><p>Posición media SBS, no dirección del negocio.</p><button data-ubigeo="'+esc(r.ubigeo)+'" type="button">Abrir ficha territorial</button>'}));
+      }
+      for(const r of locs){
+        bounds.extend(r.position);
+        const pin=new google.maps.Marker({map,position:r.position,title:r.label,
+          icon:{path:google.maps.SymbolPath.CIRCLE,scale:national?11:5.5,fillColor:"#245fd3",fillOpacity:.85,strokeColor:"#fff",strokeWeight:2}});
+        pins.push(pin);
+        pin.addListener("click",()=>{infowindow.setContent('<div style="font:12px sans-serif">'+r.info+'</div>');infowindow.open({map,anchor:pin})});
+      }
+      if(locs.length>1)map.fitBounds(bounds,30);else map.setZoom(10);
+      el.parentElement.querySelector(".svgmap")?.setAttribute("style","display:none");
+      el.classList.add("ready");
+      activeMap={remove:()=>{infowindow.close();for(const p of pins)p.setMap(null)}};
+      status("Google Maps · "+pins.length+" "+(national?"departamentos":"distritos")+" representados");
+      controls();
+    }).catch(e=>{
+      if(mode!=="google")return;
+      mode="openfree";cleanup();previousInit();controls();
+      status("Google Maps no disponible: "+e.message+" · se usa OpenFreeMap.",true);
+    });
+  }
+  window.initLeaflet=function(){if(mode==="google"&&runtimeKey)gmInit();else previousInit();controls()};
+  cleanup();
+  window.initLeaflet();
+})();
