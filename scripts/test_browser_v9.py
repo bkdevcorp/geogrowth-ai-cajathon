@@ -83,7 +83,7 @@ async function test(){
  // Verificar navegación real a los otros casos sin sustituir V9 ni inventar licencias.
  for(const [ubigeo,departamento,sourceState] of [
    ['130101','La Libertad','sin_cobertura'],
-   ['150101','Lima','agregada'],
+   ['150101','Lima','expedientes_sin_identificacion'],
    ['060101','Cajamarca','sin_cobertura'],
    ['040101','Arequipa','individualizada']
  ]){
