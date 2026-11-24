@@ -191,7 +191,7 @@ function decisionInfo(d){
  '<div class="v9-step"><b>3. Oferta que podríamos evaluar</b><p>Capital de trabajo o financiamiento de activos fijos solo si el negocio confirma la necesidad y cumple los requisitos vigentes de Caja Trujillo.</p></div>'+
  '<div class="v9-step"><b>4. Siguiente acción operativa</b><p>Verificar negocios activos, seleccionar establecimientos con fuente autorizada, asignar asesor y registrar visitas/interés/necesidad confirmada.</p></div>'+
  '<div class="v9-step"><b>5. Lo que aún no sabemos</b><p>Empresas activas en 2026, contactos válidos, demanda real de crédito, población adulta, cobertura propia de la Caja y resultados históricos de campañas.</p></div></div>'+
- '<div class="v9-tip"><b>Producto de la investigación:</b> una oportunidad de prospección sustentada para validar en campo, no un crédito preaprobado ni una predicción de conversión.</div></div>';
+ '<div class="v9-tip"><b>Producto de la investigación:</b> una oportunidad de prospección sustentada para validar en campo, no un crédito preaprobado ni una predicción de conversión.</div><div class="go-actionbar"><button class="v9-btn alt" data-go-brief="1">Exportar informe con evidencias</button><button class="v9-btn alt" data-view="sources">Consultar fuentes</button></div></div>';
 }
 function campaignInfo(d){
  const region=rankedInRegion(d.r);
@@ -201,7 +201,7 @@ function campaignInfo(d){
  const plan=state.plan.map(u=>region.find(t=>t.ubigeo===u)).filter(Boolean);
  return '<div class="go-block"><h3>¿Qué decisión tomará Caja Trujillo?</h3><p class="go-muted">Comparar tres maneras de elegir territorios según el mismo presupuesto <b>supuesto</b>. La regla M2 busca el máximo IIT acumulado sin superar el costo de campaña. No optimiza conversiones observadas.</p>'+
  '<table class="v9-tbl"><thead><tr><th>Método</th><th>Enfoque</th><th>Distritos</th><th>Costo</th><th>IIT acumulado</th><th></th></tr></thead><tbody>'+selections.map(([id,label,rs])=>'<tr><td><b>'+id+'</b></td><td>'+label+'</td><td>'+rs.length+'</td><td>S/ '+number(rs.reduce((v,t)=>v+t.cost,0))+'</td><td>'+fmtV9(rs.reduce((v,t)=>v+t.score,0),1)+'</td><td><button class="v9-btn alt" data-go-model="'+id+'">Usar '+id+'</button></td></tr>').join('')+'</tbody></table>'+
- '<div class="v9-tip">Selecciona M0, M1 o M2 para cargar una propuesta. Después exporta el JSON para la aplicación del asesor.</div><h3>Territorios incluidos ('+plan.length+')</h3>'+
+ '<div class="v9-tip"><label for="go-budget"><b>Presupuesto supuesto (S/):</b></label> <input id="go-budget" type="number" value="'+I.budget+'" min="500" max="25000" step="100" style="width:150px;margin-left:10px;padding:9px;border-radius:8px;border:1px solid #ccdbe6"> Cambia el presupuesto para recalcular los tres modelos.</div><div class="v9-tip">Selecciona M0, M1 o M2 para cargar una propuesta. Después exporta el JSON para la aplicación del asesor.</div><h3>Territorios incluidos ('+plan.length+')</h3>'+
  (plan.length?'<div class="v9-stack">'+plan.map(t=>'<div class="v9-step"><b>'+htmlSafe(t.nombre_distrito||t.ubigeo)+' · '+t.ubigeo+'</b><p>IIT: '+fmtV9(t.score,1)+' | Costo supuesto: S/ '+number(t.cost)+' | Fuente: '+htmlSafe(t.evidencia)+'</p></div>').join('')+'</div>':'<p class="v9-warning">No hay territorios seleccionados. Pulsa «Usar M2» para comenzar.</p>')+
  '<div class="go-actionbar"><button type="button" class="v9-btn" data-go-campaign-export="'+1+'" '+(plan.length?'':'disabled')+'>Exportar campaña JSON</button><button type="button" class="v9-btn alt" data-go-section="execution">Ver ejecución</button></div></div>';
 }
@@ -223,9 +223,9 @@ function renderWorkflow(){
  const body=stage==='work'?picker()+(curr?facts(curr):'<div class="go-empty">Selecciona departamento y distrito, o un acceso rápido, para iniciar.</div>'):
  !curr?'<div class="go-empty">Primero selecciona un distrito en «01 · Seleccionar territorio».</div>':
  stage==='score'?analyse(curr)+scoreInfo(curr):
- stage==='opportunity'?decisionInfo(curr)+decision(curr):
- stage==='plan'?campaignInfo(curr)+benchmarkCard(curr):
- executionInfo(curr)+followUp(curr);
+ stage==='opportunity'?decisionInfo(curr):
+ stage==='plan'?campaignInfo(curr):
+ executionInfo(curr);
  return pagehead(stageLabels[stage],'GeoGrowth AI · Data Pack oficial por UBIGEO · '+(curr?curr.r.nombre_distrito+' · '+curr.r.ubigeo:'Selecciona un territorio'))+
  v9Navigator(stage)+body+(curr?v9Next(stage):'');
 }
