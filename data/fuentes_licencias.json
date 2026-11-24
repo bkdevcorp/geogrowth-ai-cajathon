@@ -1,0 +1,26 @@
+{
+  "sistema": "GeoGrowth AI",
+  "version": "10",
+  "fuentes": [
+    {
+      "nombre": "Municipalidad Metropolitana de Lima",
+      "archivo_origen": "DATOS ABIERTOS LICENCIAS 01012024 AL 0104.2026 (1).csv",
+      "nivel": "expediente",
+      "cobertura": "150101",
+      "periodo": "2024–2026",
+      "campo_fecha": "FECHA_OTORGAMIENTO",
+      "deduplicacion": "ANIO_EXPEDIENTE+EXPEDIENTE",
+      "limitacion": "No se publican nombre comercial, giro ni dirección."
+    },
+    {
+      "nombre": "Municipalidad Provincial de Arequipa",
+      "archivo_origen": "Registro de licencias de funcionamiento JUL25 a DIC25 (1).xlsx",
+      "nivel": "licencia",
+      "cobertura": "040101",
+      "periodo": "Julio–diciembre 2025",
+      "campo_fecha": "Fecha de emision",
+      "deduplicacion": "Expediente",
+      "limitacion": "La columna UBIGEO contiene valores no estándar; se usa 040101 por jurisdicción del archivo."
+    }
+  ]
+}
