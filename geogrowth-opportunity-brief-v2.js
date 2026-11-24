@@ -115,7 +115,7 @@ function html(b){
  const place=i.puesto_departamental==null?"N/D":i.puesto_departamental+" de "+i.distritos_comparables;
  return '<article id="gg-opportunity-brief" class="gg-brief">'+
  '<header class="gg-brief-header"><div class="gg-brief-label">GeoGrowth AI · Territory Opportunity Brief</div>'+
- '<h3>'+esc(t.distrito||"Distrito sin nombre en la fuente")+' · '+esc(t.departamento)+' · '+esc(t.ubigeo)+'</h3>'+
+ '<h3>'+esc(t.distrito||"Territorio")+' · '+esc(t.departamento)+' · '+esc(t.ubigeo)+'</h3>'+
  '<p>Informe territorial automatizado con evidencias, lectura del IIT elegido y recomendación comercial condicionada a validación.</p>'+
  '<div class="gg-brief-tags"><span>IIT: '+esc(score)+'</span><span>Posición: '+esc(place)+'</span>'+
  '<span>Peso E: '+i.peso_empresas_pct+'%</span><span>Peso B: '+i.peso_menor_presencia_oficinas_pct+'%</span></div></header>'+
