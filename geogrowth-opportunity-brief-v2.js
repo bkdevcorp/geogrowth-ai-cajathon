@@ -252,7 +252,7 @@ function agentHtml(b){
     '<div class="gg-brief-metrics">'+stat(score,"IIT seleccionado")+stat(rank,"Posición departamental")+
     stat(dec(i.aporte_empresarial),"Aporte empresas E")+stat(dec(i.aporte_oficinas),"Aporte oficinas B")+'</div>')+
   sec("2. Evidencia territorial y segmentos observables",'<p>'+esc(sectorText)+'</p>'+sectorHtml+
-    '<div class="gg-ai-insight"><b>Foco comercial para contrastar</b><p>'+esc(a.foco_comercial)+'</p></div>'+
+    '<div class="gg-ai-insight"><b>Foco comercial para contrastar</b><p>'+esc(b.agentes_demo?.hipotesis_territorial||a.foco_comercial)+'</p></div>'+
     '<p class="gg-brief-fine">PRODUCE 2015: '+esc(fmt(e.produce_2015.micro))+' microempresas. SBS 2025: '+esc(fmt(e.sbs_2025.oficinas))+
     ' oficinas y '+esc(fmt(e.sbs_2025.puntos))+' puntos. Licencias: '+esc(e.licencias)+'</p>'+examples)+
   sec("3. Hipótesis que el asesor debe investigar",'<div class="gg-brief-grid">'+b.hipotesis.map(h=>
