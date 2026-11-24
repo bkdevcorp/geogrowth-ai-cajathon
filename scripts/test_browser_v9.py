@@ -92,10 +92,10 @@ async function test(){
    btn.click();
    await until(()=>doc.querySelector('#gg-agent-simulation [data-gg-case="'+ubigeo+'"][data-gg-case-active="true"]'), 'Cambiar a '+ubigeo);
    check(doc.querySelector('#gg-opportunity-brief').textContent.includes(departamento),'El territorio no cambió '+ubigeo);
-   const curr=frame.contentWindow.GeoGrowthOpportunityBriefV2.build(
-     frame.contentWindow.DATA.find(x=>x.ubigeo===ubigeo),70);
-   check(curr?.agentes_demo?.fuentes?.licencias===sourceState,'Atribución incorrecta de licencias '+ubigeo);
-   check(curr?.agentes_demo?.especialista?.length===4,'No hay análisis de agentes para '+ubigeo);
+   doc.querySelector('[data-gg-export-brief]').click();
+   check(exported?.data?.territorio?.ubigeo===ubigeo,'La exportación del brief no coincide con '+ubigeo);
+   check(exported.data.agentes_demo?.fuentes?.licencias===sourceState,'Atribución incorrecta de licencias '+ubigeo);
+   check(exported.data.agentes_demo?.especialista?.length===4,'No hay análisis de agentes para '+ubigeo);
  }
  check(doc.querySelector('#gg-agent-simulation [data-gg-case="040101"][data-gg-case-active="true"]'),'No regresó a Arequipa');
  check(!doc.querySelector('#v9-safe-map'),'El mapa no debe aparecer en Opportunity Brief');
