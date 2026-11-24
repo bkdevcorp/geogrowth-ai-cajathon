@@ -1,0 +1,87 @@
+#!/usr/bin/env python3
+"""Browser-level regression: approved V9 plus optional integrated admin/analyst extension.
+Requires a locally installed Chromium/Chrome (GitHub Actions ubuntu-latest).
+Uses Python stdlib; does not touch the original code/data.
+"""
+from __future__ import annotations
+import functools
+import http.server
+import pathlib
+import shutil
+import subprocess
+import threading
+
+ROOT=pathlib.Path(__file__).resolve().parents[1]
+CHROME=next((shutil.which(exe) for exe in ("google-chrome","google-chrome-stable","chromium","chromium-browser") if shutil.which(exe)),None)
+if not CHROME:
+    raise SystemExit("FALLO: Chrome/Chromium no disponible para validación visual")
+
+DRIVER="""<!doctype html><html lang="es"><meta charset="utf-8"><title>Prueba V9</title>
+<iframe id="app" src="GeoGrowth_AI_Dashboard_V3.html?modo=ampliado&amp;perfil=analista" style="width:1200px;height:850px"></iframe>
+<pre id="result">RUNNING</pre>
+<script>
+const status=document.getElementById('result');
+const delay=ms=>new Promise(r=>setTimeout(r,ms));
+const check=(v,msg)=>{if(!v)throw Error(msg)};
+async function until(fn,msg){
+ for(let i=0;i<100;i++){if(fn())return;await delay(65)}
+ throw Error("Tiempo agotado: "+msg);
+}
+async function test(){
+ const frame=document.getElementById('app'),doc=frame.contentDocument;
+ await until(()=>doc?.querySelector('#v9-safe-map #ggv5 svg')&&doc.querySelector('.v9-extra-license'),'mapa y licencias');
+ check(doc.querySelectorAll('#v9-safe-map #ggv5 svg path.gg-dept').length===25,'no hay 25 departamentos V5');
+ check(doc.querySelector('.v9-stages button'),'faltan cinco etapas');
+ check(doc.querySelectorAll('.v9-stages button').length===5,'flujo V9 alterado');
+ doc.querySelector('[data-v9-role="admin"]').click();
+ check(doc.querySelector('.v9-extra-panel')?.textContent.includes('Administrador'),'vista Admin ausente');
+ doc.querySelector('[data-v9-role="analista"]').click();
+ await until(()=>doc.querySelector('.v9-extra-license'),'licencias del analista');
+ const district=doc.querySelector('.v9-extra-license [data-v9-district]');
+ check(district,'no hay acción de investigación');
+ district.click();
+ await until(()=>doc.querySelector('#go-ubigeo')?.value==='040101','distrito de licencia no seleccionado');
+ doc.querySelector('[data-go-section="score"]').click();
+ await until(()=>doc.querySelector('.v9-formula'),'fórmula IIT');
+ check(doc.querySelector('#v9-safe-map #ggv5'),'mapa no integrado en scoring');
+ doc.querySelector('[data-go-section="opportunity"]').click();
+ await until(()=>doc.querySelector('.v9-stack')&&doc.querySelector('#v9-safe-map'),'Opportunity Brief');
+ doc.querySelector('[data-go-section="plan"]').click();
+ await until(()=>doc.querySelector('[data-go-model="M0"]')&&doc.querySelector('[data-go-model="M1"]')&&doc.querySelector('[data-go-model="M2"]'),'benchmark M0/M1/M2');
+ doc.querySelector('[data-go-model="M2"]').click();
+ await until(()=>doc.querySelector('[data-go-campaign-export]'),'JSON de campaña');
+ doc.querySelector('[data-go-section="execution"]').click();
+ await until(()=>doc.querySelector('#go-import-results'),'importar resultados JSON');
+ check(doc.querySelector('#v9-safe-map #ggv5'),'mapa no integrado en ejecución');
+ status.textContent='RESULTADO_BROWSER_V9_OK: mapa, roles, licencias, selección, scoring, brief, modelos, campo';
+}
+window.addEventListener('load',()=>test().catch(e=>{status.textContent='RESULTADO_BROWSER_V9_FALLO: '+e.message}));
+</script></html>"""
+
+class Quiet(http.server.SimpleHTTPRequestHandler):
+    def log_message(self,*args): pass
+
+driver=ROOT/"__v9_browser_smoke__.html"
+driver.write_text(DRIVER,encoding="utf-8")
+server=http.server.ThreadingHTTPServer(("127.0.0.1",0),functools.partial(Quiet,directory=str(ROOT)))
+thread=threading.Thread(target=server.serve_forever,daemon=True)
+thread.start()
+url=f"http://127.0.0.1:{server.server_port}/{driver.name}"
+try:
+    cmd=[
+        CHROME,"--headless=new","--no-sandbox","--disable-gpu",
+        "--disable-dev-shm-usage","--disable-background-networking",
+        "--disable-background-timer-throttling","--virtual-time-budget=16000",
+        "--hide-scrollbars","--dump-dom",url
+    ]
+    result=subprocess.run(cmd,capture_output=True,text=True,timeout=55,check=False)
+    output=result.stdout
+    if "RESULTADO_BROWSER_V9_OK:" not in output:
+        msg=output.split("RESULTADO_BROWSER_V9_FALLO:",1)
+        if len(msg)>1:
+            raise RuntimeError("Fallo funcional: "+msg[1].split("<",1)[0])
+        raise RuntimeError("Chrome no completó la validación. salida="+repr(output[-800:])+" stderr="+repr(result.stderr[-800:]))
+    print("OK: prueba E2E V9 (25 departamentos, roles, licencias, distrito, scoring, brief, M0/M1/M2, campo)")
+finally:
+    server.shutdown()
+    driver.unlink(missing_ok=True)
