@@ -52,6 +52,21 @@ assert.match(logs.html,/53[.,]9/);
 assert.match(logs.html,/89 de 101/);
 assert.match(logs.html,/Evidencia territorial/);
 assert.equal(logs.renders,1);
+w.GeoGrowthPublicLicenses={registros:[
+ {ubigeo:"040520",nombre:"Negocio publicado A",sector:"Comercio",giro:"Venta al por menor",fecha:"2025-12-31"},
+ {ubigeo:"040520",nombre:"Negocio publicado B",sector:"Comercio",giro:"Ropa",fecha:"2025-10-01"},
+ {ubigeo:"040520",nombre:"Negocio publicado C",sector:"Alimentos y gastronomía",fecha:"2025-11-01"},
+ {ubigeo:"040101",nombre:"Otro distrito",sector:"Servicios",fecha:"2025-12-01"}
+]};
+const withLicenses=w.GeoGrowthOpportunityBriefV2.build(target,55);
+assert.equal(withLicenses.investigacion.licencias_individuales,3);
+assert.equal(withLicenses.investigacion.sectores[0].sector,"Comercio");
+assert.equal(withLicenses.investigacion.sectores[0].registros,2);
+assert.equal(withLicenses.investigacion.sectores[1].registros,1);
+assert.match(withLicenses.investigacion.foco_comercial,/inventarios/);
+assert.equal(withLicenses.investigacion.alternativas_departamentales.length,3);
+assert(withLicenses.investigacion.sensibilidad.length>=2);
+assert.equal(withLicenses.investigacion.ejemplos_publicados.length,3);
 const w70=w.GeoGrowthOpportunityBriefV2.build(target,70);
 assert.notEqual(w70.iit.puntuacion,brief.iit.puntuacion);
 assert.equal(w70.iit.peso_empresas_pct,70);
