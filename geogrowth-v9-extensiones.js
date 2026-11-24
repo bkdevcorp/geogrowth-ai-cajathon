@@ -75,6 +75,8 @@
     if(!STAGES.has(state.view))return;
     const root=document.getElementById("content"),nav=root?.querySelector(".v9-stages");
     if(!nav)return;
+    const chooser=document.getElementById("go-dep");
+    if(chooser && !document.getElementById("go-ubigeo")?.value && chooser.value && state.dep!==chooser.value)state.dep=chooser.value;
     const r=territory();
     const region=state.dep||"Todo el Perú";
     const shell=document.createElement("section");
