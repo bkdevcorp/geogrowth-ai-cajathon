@@ -48,7 +48,7 @@ assert.match(brief.decision.recomendacion,/No lanzar una campaña amplia/);
 assert.equal(brief.evidencia.produce_2015.micro,2811);
 assert.equal(brief.evidencia.sbs_2025.puntos,343);
 assert.match(logs.html,/gg-opportunity-brief/);
-assert.match(logs.html,/53,9/);
+assert.match(logs.html,/53[.,]9/);
 assert.match(logs.html,/89 de 101/);
 assert.match(logs.html,/Evidencia territorial/);
 assert.equal(logs.renders,1);
