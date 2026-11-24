@@ -13,6 +13,47 @@ let DATA=[],state={dep:"Todo el Perú",selected:null,query:""};
 const style=document.createElement("style");style.textContent=
 ".ggv5{height:100%;width:100%;position:relative;background:#eaf3f9;overflow:hidden;border-radius:11px}.ggv5 svg{height:100%;width:100%;display:block;touch-action:none;cursor:grab}.ggv5 svg.dragging{cursor:grabbing}.ggv5-head,.ggv5-menu,.ggv5-note{position:absolute;z-index:3;background:#fffffff0;border:1px solid #dce6f1;border-radius:10px;padding:9px 11px;color:#234765;box-shadow:0 3px 15px #183b5b1c}.ggv5-head{top:12px;left:12px}.ggv5-head b{display:block;font-size:12px}.ggv5-head small{font-size:10px;color:#698399}.ggv5-menu{top:12px;right:58px;width:190px;max-height:230px;overflow:auto}.ggv5-menu strong{font-size:11px}.ggv5-menu button{width:100%;display:flex;justify-content:space-between;text-align:left;border:0;border-bottom:1px solid #edf3f8;background:transparent;cursor:pointer;font-size:10px;color:#36536b;padding:6px 2px}.ggv5-menu button:hover{background:#e5f0fa}.ggv5-menu small{color:#73869d}.ggv5-note{bottom:10px;left:10px;font-size:10px;color:#5e7990;max-width:90%}.ggv5-ctrl{position:absolute;right:12px;top:12px;z-index:4;display:grid;gap:5px}.ggv5-ctrl button{width:36px;height:36px;border-radius:8px;border:1px solid #d3e0eb;background:white;color:#284e70;cursor:pointer;font-size:18px;font-weight:bold}.ggv5 path.gg-dept{stroke:white;stroke-width:1.3;stroke-linejoin:round;vector-effect:non-scaling-stroke;cursor:pointer}.ggv5 path.gg-dept:hover{fill:#8fbae2}.ggv5 path.gg-dept.selected{stroke:#195d6b;stroke-width:2.8}.ggv5 .gg-point{fill:#2766c6;fill-opacity:.88;stroke:#fff;stroke-width:1.5;cursor:pointer}.ggv5 .gg-point:hover{fill:#f09c39;stroke:#244258;stroke-width:2.5}.ggv5 .gg-label{font-size:10px;fill:#17466e;paint-order:stroke;stroke:#fff;stroke-width:3px;pointer-events:none}.ggv5 .gg-error{height:100%;display:grid;place-items:center;color:#6d8397;padding:30px;font-size:13px}";
 document.head.appendChild(style);
+
+/* GeoJSON helpers: el mapa V11 es local y no depende de proveedores de teselas. */
+function forEachCoord(geometry,visit){
+  if(!geometry || !geometry.coordinates)return;
+  const walk=value=>{
+    if(!Array.isArray(value))return;
+    if(value.length>=2 && typeof value[0]==="number" && typeof value[1]==="number"){
+      visit(value);
+      return;
+    }
+    value.forEach(walk);
+  };
+  walk(geometry.coordinates);
+}
+function geometryPath(geometry,project){
+  if(!geometry)return "";
+  const polygons=geometry.type==="Polygon" ? [geometry.coordinates]
+    : geometry.type==="MultiPolygon" ? geometry.coordinates : [];
+  return polygons.map(polygon=>polygon.map(ring=>{
+    const projected=ring.filter(p=>Array.isArray(p)&&Number.isFinite(p[0])&&Number.isFinite(p[1])).map(project);
+    return projected.length ? "M"+projected.map(p=>p[0].toFixed(2)+","+p[1].toFixed(2)).join("L")+"Z" : "";
+  }).join("")).join("");
+}
+function load(){
+  if(geo)return Promise.resolve(geo);
+  if(!promise){
+    promise=fetch("data/peru_departamentos.geojson",{cache:"force-cache"})
+      .then(response=>{
+        if(!response.ok)throw Error("GeoJSON HTTP "+response.status);
+        return response.json();
+      })
+      .then(data=>{
+        if(data?.type!=="FeatureCollection" || !Array.isArray(data.features) || !data.features.length)
+          throw Error("GeoJSON inválido o vacío");
+        geo=data;
+        return data;
+      })
+      .catch(error=>{promise=null;throw error;});
+  }
+  return promise;
+}
 window.GeoGrowthEmbeddedMap={mount({element,data,department,selectedUbigeo}){
  if(!element)return;
  DATA=Array.isArray(data)?data:[];
