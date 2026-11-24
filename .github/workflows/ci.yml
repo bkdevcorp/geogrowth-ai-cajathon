@@ -33,5 +33,7 @@ jobs:
         run: node scripts/test_map.cjs
       - name: Regresión del mapa V5 y flujo V9 ampliado
         run: node scripts/test_v9_extension.cjs
+      - name: Validar Opportunity Brief por territorio e IIT
+        run: node scripts/test_opportunity_brief.cjs
       - name: Prueba real de navegador de V9 ampliado
         run: python scripts/test_browser_v9.py
