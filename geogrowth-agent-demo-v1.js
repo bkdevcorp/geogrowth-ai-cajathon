@@ -138,7 +138,7 @@ render=function(){
  if(state.view==="opportunity"){
    const host=document.getElementById("gg-opportunity-brief");
    if(host&&!document.getElementById("gg-agent-simulation"))
-      host.insertAdjacentHTML("afterbegin",teamHtml(analysis));
+      host.querySelector(".gg-brief-header")?.insertAdjacentHTML("afterend",teamHtml(analysis));
  }else{
    const host=document.getElementById("gg-campaign-guide");
    if(host&&!document.getElementById("gg-campaign-agent"))
