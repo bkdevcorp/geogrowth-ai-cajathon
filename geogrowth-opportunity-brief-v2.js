@@ -137,6 +137,9 @@ function build(r,weight){
     sbs_2025:{oficinas:r.sbs_oficinas_2025??null,puntos:r.sbs_puntos_2025??null,atm:r.sbs_atm_2025??null,pos:r.sbs_pos_2025??null},
     licencias:licenses,ids:String(r.evidencia||"").split("|").filter(Boolean)},
   hipotesis,productos,acciones,criterios,faltantes,investigacion,
+  agentes_demo:window.GeoGrowthAgentDemo?.create(r,{
+    puntuacion:entry?.score??null,puesto:rank,total:n,peso:w,categoria,investigacion
+  })||null,
   limitacion:"PRODUCE 2015 y SBS 2025 son fuentes de años distintos. No indican negocios activos, demanda ni elegibilidad crediticia."
  };
 }
