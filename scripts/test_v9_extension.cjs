@@ -96,14 +96,15 @@ assert.equal(extended.sandbox.state.view,"work","Un enlace externo no abre secci
 assert.equal(extended.visibleNav().length,10,"El filtrado se conserva tras navegar");
 extended.logs.click(evt);
 // El mapa ampliado se monta únicamente en la etapa 01; las demás preservan sus vistas.
+const mapCountBeforeStages=extended.logs.mapRenders;
 for (const stage of ["score","opportunity","plan","execution"]) {
   extended.sandbox.state.view=stage;
   extended.sandbox.render();
-  assert.equal(extended.logs.mapRenders,2,"No se debe montar mapa en "+stage);
+  assert.equal(extended.logs.mapRenders,mapCountBeforeStages,"No se debe montar mapa en "+stage);
 }
 extended.sandbox.state.view="work";
 extended.sandbox.render();
-assert.equal(extended.logs.mapRenders,3,"El mapa vuelve a montarse solo en territorio");
+assert.equal(extended.logs.mapRenders,mapCountBeforeStages+1,"El mapa vuelve a montarse solo en territorio");
 Promise.resolve().then(()=>new Promise(resolve=>setImmediate(resolve))).then(()=>{
   assert.match(extended.logs.lastShell.innerHTML,/Administrador/);
   console.log("OK: V5/V9/Campo unchanged; analyst menu only five stages; admin menu intact; map only in territory");
