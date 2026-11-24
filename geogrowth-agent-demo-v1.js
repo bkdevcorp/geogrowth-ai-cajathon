@@ -21,12 +21,16 @@ function create(r,context){
  const officePct=Math.round(100*cohort.filter(x=>Number(x.sbs_oficinas_2025||0)<=offices).length/total);
  const hasMicro=r.micro_2015!=null;
  const hasOffices=r.sbs_oficinas_2025!=null;
- const municipality=meta.licencias_individuales>0?"individualizada":r.licencias_municipales_ref!=null?"agregada":"sin_cobertura";
+ const municipality=meta.licencias_con_sector_y_nombre>0?"individualizada":
+   meta.licencias_individuales>0?"expedientes_sin_identificacion":
+   r.licencias_municipales_ref!=null?"agregada":"sin_cobertura";
  const top=meta.sectores?.[0]||null;
  const sourceNote=municipality==="individualizada"
   ?"Hay "+number(meta.licencias_individuales)+" licencias municipales individualizadas con cobertura parcial; los registros no confirman operación actual."
+  :municipality==="expedientes_sin_identificacion"
+  ?"Se publican "+number(meta.licencias_individuales)+" expedientes en la bandeja del distrito, pero sin nombre comercial, giro ni dirección pública individual. El total histórico municipal de "+number(r.licencias_municipales_ref)+" no constituye una lista de prospectos."
   :municipality==="agregada"
-  ?"Hay "+number(r.licencias_municipales_ref)+" expedientes municipales agregados, sin nombres, giros o direcciones individuales verificables en esta fuente."
+  ?"Hay "+number(r.licencias_municipales_ref)+" expedientes administrativos sin segmentación comercial individualizada verificable en esta fuente."
   :"No hay registros municipales individualizados publicados para este UBIGEO en el paquete; no significa que no haya empresas ni licencias.";
  const lens=hasMicro&&hasOffices
   ?"El distrito se sitúa aproximadamente en el percentil "+microPct+" de microempresas históricas y en el percentil "+officePct+" de oficinas SBS entre los distritos comparables de "+r.departamento+". Son posiciones sobre datos de distintos años."
@@ -51,7 +55,7 @@ function create(r,context){
  }[String(r.ubigeo)];
  const sectorFocus=top
   ?"La señal municipal más frecuente publicada es "+top.sector+" ("+number(top.registros)+" expedientes de "+number(meta.licencias_individuales)+"). Evaluar primero vigencia y necesidades de ese giro, sin extrapolarlo a todo el distrito."
-  :municipality==="agregada"
+  :municipality==="agregada"||municipality==="expedientes_sin_identificacion"
   ?"La información municipal es documental, no un padrón comercial por actividad. La siguiente etapa debe recuperar clasificación sectorial vigente antes de elegir rubros."
   :hasMicro&&microPct>=75&&officePct>=75
   ?"Se observa concentración empresarial histórica y de oficinas comparativamente alta. Hipótesis demo: investigar diferenciación de atención, calidad y necesidades insatisfechas, no una ausencia de servicios."
