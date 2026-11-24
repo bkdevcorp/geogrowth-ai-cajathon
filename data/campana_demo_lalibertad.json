@@ -1,0 +1,42 @@
+{
+  "format": "GeoGrowthCampaignV3",
+  "source": "GeoGrowth AI Eje2 V3",
+  "departamento": "La Libertad",
+  "budget_hipotetico": 2400,
+  "peso_empresa_historica": 55,
+  "advertencia": "Datos reales multianuales, costos y escenarios ilustrativos.",
+  "territorios": [
+    {
+      "ubigeo": "130101",
+      "nombre": "Trujillo",
+      "departamento": "La Libertad",
+      "iit": null,
+      "costo_simulado": 600,
+      "evidencias": "PRODUCE-2015:130101|SBS-2025:130101"
+    },
+    {
+      "ubigeo": "130105",
+      "nombre": "La Esperanza",
+      "departamento": "La Libertad",
+      "iit": null,
+      "costo_simulado": 600,
+      "evidencias": "PRODUCE-2015:130105|SBS-2025:130105"
+    },
+    {
+      "ubigeo": "130102",
+      "nombre": "UBIGEO 130102",
+      "departamento": "La Libertad",
+      "iit": null,
+      "costo_simulado": 600,
+      "evidencias": "PRODUCE-2015:130102|SBS-2025:130102"
+    },
+    {
+      "ubigeo": "130111",
+      "nombre": "Víctor Larco Herrera",
+      "departamento": "La Libertad",
+      "iit": null,
+      "costo_simulado": 600,
+      "evidencias": "PRODUCE-2015:130111|SBS-2025:130111"
+    }
+  ]
+}

@@ -1,0 +1,62 @@
+[
+  {
+    "clave": "PRODUCE15",
+    "fuente": "PRODUCE - empresas georreferenciadas por tamaño",
+    "archivo": "/mnt/data/Empresas.csv",
+    "periodo": "2015",
+    "nivel": "establecimiento (agregado a UBIGEO)",
+    "utilidad": "actividad empresarial histórica",
+    "limitacion": "No implica negocios activos en 2026; decenio de diferencia con SBS",
+    "url": "https://transparencia.produce.gob.pe/index.php/52-portal-de-datos-abiertos",
+    "bytes": 106031310,
+    "sha256": "b8826e957554c0c8df77bb97a6e381a1be284c20fcd6852fe16ec015b04aa0f5"
+  },
+  {
+    "clave": "SBS25",
+    "fuente": "SBS - puntos de atención financiera CIIF-0002",
+    "archivo": "/mnt/data/CIIF-0002-di2025.xls",
+    "periodo": "2025-12",
+    "nivel": "punto / UBIGEO (agregado)",
+    "utilidad": "presencia de infraestructura financiera",
+    "limitacion": "POS no equivale a oficina; no determina acceso, uso ni inclusión por habitante",
+    "url": "https://www.sbs.gob.pe/inclusion-financiera-principal/cifras-de-inclusion-financiera/mapa-de-oportunidades",
+    "bytes": 5516641,
+    "sha256": "e44b44c7cd0e59fd3402b707c6f72842e42ad0d02995f502664a76c5c68b3351"
+  },
+  {
+    "clave": "MML26",
+    "fuente": "Municipalidad Metropolitana de Lima - licencias",
+    "archivo": "/mnt/data/DATOS ABIERTOS LICENCIAS 01012024 AL 0104.2026 (1).csv",
+    "periodo": "2024-01 a 2026-04",
+    "nivel": "expediente en Cercado de Lima (UBIGEO 150101)",
+    "utilidad": "actividad administrativa reciente; no sector ni localización puntual",
+    "limitacion": "Únicamente un distrito; múltiples cortes con duplicados; RUC no exportado",
+    "url": "https://www.datosabiertos.gob.pe/dataset/licencias-de-funcionamiento-otorgadas-2020-2025",
+    "bytes": 1011826,
+    "sha256": "e6375a14efb17a7002fee1671dda42b8d8965740512f3530b6876f76f0d99fc9"
+  },
+  {
+    "clave": "MPA25",
+    "fuente": "Municipalidad Provincial de Arequipa - licencias",
+    "archivo": "/mnt/data/Registro de licencias de funcionamiento JUL25 a DIC25 (1).xlsx",
+    "periodo": "2025-07 a 2025-12",
+    "nivel": "licencias municipales",
+    "utilidad": "señal local de actividad administrativa",
+    "limitacion": "Solo municipalidad provincial; agregación previa; campos UBIGEO inconsistentes",
+    "url": "https://www.datosabiertos.gob.pe/",
+    "bytes": 156761,
+    "sha256": "afe1d5d9537be55051168867b7c769e7b73ebeaeca84197b5154197c1567e5bc"
+  },
+  {
+    "clave": "INEI26",
+    "fuente": "INEI - Datos_Muestra_2026",
+    "archivo": "/mnt/data/Datos_Muestra_2026.csv",
+    "periodo": "2026",
+    "nivel": "muestra de 199 municipalidades",
+    "utilidad": "referencia local parcial",
+    "limitacion": "Solo Amazonas y Áncash; no es censo nacional ni denominador de población",
+    "url": "https://www.datosabiertos.gob.pe/",
+    "bytes": 170137,
+    "sha256": "e5b93c35aa02d19496352f53555442207044a2d36dc69a113b8934c902f38c91"
+  }
+]

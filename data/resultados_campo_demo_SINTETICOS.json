@@ -1,0 +1,8 @@
+{
+  "format": "GeoGrowthFieldResultsV3",
+  "source": "GeoGrowth Campo — EJEMPLO FICTICIO (NO VISITAS REALES)",
+  "visitas": [
+    {"territory_ubigeo":"130101","fecha":"2026-11-23","resultado":"Informativo","sector":"Comercio","necesidad":"No verificada","siguiente_accion":"Continuar investigación","consentimiento_simulado":false,"observaciones":"EJEMPLO SINTÉTICO. No corresponde a visita real."},
+    {"territory_ubigeo":"130105","fecha":"2026-11-23","resultado":"Interesado","sector":"Servicios","necesidad":"Capital de trabajo","siguiente_accion":"Seguimiento con autorización","consentimiento_simulado":true,"observaciones":"EJEMPLO SINTÉTICO. No representa a una empresa identificada."}
+  ]
+}
