@@ -140,5 +140,7 @@
       if(STAGES.has(state.view))render();
     })
     .catch(err=>{error=String(err.message||err);loading=false;if(STAGES.has(state.view))render();});
-  render();
+  // El analista abre un distrito con registros municipales verificables; la V9 normal no cambia.
+  if(role==="analista" && !query.has("departamento"))openDistrict("040101");
+  else render();
 })();
