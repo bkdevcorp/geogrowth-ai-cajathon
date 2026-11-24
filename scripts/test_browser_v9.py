@@ -33,9 +33,20 @@ async function test(){
  check(doc.querySelectorAll('#v9-safe-map #ggv5 svg path.gg-dept').length===25,'no hay 25 departamentos V5');
  check(doc.querySelector('.v9-stages button'),'faltan cinco etapas');
  check(doc.querySelectorAll('.v9-stages button').length===5,'flujo V9 alterado');
+ const stages=['work','score','opportunity','plan','execution'];
+ const nav=(id)=>[...doc.querySelectorAll(id+' [data-view]')].map(el=>el.dataset.view);
+ const same=(a,b)=>a.length===b.length&&a.every((x,i)=>x===b[i]);
+ check(same(nav('#sidenav'),stages),'Analista: sidebar debe contener solo cinco etapas');
+ check(same(nav('#mobilemenu'),stages),'Analista: menú móvil debe contener solo cinco etapas');
  doc.querySelector('[data-v9-role="admin"]').click();
  check(doc.querySelector('.v9-extra-panel')?.textContent.includes('Administrador'),'vista Admin ausente');
+ for(const id of ['home','explore','sources','readiness']){
+   check(nav('#sidenav').includes(id),'Administrador debe conservar '+id);
+   check(nav('#mobilemenu').includes(id),'Administrador móvil debe conservar '+id);
+ }
  doc.querySelector('[data-v9-role="analista"]').click();
+ check(same(nav('#sidenav'),stages),'Al regresar a Analista deben ocultarse las otras vistas');
+ check(same(nav('#mobilemenu'),stages),'Al regresar a Analista móvil deben ocultarse las otras vistas');
  await until(()=>doc.querySelector('.v9-extra-license'),'licencias del analista');
  const district=doc.querySelector('.v9-extra-license [data-v9-district]');
  check(district,'no hay acción de investigación');
@@ -43,6 +54,7 @@ async function test(){
  await until(()=>doc.querySelector('#go-ubigeo')?.value==='040101','distrito de licencia no seleccionado');
  doc.querySelector('[data-go-section="score"]').click();
  await until(()=>doc.querySelector('.v9-formula'),'fórmula IIT');
+ check(same(nav('#sidenav'),stages),'Analista debe conservar su menú de cinco etapas en Scoring');
  check(!doc.querySelector('#v9-safe-map'),'El mapa no debe aparecer en Scoring IIT');
  doc.querySelector('[data-go-section="opportunity"]').click();
  await until(()=>doc.querySelector('.v9-stack'),'Opportunity Brief');
