@@ -43,6 +43,7 @@ function draw(host,g){
  const scale=Math.min((W-50)/(maxX-minX),(H-55)/(maxY-minY));
  const dx=(W-(maxX-minX)*scale)/2,dy=(H-(maxY-minY)*scale)/2;
  const P=([x,y])=>[dx+(x-minX)*scale,H-(dy+(y-minY)*scale)];
+ const canonicalNames=new Map(DATA.map(r=>[norm(r.departamento),r.departamento]));
  const groups=new Map();
  DATA.forEach(r=>{const k=norm(r.departamento),o=groups.get(k)||{sbs:0,n:0,lat:0,lon:0,w:0};
    o.n++;o.sbs+=Number(r.sbs_puntos_2025||0);
@@ -54,7 +55,7 @@ function draw(host,g){
  for(const f of all){const nm=name(f),o=groups.get(norm(nm))||{sbs:0},selected=!country&&norm(nm)===norm(state.dep);
    const light=Math.round(92-38*Math.sqrt(o.sbs/max));
    const fill=selected?"#abd8cc":"hsl(197 43% "+light+"%)";
-   regions+='<path class="gg-dept '+(selected?'selected':'')+'" data-map-dep="'+clean(nm)+'" fill="'+fill+'" d="'+geometryPath(f.geometry,P)+'"><title>'+clean(nm)+" · "+number(o.sbs)+' puntos SBS 2025</title></path>';
+   regions+='<path class="gg-dept '+(selected?'selected':'')+'" data-map-dep="'+clean(canonicalNames.get(norm(nm))||nm)+'" fill="'+fill+'" d="'+geometryPath(f.geometry,P)+'"><title>'+clean(nm)+" · "+number(o.sbs)+' puntos SBS 2025</title></path>';
  }
  const q=String(state.query||"").trim().toLowerCase();
  const rows=DATA.filter(r=>country||norm(r.departamento)===norm(state.dep));
@@ -63,7 +64,7 @@ function draw(host,g){
  if(country){
    for(const f of all){const nm=name(f),o=groups.get(norm(nm));if(!o?.w)continue;
      const [x,y]=P(merc([o.lon/o.w,o.lat/o.w])),radius=Math.max(6,Math.min(17,5+Math.log1p(o.sbs)*1.2));
-     markers+='<circle class="gg-point" data-map-dep="'+clean(nm)+'" cx="'+x.toFixed(1)+'" cy="'+y.toFixed(1)+'" r="'+radius.toFixed(1)+'"><title>'+clean(nm)+' · '+number(o.sbs)+' puntos SBS</title></circle>';
+     markers+='<circle class="gg-point" data-map-dep="'+clean(canonicalNames.get(norm(nm))||nm)+'" cx="'+x.toFixed(1)+'" cy="'+y.toFixed(1)+'" r="'+radius.toFixed(1)+'"><title>'+clean(nm)+' · '+number(o.sbs)+' puntos SBS</title></circle>';
      if(["LIMA","LA LIBERTAD","PIURA","AREQUIPA","LORETO","PUNO","CUSCO","CAJAMARCA"].includes(norm(nm)))markers+='<text class="gg-label" x="'+(x+radius+4).toFixed(1)+'" y="'+(y+3).toFixed(1)+'">'+clean(nm)+'</text>';
    }
  }else{
@@ -75,7 +76,7 @@ function draw(host,g){
  }
  const list=country?'<div class="ggv5-menu"><strong>Departamentos</strong>'+all.slice().sort((a,b)=>name(a).localeCompare(name(b),"es")).map(f=>{
    const n=name(f),a=groups.get(norm(n))||{sbs:0};
-   return '<button type="button" data-map-dep="'+clean(n)+'"><span>'+clean(n)+'</span><small>'+number(a.sbs)+'</small></button>';
+   return '<button type="button" data-map-dep="'+clean(canonicalNames.get(norm(n))||n)+'"><span>'+clean(n)+'</span><small>'+number(a.sbs)+'</small></button>';
  }).join("")+'</div>':"";
  host.innerHTML='<div class="ggv5-head"><b>'+(country?'Todo el Perú · 25 departamentos':clean(state.dep))+'</b><small>'+number(points.length)+' distritos con coordenadas SBS</small></div>'+
   '<svg id="ggv5svg" viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Mapa con límites reales del Perú"><rect x="0" y="0" width="'+W+'" height="'+H+'" fill="#eaf3f9"/><g>'+regions+'</g><g>'+markers+'</g></svg>'+
