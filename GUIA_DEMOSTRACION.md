@@ -1,39 +1,29 @@
-# GeoGrowth AI — Flujo operativo con datos territoriales reales (V8)
+# GeoGrowth AI V9 — Flujo operativo por secciones
 
-## Propósito
-Resolver el reto COM-01 del Eje 2 de Caja Trujillo: investigar y priorizar territorios de captación con datos verificables.
+El flujo se divide en cinco secciones independientes; al seleccionar un distrito, las demás reutilizan ese mismo UBIGEO. La cartografía V5, los CSV y los datos públicos no se modificaron.
 
-El **mapa V5 se conserva sin modificaciones**. Se retiró del menú la demostración guiada. La vista inicial ahora es **Analizar territorio**.
+## 1. Seleccionar territorio
+Elegir departamento y distrito en **01 · Seleccionar territorio** o usar Trujillo (130101), Lima Cercado (150101), Arequipa (040101) o Cajamarca (060101). Revisar indicadores y fuentes disponibles. Pulsar **Continuar: 02 · Scoring IIT**.
 
-## Uso
-1. Abrir [GeoGrowth AI](https://bkdevcorp.github.io/geogrowth-ai-cajathon/GeoGrowth_AI_Dashboard_V3.html?v=80).
-2. Elegir un departamento y un distrito/UBIGEO, o un acceso directo (Trujillo, Lima Cercado, Arequipa, Cajamarca).
-3. La interfaz ejecuta el análisis del distrito sin botones de paso a paso:
-   - Cruce con el Data Pack PRODUCE 2015 + SBS 2025 y, donde existe, licencias municipales.
-   - Diagnóstico de cobertura y calidad.
-   - IIT exploratorio, cuando ambas fuentes están disponibles.
-   - Opportunity Brief con hechos, hipótesis, producto candidato por verificar y próximas acciones.
-   - Comparación M0/M1/M2 y selección de campaña según presupuesto **hipotético**.
-4. Exportar la campaña JSON, o abrir directamente la app de campo con el UBIGEO seleccionado.
-5. Registrar solo visitas **efectivamente realizadas** en la app de campo. Exportar resultados JSON e importarlos en Campañas y retorno.
+## 2. Scoring IIT
+Explicar el índice: IIT = 100 × (w × E + (1 − w) × B).
+- E: log(1 + microempresas PRODUCE 2015) / máximo logarítmico de microempresas del departamento.
+- B: 1 − log(1 + oficinas SBS 2025) / máximo logarítmico de oficinas del departamento.
+- w: peso elegido, 55 % por defecto; complemento de 45 % para B.
 
-## Datos y limitaciones
-- PRODUCE 2015: registro empresarial histórico, no padrón actual de negocios.
-- SBS diciembre 2025: infraestructura financiera por UBIGEO; no equivale a inclusión financiera real.
-- Licencias municipales: solo Cercado de Lima (expedientes 2024–2026) y Arequipa Cercado (registros 2025), no cobertura nacional.
-- El índice IIT no es predicción de captación, riesgo ni elegibilidad crediticia.
-- M0, M1 y M2 emplean costos de campaña **ilustrativos**; no se han medido desembolsos ni conversiones.
-- Se preserva el consentimiento y la revisión humana para cualquier contacto comercial.
+El sistema presenta contribuciones y fórmula con los datos reales del distrito. Es una **prioridad de investigación exploratoria**, no una tasa de captación ni una medición validada de inclusión financiera.
 
-## Ejemplos con información real
-- Trujillo, La Libertad: UBIGEO 130101.
-- Lima Cercado, Lima: UBIGEO 150101.
-- Arequipa Cercado, Arequipa: UBIGEO 040101.
-- Cajamarca, Cajamarca: UBIGEO 060101.
+## 3. Opportunity Brief
+Presenta una decisión preliminar y **qué realizaría el asesor**: hechos verificados, segmentos que podrían investigarse, productos candidatos sujetos a validación, próxima acción y datos faltantes. El informe puede exportarse con evidencias.
 
-## Componentes principales
-- `GeoGrowth_AI_Dashboard_V3.html` + `geogrowth-operacion-v8.js`: proceso analítico.
-- `geogrowth-map.js`: mapa aprobado V5, **intacto**.
-- `GeoGrowth_AI_Campo_V3.html` + `geogrowth-campo-operacion-v8.js`: observaciones de campo.
-- `data/territorios_reales.json`: datos territoriales agregados.
-- `data/fuentes_y_transformaciones.json`: manifiesto de procedencia y transformaciones.
+## 4. Diseño de campaña
+Comparar M0 (mayor volumen histórico), M1 (mayor IIT), M2 (selección matemática bajo presupuesto supuesto). Cambiar presupuesto, pulsar **Usar M0/M1/M2** y revisar la lista seleccionada. Exportar el JSON de campaña.
+
+## 5. Ejecución y resultados
+Abrir **GeoGrowth Campo** con el distrito o importar el JSON de campaña si contiene varios territorios. Registrar una visita **solo cuando se haya realizado**; exportar las observaciones en JSON y devolverlas mediante **Importar resultados JSON** en esta sección.
+
+No hay CRM conectado ni clientes, necesidades, conversiones o desembolsos reales en las fuentes. Los indicadores vienen de PRODUCE 2015 y SBS 2025; las licencias municipales son parciales. No confundir el resultado de una prueba de interfaz con captación comprobada.
+
+## Acceso
+Dashboard: https://bkdevcorp.github.io/geogrowth-ai-cajathon/GeoGrowth_AI_Dashboard_V3.html?v=90
+Aplicación móvil: https://bkdevcorp.github.io/geogrowth-ai-cajathon/GeoGrowth_AI_Campo_V3.html?v=80
