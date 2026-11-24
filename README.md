@@ -40,3 +40,28 @@ No usa Google Maps ni las teselas de OpenStreetMap: el mapa es una vista SVG geo
 El índice es exploratorio; las variables cruzadas no son comparables temporalmente. Los costos por territorio son hipotéticos. Los datos no permiten inferir demanda real, probabilidad de captación, elegibilidad crediticia o necesidades de financiamiento individuales. Para producción faltan población adulta comparable, empresas actuales, catálogo oficial de productos y resultados históricos de campañas.
 
 Consulta `EVALUACION_DE_FACTIBILIDAD.md` y `data/fuentes_y_transformaciones.json` para auditoría y limitaciones.
+
+
+## Mapa interactivo: OpenFreeMap o Google Maps
+
+En el dashboard se puede alternar entre **OpenFreeMap** (predeterminado, sin clave) y
+**Google Maps** (modo opcional de prueba). En el panel inferior derecho del mapa,
+elige **Google Maps**, introduce una clave **restringida de Maps JavaScript API**
+y pulsa **Activar Google Maps**.
+
+La clave se conserva solamente en la memoria de esa pestaña: **no se incluye
+en el repositorio, no se guarda en localStorage y no se exporta a los datos**.
+Por tanto, cada sesión nueva requerirá introducirla de nuevo. Las personas que
+visiten la página sin clave seguirán viendo OpenFreeMap.
+
+Configuración en Google Cloud Console:
+1. Habilitar **Maps JavaScript API** en el proyecto.
+2. Verificar que exista una cuenta de facturación activa y establecer límites/cuotas.
+3. Restringir la clave por **Websites (HTTP referrers)**:
+   \`https://bkdevcorp.github.io/*\`
+4. Restringir la clave a **Maps JavaScript API** exclusivamente.
+5. Si se compartió una clave sin restricciones, crear una nueva y deshabilitar la anterior.
+
+Google Maps se utiliza **solo como cartografía**, no como fuente de prospectos:
+los puntos siguen siendo coordenadas medias de la infraestructura reportada
+por SBS 2025; no corresponden a ubicaciones empresariales individuales.
