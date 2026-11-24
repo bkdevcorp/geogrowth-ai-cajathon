@@ -18,7 +18,7 @@ const dload=(name,value,mime='application/json')=>{
  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},600);
 };
 const warning='<div class="callout warn"><b>Alcance de la evidencia.</b> Las licencias son registros administrativos históricos; no prueban que la empresa se constituyó ese día, que continúe operando, que necesite un crédito ni que cumpla requisitos. Los contactos y conversiones no se generan con estos datos.</div>';
-let app={territories:[],licencias:[],summary:{},sources:[],nav:ROLE==='admin'?'resumen':'bandeja',dept:ROLE==='admin'?'La Libertad':'Arequipa',
+let app={territories:[],licencias:[],summary:{},sources:[],nav:ROLE==='admin'?'resumen':'bandeja',dept:ROLE==='admin'?'La Libertad':'Arequipa',mapDep:ROLE==='admin'?'Todo el Perú':'Arequipa',mapUbigeo:null,licenseUbigeo:null,
  leadId:null,query:'',sector:'Todos',status:'Vigentes',page:0,budget:2400,maxZones:4,
  prefs:tryJSON('prefs',{w:55}),campaign:tryJSON('campaign',null),picks:tryJSON('picks',[]),feedback:tryJSON('feedback',[]),
  imported:tryJSON('imported',[]),plan:[],viewMode:'m2',runCount:0};
@@ -70,11 +70,10 @@ function fieldSelect(id,label,options,val){return `<div class="field"><label for
 function formatDate(s){if(!s)return 'Sin fecha';const a=s.split('-');return `${a[2]}/${a[1]}/${a[0]}`}
 function badgeStatus(s){const cls=['ACTIVA','VIGENTE'].includes(s)?'green':'warn';return `<span class="tag ${cls}">${esc(s)}</span>`}
 function roleNav(){
- const navAdmin=[['resumen','Resumen ejecutivo'],['fuentes','Datos y nuevos registros'],['modelo','Fórmula IIT'],['campanas','Diseño de campañas'],['resultados','Resultados y embudo']];
- const navAnalyst=[['bandeja','Oportunidades detectadas'],['brief','Opportunity Brief'],['micanpana','Mi campaña'],['seguimiento','Seguimiento comercial']];
+ const navAdmin=[['resumen','Mapa y resumen'],['fuentes','Datos y nuevos registros'],['modelo','Fórmula IIT'],['campanas','Diseño de campañas'],['resultados','Resultados y embudo']];
+ const navAnalyst=[['bandeja','Mapa y oportunidades'],['brief','Opportunity Brief'],['micanpana','Mi campaña'],['seguimiento','Seguimiento comercial']];
  const set=ROLE==='admin'?navAdmin:navAnalyst;
- $('nav').innerHTML=set.map(([id,name],i)=>`<button type="button" data-nav="${id}" class="${id===app.nav?'active':''}"><span class="number">${String(i+1).padStart(2,'0')}</span>${esc(name)}</button>`).join('')+
- `<a href="GeoGrowth_AI_Dashboard_V3.html?map=1&v=50" target="_blank" rel="noopener">Ver mapa nacional V5</a>`;
+ $('nav').innerHTML=set.map(([id,name],i)=>`<button type="button" data-nav="${id}" class="${id===app.nav?'active':''}"><span class="number">${String(i+1).padStart(2,'0')}</span>${esc(name)}</button>`).join('');
  $('roleSwitch').innerHTML=ROLE==='admin'?`<a href="GeoGrowth_Analista.html" class="btn small">Abrir vista del analista</a>`:`<a href="GeoGrowth_Admin.html" class="btn small">Vista administrador</a>`;
  $('breadcrumb').textContent=(ROLE==='admin'?'Administrador':'Analista')+' / '+(set.find(x=>x[0]===app.nav)?.[1]||'GeoGrowth');
 }
@@ -82,10 +81,12 @@ function render(){roleNav();
  const pages=ROLE==='admin'?{resumen:adminHome,fuentes:adminSources,modelo:adminModel,campanas:adminCampaign,resultados:adminResults}:
  {bandeja:analystInbox,brief:analystBrief,micanpana:analystCampaign,seguimiento:analystFollowup};
  $('content').innerHTML=(pages[app.nav]||Object.values(pages)[0])();
+ window.GeoGrowthMapView?.mount(app);
 }
 function adminHome(){const st=resultStats();const hot=topLeads('Arequipa',4);const national=app.territories.length;
  return pagehead('Panel de control','Inteligencia comercial territorial','Monitorea fuentes, oportunidades investigables, campañas y resultados. Sin afirmar captación crediticia observada.')+
  `<div class="role-banner"><div><strong>GeoGrowth AI · Eje 2 de Caja Trujillo</strong><p>Transformamos registros públicos en señales para orientar la prospección. El analista valida cada oportunidad antes de ofrecer productos.</p></div><button class="btn teal" data-nav="fuentes">Revisar licencias detectadas</button></div>`+
+ window.GeoGrowthMapView.panel(app,ROLE)+
  `<div class="kpi-grid">${summaryCard(fmt(national),'UBIGEO integrados (unión de fuentes)')}${summaryCard('1,725','UBIGEO con cruce SBS 2025 / PRODUCE 2015')}${summaryCard(fmt(app.summary.total||5507),'Expedientes/licencias municipales deduplicados')}${summaryCard(fmt(st.real),'Observaciones reales importadas')}</div>`+
  `<div class="stepflow">${['Fuentes públicas','Señales territoriales','Priorización y brief','Campaña operativa','Validación y retorno'].map((x,i)=>`<div class="step"><small>${String(i+1).padStart(2,'0')}</small><b>${esc(x)}</b></div>`).join('')}</div>`+
  `<div class="grid-2"><section class="card"><div class="card-header"><div><h2>Últimas licencias con datos nominativos</h2><p>Arequipa 2025 · Verificación pendiente</p></div><button class="btn small" data-go-analyst="1">Investigar oportunidades</button></div>${hot.map(r=>`<div class="stat-line"><span><b>${esc(r.nombre)}</b><small style="display:block">${formatDate(r.fecha)} · ${esc(r.sector)}</small></span><span class="badge">${r.puntaje}/100</span></div>`).join('')}<p class="muted" style="margin-top:12px">La fecha corresponde al otorgamiento de licencia; no indica apertura reciente ni garantiza operación actual.</p></section>`+
@@ -151,16 +152,18 @@ function adminResults(){const st=resultStats();const records=app.feedback;
  `<section class="card"><div class="card-header"><div><h2>Registro de visitas y próximos pasos</h2><p>Traza cada resultado hasta la licencia o el distrito de la campaña</p></div><span class="badge">${st.total} observaciones</span></div><div class="tablewrap"><table><thead><tr><th>Fecha / ID</th><th>Registro territorial o licencia</th><th>Resultado</th><th>Necesidad declarada</th><th>Próxima acción</th><th>Tipo</th></tr></thead><tbody>${records.slice().reverse().slice(0,50).map(x=>{const lead=leadById(x.lead_id);return `<tr><td>${esc(x.fecha)}<small style="display:block">${esc(x.visita_id||'')}</small></td><td><b>${esc(lead?.nombre||x.territory_ubigeo||'Sin territorio')}</b><small style="display:block">${esc(x.lead_id||x.territory_ubigeo)}</small></td><td>${esc(x.resultado)}</td><td>${esc(x.necesidad||'No verificada')}</td><td>${esc(x.siguiente_accion||'Pendiente')}</td><td>${x.tipo_dato==='REAL'?'<span class="tag green">Declarado real</span>':'<span class="tag warn">Simulación</span>'}</td></tr>`}).join('')||'<tr><td colspan="6" class="empty-row">Importa el JSON de la app de campo para visualizar resultados.</td></tr>'}</tbody></table></div></section>`;
 }
 function analystInbox(){const results=app.licencias.filter(r=>(app.dept==='Todo el Perú'||r.departamento===app.dept)&&
+ (!app.licenseUbigeo||r.ubigeo===app.licenseUbigeo)&&
  (!app.query||[r.nombre,r.id,r.direccion,r.giro,r.sector].join(' ').toLocaleLowerCase('es').includes(app.query.toLocaleLowerCase('es')))&&
  (app.sector==='Todos'||r.sector===app.sector)&&
  (app.status!=='Vigentes'||['ACTIVA','VIGENTE'].includes(r.estado)));
  const pageRows=results.slice(app.page*20,(app.page+1)*20);
  const sectors=['Todos',...new Set(app.licencias.map(x=>x.sector))].sort((a,b)=>a.localeCompare(b,'es'));
- const deps=['Todo el Perú','Arequipa','Lima'];
+ const deps=['Todo el Perú',...[...new Set(app.territories.map(r=>r.departamento))].sort((a,b)=>a.localeCompare(b,'es'))];
  return pagehead('Prospección','Oportunidades detectadas','Licencias municipales que pueden justificar una verificación temprana. No son clientes nuevos confirmados ni leads precalificados.')+
  `<div class="role-banner"><div><b>Señales detectadas en cortes municipales</b><p>Lima: licencias con fecha 2026, sin nombre comercial. Arequipa: licencias 2025 con nombre, giro y dirección disponibles. Elige una para investigar.</p></div><span class="badge amber">Datos públicos históricos</span></div>`+
+ window.GeoGrowthMapView.panel(app,ROLE)+
  `<div class="kpi-grid">${summaryCard(fmt(app.summary.total),'Licencias deduplicadas en las fuentes')}${summaryCard(fmt(app.licencias.length),'Registros incluidos en bandeja')}${summaryCard(fmt(results.length),'Coinciden con filtros')}${summaryCard(fmt(app.picks.length),'Licencias seleccionadas')}</div>`+
- `<div class="card"><div class="card-header"><div><h2>Priorizar señales por licencia</h2><p>IPLV (0–100) = 50% fecha + 30% datos disponibles + 20% giro identificado. No predice conversión.</p></div></div><div class="form-grid">${fieldSelect('leadDept','Ubicación',deps,app.dept)}${fieldSelect('sector','Actividad',sectors,app.sector)}${fieldSelect('status','Estado según fuente',['Vigentes','Todos'],app.status)}</div><div class="form-grid two" style="margin-top:12px"><div class="field"><label for="leadSearch">Buscar negocio / giro / licencia</label><input id="leadSearch" placeholder="Ej. ferretería, taller, nombre comercial" value="${esc(app.query)}"></div><div class="field"><label>Orden</label><input readonly value="Prioridad para verificación (IPLV)" /></div></div><p class="muted" style="margin:12px 0">${fmt(results.length)} registros. “Vigente/activa” refleja el estado publicado en su corte; debe verificarse nuevamente antes de una acción comercial.</p>${leadRows(pageRows)}<div class="actions-row"><button class="btn small" data-lead-page="-1" ${app.page<=0?'disabled':''}>Anterior</button><span class="muted">Página ${app.page+1} de ${Math.max(1,Math.ceil(results.length/20))}</span><button class="btn small" data-lead-page="1" ${(app.page+1)*20>=results.length?'disabled':''}>Siguiente</button></div></div>`+warning;
+ `<div class="card"><div class="card-header"><div><h2>Priorizar señales por licencia</h2><p>IPLV (0–100) = 50% fecha + 30% datos disponibles + 20% giro identificado. No predice conversión.</p></div></div><div class="form-grid">${fieldSelect('leadDept','Ubicación',deps,app.dept)}${fieldSelect('sector','Actividad',sectors,app.sector)}${fieldSelect('status','Estado según fuente',['Vigentes','Todos'],app.status)}</div><div class="form-grid two" style="margin-top:12px"><div class="field"><label for="leadSearch">Buscar negocio / giro / licencia</label><input id="leadSearch" placeholder="Ej. ferretería, taller, nombre comercial" value="${esc(app.query)}"></div><div class="field"><label>Orden</label><input readonly value="Prioridad para verificación (IPLV)" /></div></div><p class="muted" style="margin:12px 0">${fmt(results.length)} registros${app.licenseUbigeo?' en el UBIGEO '+esc(app.licenseUbigeo):''}. “Vigente/activa” refleja el estado publicado en su corte; debe verificarse nuevamente antes de una acción comercial.</p>${results.length===0?'<div class="callout warn">No existen licencias individuales cargadas para este territorio. El mapa mantiene disponibles las estadísticas SBS–PRODUCE.</div>':''}${leadRows(pageRows)}<div class="actions-row"><button class="btn small" data-lead-page="-1" ${app.page<=0?'disabled':''}>Anterior</button><span class="muted">Página ${app.page+1} de ${Math.max(1,Math.ceil(results.length/20))}</span><button class="btn small" data-lead-page="1" ${(app.page+1)*20>=results.length?'disabled':''}>Siguiente</button></div></div>`+warning;
 }
 function chosenLead(){return leadById(app.leadId)||app.licencias.find(x=>x.departamento==='Arequipa'&&x.estado==='ACTIVA')||app.licencias[0]}
 function analystBrief(){const x=chosenLead();if(!x)return `<div class="blank">No hay registro de licencia seleccionado.</div>`;
@@ -237,8 +240,9 @@ async function handleFile(e){const target=e.target;
  else if(target.id==='newLicenseFile'&&target.files?.[0])importLicencias(await target.files[0].text());}catch(error){toast('No se pudo importar: '+error.message);}
 }
 document.addEventListener('change',e=>{const t=e.target;
+ if(t.id==='ggMapDepartment'){window.GeoGrowthMapView.chooseDep(app,ROLE,render,t.value);return;}
  if(['feedbackFile','newLicenseFile'].includes(t.id)){handleFile(e);return;}
- if(['modelDep','campaignDep','leadDept'].includes(t.id)){app.dept=t.value;app.page=0;app.plan=[];if(t.id==='modelDep')app.modelUbigeo=null;render();return;}
+ if(['modelDep','campaignDep','leadDept'].includes(t.id)){app.dept=t.value;app.mapDep=t.value;app.mapUbigeo=null;app.licenseUbigeo=null;app.page=0;app.plan=[];if(t.id==='modelDep')app.modelUbigeo=null;render();return;}
  if(t.id==='modelUbigeo'){app.modelUbigeo=t.value;render();return;}
  if(t.id==='weight'){app.prefs.w=Number(t.value);store('prefs',app.prefs);render();return;}
  if(t.id==='leadSearch'){app.query=t.value;app.page=0;render();return;}
@@ -248,7 +252,8 @@ document.addEventListener('change',e=>{const t=e.target;
  if(t.id==='maxZones'){app.maxZones=Math.max(1,Math.min(12,Math.round(Number(t.value)||4)));render();return;}
  if(t.id==='includeLeads'){app.includeLeads=t.checked;return;}
 });
-document.addEventListener('click',e=>{const t=e.target.closest('button[data-nav],button[data-lead],button[data-lead-page],button[data-model],button[data-pick],button[data-template],button[data-recalculate],button[data-apply-model],button[data-save-campaign],button[data-export-campaign],button[data-create-lead-campaign],button[data-clear-picks],button[data-export-brief],button[data-export-feedback],button[data-clear-feedback],button[data-go-analyst]');
+document.addEventListener('click',e=>{if(window.GeoGrowthMapView.click(e,app,ROLE,render))return;
+ const t=e.target.closest('button[data-nav],button[data-lead],button[data-lead-page],button[data-model],button[data-pick],button[data-template],button[data-recalculate],button[data-apply-model],button[data-save-campaign],button[data-export-campaign],button[data-create-lead-campaign],button[data-clear-picks],button[data-export-brief],button[data-export-feedback],button[data-clear-feedback],button[data-go-analyst]');
  if(!t)return;
  if(t.dataset.nav){app.nav=t.dataset.nav;render();return;}
  if(t.dataset.lead){app.leadId=t.dataset.lead;app.nav='brief';render();window.scrollTo(0,0);return;}
@@ -286,7 +291,7 @@ async function boot(){try{
  app.territories=terr;app.summary=lead.metadata||{};app.sources=source;
  app.licencias=[...lead.registros,...app.imported].sort((a,b)=>b.puntaje-a.puntaje);
  const qs=new URLSearchParams(location.search);
- if(qs.has('lead')&&leadById(qs.get('lead'))){app.leadId=qs.get('lead');app.nav='brief';app.dept=leadById(app.leadId).departamento;}
+ if(qs.has('lead')&&leadById(qs.get('lead'))){app.leadId=qs.get('lead');app.nav='brief';app.dept=leadById(app.leadId).departamento;app.mapDep=app.dept;}
  if(qs.has('section')&&ROLE==='admin')app.nav=qs.get('section');
  render();
 }catch(err){$('content').innerHTML=`<div class="card"><h2>No se pudo cargar el Data Pack</h2><p class="muted">${esc(err.message)}</p><div class="callout">Abre esta web desde GitHub Pages o inicia un servidor HTTP local; las páginas abiertas como file:// pueden bloquear fetch.</div></div>`;}}
