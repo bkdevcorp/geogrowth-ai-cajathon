@@ -9,6 +9,7 @@ assert(start>10&&end>start,"La página V9 debe conservar el Data Pack");
 const DATA=JSON.parse(html.slice(start,end));
 const licenses=JSON.parse(read("data/licencias_prospeccion.json")).registros;
 const newLicenses=JSON.parse(read("data/licencias_convencion_2026q2_resumen.json"));
+const mpa26=JSON.parse(read("data/licencias_arequipa_2026_resumen.json"));
 const page={location:{search:"?modo=ampliado"}};
 const env={
  window:page,URLSearchParams,DATA,state:{view:"work",selected:"040101",dep:"Arequipa",w:55},
@@ -34,8 +35,11 @@ function scenario(ubigeo){
  const sectores=[...count].sort((a,b)=>b[1]-a[1]).map(([sector,registros])=>({sector,registros}));
  const comparable=DATA.filter(x=>x.departamento===r.departamento&&x.ambas_fuentes);
  const additional=ubigeo==="080901"?{emitidas_q2_2026:newLicenses.calidad.registros_q2_2026,fuera_de_periodo:newLicenses.calidad.registros_fuera_de_periodo,por_codigo_giro:newLicenses.q2_2026.por_codigo_giro}:null;
+ const currentMPA=ubigeo==="040101"?{registros:mpa26.calidad.registros,
+    por_tipo:mpa26.resumen.por_tipo,por_estado:mpa26.resumen.por_estado}:null;
  const result=create(r,{puntuacion:55,puesto:10,total:comparable.length,peso:55,categoria:"observacion",
-   investigacion:{licencias_individuales:members.length,licencias_con_sector_y_nombre:sectorRows.length,sectores,licencias_adicionales:additional}});
+   investigacion:{licencias_individuales:members.length,licencias_con_sector_y_nombre:sectorRows.length,sectores,
+     licencias_adicionales:additional,licencias_arequipa_2026:currentMPA}});
  assert.equal(result.ubigeo,ubigeo);
  assert.equal(result.departamento,r.departamento);
  assert.equal(result.especialista.length,4);
@@ -57,6 +61,8 @@ assert.match(cajamarca.hipotesis_territorial,/Cajamarca/);
 assert.match(santaAna.hipotesis_territorial,/Santa Ana/);
 assert.equal(arequipa.fuentes.licencias,"individualizada");
 assert.match(arequipa.segmento_demo,/Comercio/);
+assert.match(arequipa.especialista[0].conclusion,/824 trámites/);
+assert.equal(arequipa.fuentes.licencias_mpa_2026,824);
 assert.equal(lima.fuentes.licencias,"expedientes_sin_identificacion");
 assert.match(lima.especialista[0].conclusion,/sin nombre comercial, giro ni dirección/);
 assert.match(lima.segmento_demo,/no un padrón comercial/);
@@ -86,6 +92,6 @@ if(missing){
  assert.equal(result.piloto_demo.fichas,0);
  assert.match(result.especialista[3].conclusion,/no comparable/);
 }
-assert.match(html,/geogrowth-agent-demo-v1\.js\?v=2/);
+assert.match(html,/geogrowth-agent-demo-v1\.js\?v=3/);
 assert.match(html,/geogrowth-opportunity-brief-v2\.js\?v=\d+/);
 console.log("OK: 5 casos distintos, 25 departamentos, fuente Santa Ana 2026-Q2, datos agregados y casos sin IIT.");
