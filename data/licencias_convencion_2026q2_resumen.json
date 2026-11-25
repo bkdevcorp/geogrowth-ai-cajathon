@@ -1,0 +1,76 @@
+{
+  "version": "1.0",
+  "municipio": "Municipalidad Provincial de La Convención",
+  "codigo_entidad": "300748",
+  "ubicacion": {
+    "departamento": "Cusco",
+    "provincia": "La Convención",
+    "distrito": "Santa Ana (Quillabamba)",
+    "ubigeo_inei": "080901",
+    "ubigeo_original_csv": "070901",
+    "nota_homologacion": "El CSV rotula 070901 como INEI; coincide con el código RENIEC de Santa Ana. Para vincular con GeoGrowth/INEI se usa 080901. Ambos se conservan para auditoría."
+  },
+  "origen": {
+    "archivo": "Licencias de Funcionamiento Segundo Trimestre 2026.csv",
+    "sha256": "b15742ef8c3b135ffb83365ccae12ba1f307b8ece8d77473f8ccf6e0b372de15",
+    "archivo_duplicado": "Los dos CSV recibidos poseen igual SHA-256; se contabiliza una única fuente.",
+    "url_publica": "https://www.datosabiertos.gob.pe/dataset/licencias-de-funcionamiento-de-municipalidad-provincial-la-convenci%C3%B3n/resource/bce103e8-e3ae",
+    "corte_documental": "Segundo trimestre 2026; incluye un registro histórico fuera de periodo.",
+    "contenido": "Agregaciones de 57 registros; se excluyen RUC, razón social e identificadores personales."
+  },
+  "calidad": {
+    "registros_originales": 57,
+    "registros_q2_2026": 56,
+    "registros_fuera_de_periodo": 1,
+    "periodo_principal": "2026-04 a 2026-06",
+    "otras_fechas": "2024-02 (un registro)",
+    "registros_unicos_por_id_en_archivo": 57,
+    "giros_distintos_q2": 27,
+    "ubicacion_puntual_disponible": false,
+    "estado_actual_operacion_verificado": false,
+    "clasificacion_de_giro_por_validar": true
+  },
+  "q2_2026": {
+    "por_mes": {
+      "2026-04": 20,
+      "2026-05": 18,
+      "2026-06": 18
+    },
+    "por_codigo_giro": {
+      "4520": 1,
+      "4530": 1,
+      "4620": 2,
+      "4630": 1,
+      "4663": 2,
+      "4711": 1,
+      "4719": 2,
+      "4721": 3,
+      "4722": 2,
+      "4759": 1,
+      "4772": 2,
+      "4773": 2,
+      "5510": 3,
+      "5610": 12,
+      "5629": 1,
+      "5630": 6,
+      "6209": 1,
+      "6810": 1,
+      "6910": 1,
+      "8211": 1,
+      "8620": 2,
+      "8890": 1,
+      "9311": 1,
+      "9329": 1,
+      "9499": 1,
+      "9602": 3,
+      "9603": 1
+    }
+  },
+  "indicadores_resumidos": {
+    "codigo_giro_5610": 12,
+    "codigo_giro_5630": 6,
+    "codigo_giro_5510": 3,
+    "codigo_giro_4721": 3
+  },
+  "advertencia": "Conteo de licencias emitidas según archivo, no prueba de empresas nuevas, operativas o susceptibles de crédito. Los giros se conservan como códigos, sin asignarles una clasificación oficial no incluida en el CSV."
+}
