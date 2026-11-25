@@ -213,12 +213,21 @@ async function test(){
    return lib[name];
  }}};
  frame.contentWindow.GeoGrowthGoogleMaps.activateForTest('FAKE_TEST_ONLY');
- await until(()=>doc.querySelector('#gg-google-map-canvas')&&doc.querySelector('#gg-maps-status')?.textContent.includes('busca establecimientos'),'Google Maps con bibliotecas simuladas');
+ await until(()=>doc.querySelector('#gg-google-map-canvas')&&doc.querySelector('#gg-maps-status')?.textContent.includes('valida registros oficiales'),'Google Maps con bibliotecas simuladas');
  for(const x of ['maps','core','marker','geocoding'])check(invoked.includes(x),'No se importó biblioteca Google '+x);
  check(!invoked.includes('drawing'),'Drawing no debe cargarse');
  doc.querySelector('[data-gm-places]').click();
- await until(()=>doc.querySelector('#gg-google-places-results')?.textContent.includes('Negocio simulado CI'),'Places mock');
+ await until(()=>doc.querySelector('#gg-maps-status')?.textContent.includes('No se realizó ninguna consulta Places'),'Santa Ana no tiene registros identificables');
+ check(!invoked.includes('places'),'No consultar Places sin registros identificables');
+ const depA=doc.querySelector('#go-dep');depA.value='Arequipa';depA.dispatchEvent(new frame.contentWindow.Event('change',{bubbles:true}));
+ await until(()=>doc.querySelector('#go-ubigeo option[value="040101"]'),'Arequipa disponible');
+ const distA=doc.querySelector('#go-ubigeo');distA.value='040101';distA.dispatchEvent(new frame.contentWindow.Event('change',{bubbles:true}));
+ await until(()=>doc.querySelector('#gg-maps-status')?.textContent.includes('valida registros oficiales'),'mapa Arequipa');
+ doc.querySelector('[data-gm-places]').click();
+ await until(()=>doc.querySelector('#gg-google-places-results')?.textContent.includes('10 consultados'),'lote oficial procesado');
  check(invoked.includes('places'),'Places no importado');
+ check(!doc.querySelector('#gg-google-places-results').textContent.includes('Negocio simulado CI'),'Rechazar resultados que no coinciden con la fuente');
+ check(doc.querySelector('[data-gm-next]'),'Debe permitir consultar el siguiente lote');
  check(!doc.querySelector('#v9-safe-map #ggv5'),'No volver al mapa V5');
   status.textContent='RESULTADO_BROWSER_V9_OK: mapa, agentes, 5 etapas, 196 provincias, filtrado y campaña explicables';
 }
