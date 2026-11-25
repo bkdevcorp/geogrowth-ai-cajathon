@@ -86,12 +86,34 @@ function loader(apiKey){
  });
  return loading;
 }
-// Session-only validation index: no invented coordinates or persisted Places payloads.
-const validatedDistricts=new Set();
+// Store only permitted Place IDs and our own source record IDs, not Google content.
+const demoStorage="geogrowth.demo.placeids.v1";
+function readDemo(){try{const x=JSON.parse(localStorage.getItem(demoStorage)||"[]");return Array.isArray(x)?x.filter(v=>v&&typeof v.recordId==="string"&&typeof v.placeId==="string"&&/^\d{6}$/.test(v.ubigeo)):[];}catch(_){return [];}}
+let demoIndex=readDemo();
+const validatedDistricts=new Set(demoIndex.map(x=>x.ubigeo));
 function rememberValidated(results){
- for(const p of results)if(p.id&&p.location&&p.officialLicense?.ubigeo)validatedDistricts.add(String(p.officialLicense.ubigeo));
+ for(const p of results)if(p.id&&p.location&&p.officialLicense?.ubigeo){
+ const ref={recordId:p.officialLicense.id,placeId:p.id,ubigeo:String(p.officialLicense.ubigeo)};
+ demoIndex=demoIndex.filter(x=>x.recordId!==ref.recordId);demoIndex.push(ref);validatedDistricts.add(ref.ubigeo);
+ }
+ try{localStorage.setItem(demoStorage,JSON.stringify(demoIndex));}catch(_){}
  if(results.length)window.dispatchEvent(new Event("geogrowth:validated"));
 }
+async function restoreDemo(sc,candidates){
+ const byId=new Map(candidates.map(l=>[l.id,l]));
+ const refs=demoIndex.filter(x=>byId.has(x.recordId));
+ if(!refs.length)return [];
+ const {Place}=await google.maps.importLibrary("places");
+ const out=[];
+ for(const ref of refs.slice(0,30)){
+ try{const p=new Place({id:ref.placeId});await p.fetchFields({fields:["id","displayName","location","formattedAddress","googleMapsURI","businessStatus","rating","userRatingCount"]});
+ const l=byId.get(ref.recordId);
+ if(selectMatch(l,[p]))out.push({...placeResult(p,l)});
+ }catch(_){}
+ }
+ return out;
+}
+function placeResult(p,l){return {id:p.id,displayName:p.displayName,location:p.location,formattedAddress:p.formattedAddress,googleMapsURI:p.googleMapsURI,businessStatus:p.businessStatus,rating:p.rating,userRatingCount:p.userRatingCount,officialLicense:l};}
 let lastSearch=null,searchEpoch=0;
 function scope(){
  const f=window.GeoGrowthTerritoryFilters,dep=document.getElementById("go-dep")?.value||state.dep;
@@ -186,7 +208,16 @@ async function mount(){
  if(my!==seq||!host.isConnected||authFailed)return;
  const g=geo.results[0]?.geometry;if(g?.viewport)map.fitBounds(g.viewport);else if(g?.location){map.setCenter(g.location);map.setZoom(12);}
  if(lastSearch&&same(lastSearch.scope,sc)){display(lastSearch.results,lastSearch.plan);datasetSummary(sc,lastSearch.unmatched||[],lastSearch.records,lastSearch.results,lastSearch.failed,lastSearch.checked?.length||0,lastSearch.total,lastSearch.errors);status("Resultados de esta sesión.");}
- else status("Selecciona el tipo de oportunidad y valida registros oficiales.");
+ else {
+ status("Selecciona el tipo de oportunidad y valida registros oficiales.");
+ if(demoIndex.length&&same(sc,scope())){
+ const [licenses]=await officialEvidence();
+ if(my!==seq||!same(sc,scope()))return;
+ const cached=await restoreDemo(sc,sourceCandidates(licenses,sc));
+ if(my!==seq||!same(sc,scope()))return;
+ if(cached.length){display(cached,{missing:"Ubicaciones recuperadas mediante Place ID; no prueban apertura ni elegibilidad."});status(cached.length+" establecimientos del catálogo demo recuperados.");}
+ }
+ }
  }catch(e){if(my===seq)status("Google Maps no disponible: "+e.message);}
 }
 // Dataset-first: only identifiable records in the selected source can produce a Places lookup.
@@ -270,8 +301,46 @@ async function searchPlaces(next=false){
  status(results.length+" coincidencias verificables de "+checked.length+" registros consultados. No se muestran negocios externos a la fuente.");
  }catch(e){if(token===searchEpoch&&my===seq)status("No se completó la consulta Places: "+e.message);}
 }
+// Explicitly initiated, bounded, source-first preparation for the live demo.
+let preparing=false;
+async function prepareDemo(){
+ if(preparing)return;
+ if(!key){openConfig();return;}
+ if(!active||authFailed)return status("Conecta Google Maps antes de preparar la demo.");
+ const sc=scope(),token=++searchEpoch,my=seq;
+ const [licenses]=await officialEvidence();
+ if(token!==searchEpoch||my!==seq)return;
+ const candidates=sourceCandidates(licenses,{...sc,type:"todas"});
+ if(!candidates.length)return status("Este territorio no tiene registros con nombre y dirección. Selecciona Arequipa Cercado.");
+ preparing=true;
+ const button=document.querySelector("[data-gm-prepare]");if(button)button.disabled=true;
+ const results=new Map();let processed=0,errors=0;
+ try{
+ const {Place}=await google.maps.importLibrary("places");
+ const refs=new Set(demoIndex.map(x=>x.recordId));
+ const queue=candidates.filter(l=>!refs.has(l.id));
+ const limit=Number(document.getElementById("gg-demo-limit")?.value||30);
+ for(const l of queue.slice(0,limit)){
+ if(token!==searchEpoch||my!==seq||!same(sc,scope()))break;
+ if(results.size>=5||errors>=3)break;
+ processed++;
+ status("Preparando demo: "+processed+" consultas · "+results.size+" coincidencias.");
+ try{
+ const response=await Place.searchByText({textQuery:lookupQuery(l),fields:["id","displayName","location","formattedAddress","googleMapsURI","businessStatus","rating","userRatingCount"],maxResultCount:5,region:"pe",language:"es"});
+ if(token!==searchEpoch||my!==seq||!same(sc,scope()))break;
+ const p=selectMatch(l,response.places);
+ if(p){const item=placeResult(p,l);results.set(p.id,item);rememberValidated([item]);}
+ }catch(_){errors++;}
+ }
+ if(token!==searchEpoch||my!==seq)return;
+ const list=[...results.values()];
+ if(list.length)display(list,{missing:"Coincidencias de la fuente verificadas por nombre y dirección; sin inferencia de crédito."});
+ status("Preparación: "+list.length+" nuevos lugares validados, "+processed+" registros consultados, "+errors+" errores. "+(list.length?"Referencias guardadas en este navegador.":"No se encontraron coincidencias nuevas; no se inventarán ubicaciones."));
+ }catch(e){status("No se pudo preparar la demo: "+e.message);}
+ finally{preparing=false;if(button?.isConnected)button.disabled=false;}
+}
 function toolbox(){
- return '<div id="gg-google-toolbar" class="gg-search-actions"><button type="button" class="go-primary" data-gm-places>Buscar oportunidades</button><p id="gg-maps-status" class="gg-maps-disclaimer" role="status"></p></div>';
+ return '<div id="gg-google-toolbar" class="gg-search-actions"><button type="button" class="go-primary" data-gm-places>Buscar oportunidades</button><label for="gg-demo-limit" style="font-size:11px">Límite de consultas</label><select id="gg-demo-limit"><option value="30">30</option><option value="60">60</option><option value="100">100</option></select><button type="button" data-gm-prepare>Preparar demo (hasta 5 coincidencias)</button><p id="gg-maps-status" class="gg-maps-disclaimer" role="status"></p></div>';
 }
 const style=document.createElement("style");
 style.textContent=`.gg-search-actions{display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-top:14px}.gg-search-actions button,.gg-map-empty button,#gg-config-dialog button{border:1px solid #cbdbe9;border-radius:8px;padding:9px 14px;font-size:12px;font-weight:700;cursor:pointer;background:#fff;color:#245792}.gg-search-actions .go-primary,.gg-map-empty .go-primary,#gg-config-dialog .go-primary{background:#205b92;color:#fff;border-color:#205b92}.gg-maps-disclaimer{margin:0;font-size:11px;color:#526982;line-height:1.5}.gg-google-map-canvas{height:440px;width:100%;border-radius:11px;overflow:hidden;background:#f0f5fa}.gg-map-empty{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:25px;text-align:center;color:#244e71}.gg-map-empty p{font-size:12px;color:#617d95;max-width:280px}.v9-extra-panel{max-height:440px!important}.v9-extra-license a{font-size:11px;color:#235aa1}#gg-config-dialog{border:1px solid #dce7f3;border-radius:14px;padding:24px;width:min(460px,calc(100% - 32px));color:#193d63;box-shadow:0 16px 50px #132b4940}#gg-config-dialog::backdrop{background:#132b4966}#gg-config-dialog h3{margin:0 0 12px;font-size:17px}#gg-config-dialog p{font-size:12px;line-height:1.6;color:#526982}#gg-config-dialog label{display:block;font-size:12px;font-weight:700;margin:14px 0 6px}#gg-config-dialog input{box-sizing:border-box;width:100%;padding:11px;border:1px solid #c5d8e8;border-radius:8px;font:inherit;font-size:13px}#gg-config-dialog .gg-config-actions{display:flex;justify-content:flex-end;flex-wrap:wrap;gap:8px;margin-top:16px}@media(max-width:760px){.gg-google-map-canvas{height:340px}.v9-extra-panel{max-height:340px!important}}`;
@@ -286,13 +355,15 @@ render=function(){
  void mount();
 };
 document.addEventListener("click",event=>{
- const b=event.target.closest("[data-gm-config],[data-gm-close],[data-gm-clear],[data-gm-places],[data-gm-next]");if(!b)return;
+ const b=event.target.closest("[data-gm-config],[data-gm-close],[data-gm-clear],[data-gm-places],[data-gm-next],[data-gm-prepare]");if(!b)return;
  event.preventDefault();event.stopImmediatePropagation();
  if(b.hasAttribute("data-gm-config"))openConfig();
  else if(b.hasAttribute("data-gm-close"))document.getElementById("gg-config-dialog")?.close();
  else if(b.hasAttribute("data-gm-clear")){key="";mapId="DEMO_MAP_ID";saveSession();lastSearch=null;location.reload();}
+ else if(b.hasAttribute("data-gm-prepare"))void prepareDemo();
  else void searchPlaces(b.hasAttribute("data-gm-next"));
 },true);
 window.GeoGrowthGoogleMaps={libraries:{initial:["maps","core","marker","geocoding"],onDemand:["places"]},get mode(){return "google";},matchLicense,sourceCandidates,selectMatch,lookupQuery,hasValidated:u=>validatedDistricts.has(String(u)),get enabled(){return Boolean(key);},activateForTest(apiKey,configuredMapId="DEMO_MAP_ID"){key=apiKey;mapId=configuredMapId;render();}};
 render();
+ if(demoIndex.length)window.dispatchEvent(new Event("geogrowth:validated"));
 })();
