@@ -10,13 +10,14 @@ const fmt=v=>v==null?"N/D":Number(v).toLocaleString("es-PE");
 const dec=v=>v==null?"N/D":Number(v).toLocaleString("es-PE",{minimumFractionDigits:1,maximumFractionDigits:1});
 const TYPES=[
  ["todas","Todas las oportunidades"],
- ["nuevos","Nuevos negocios · licencias por verificar"],
- ["expansion","Expansión comercial · señal histórica"],
- ["desatendidos","Mercados por investigar · canales SBS"],
- ["estacionales","Campañas estacionales · sin series disponibles"]
+ ["nuevos","Nuevos negocios"],
+ ["expansion","Expansión comercial"],
+ ["desatendidos","Mercados desatendidos"],
+ ["estacionales","Campañas estacionales"],
+ ["otros","Otros (investigación con IA)"]
 ];
 let provinces={},catalog=[],ready=false,observer=null;
-const focus={province:"all",type:"todas",department:null};
+const focus={province:"all",type:"todas",department:null,custom:""};
 const markerColor={todas:"Análisis territorial general",nuevos:"Verificar expedientes de licencias",expansion:"Explorar empresas históricas",desatendidos:"Evaluar accesibilidad financiera",estacionales:"Investigar estacionalidad sin datos suficientes"};
 const sortText=(a,b)=>String(a).localeCompare(String(b),"es");
 const key=r=>String(r?.ubigeo||"").slice(0,4);
@@ -69,6 +70,7 @@ function description(r){
   distrito_ubigeo:r?.ubigeo||null,
   provincia_filtro:focus.province==="all"?"Todas":provinceName(focus.province),
   tipo_oportunidad:focus.type,
+  instruccion_personalizada:focus.type==="otros"?focus.custom:null,
   tipo_descripcion:TYPES.find(x=>x[0]===focus.type)?.[1]||"Todas",
   naturaleza:"Lente de investigación, no resultado de detección de clientes o demanda",
   fuente_municipal_externa:external&&external.estado==="FUENTE_EXTERNA_NO_INTEGRADA"?{url:external.referencia,estado:external.estado,periodo_referido:external.periodo_indicado}:null,
@@ -155,7 +157,8 @@ function enhancePicker(){
   Array.from(select.options).filter(x=>x.value&&String(x.value).slice(0,4)!==focus.province).forEach(x=>x.remove());
  }
  const existing=document.getElementById("gg-filter-results");if(existing)existing.remove();
- container.insertAdjacentHTML("afterend",filterSummary(dept.value));
+ if(focus.type==="otros"){const custom=document.createElement("div");custom.style.cssText="margin-top:12px";custom.innerHTML='<label for="gg-custom-opportunity">Describe la oportunidad</label><textarea id="gg-custom-opportunity" rows="3" style="width:100%;padding:10px;border:1px solid #c5d8e8;border-radius:8px" placeholder="Ej.: ferreterías para capital de trabajo">'+esc(focus.custom)+'</textarea>';opts.after(custom);}
+ if(budget)budget.remove();
 }
 function updateMap(){
  const map=document.getElementById("ggv5");
@@ -198,7 +201,7 @@ function opportunityNote(){
   expansion:"Se prioriza la investigación del tejido microempresarial histórico (PRODUCE 2015). Esto no demuestra apertura, expansión ni necesidad financiera actual.",
   desatendidos:"Se examina la distribución relativa de oficinas SBS y actividad empresarial histórica. Sin población adulta, uso real de servicios y cobertura de Caja, no se concluye que un mercado esté desatendido.",
   estacionales:"No hay series mensuales o estacionales verificables en el Data Pack; el informe solo sugiere recopilar datos antes de diseñar una campaña por temporada."
- }[type];
+ }[type]||"Investigación personalizada; requiere validación de evidencias.";
  host.querySelector(".gg-brief-header")?.insertAdjacentHTML("afterend",
  '<div class="gg-filter-insight" id="gg-opportunity-lens"><strong>Enfoque de búsqueda: '+esc(TYPES.find(x=>x[0]===type)?.[1])+'</strong>'+
  '<div>'+esc(details)+'</div></div>');
@@ -216,6 +219,7 @@ function campaignNote(){
 }
 const api={
  get type(){return focus.type;},
+ get custom(){return focus.custom;},
  get province(){return focus.province;},
  get selectedMethod(){return this._selectedMethod||null;},
  set selectedMethod(v){this._selectedMethod=v;},
@@ -252,6 +256,7 @@ function choose(ubigeo){
  dist.value=ubigeo;
  dist.dispatchEvent(new Event("change",{bubbles:true}));
 }
+document.addEventListener("input",e=>{if(e.target.id==="gg-custom-opportunity")focus.custom=e.target.value;});
 document.addEventListener("change",e=>{
  const t=e.target;
  if(t.id==="gg-filter-province"){
