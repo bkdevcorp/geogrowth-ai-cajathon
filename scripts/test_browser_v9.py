@@ -29,23 +29,19 @@ async function until(fn,msg){
 }
 async function test(){
  const frame=document.getElementById('app'),doc=frame.contentDocument;
- await until(()=>doc?.querySelector('#v9-safe-map #ggv5 svg')&&doc.querySelector('.v9-extra-license'),'mapa y licencias');
- check(doc.querySelectorAll('#v9-safe-map #ggv5 svg path.gg-dept').length===25,'no hay 25 departamentos V5');
- check(doc.querySelector('.v9-stages button'),'faltan cinco etapas');
+ await until(()=>doc?.querySelector('#gg-google-map-canvas')&&doc.querySelector('#gg-official-evidence')?.textContent.includes('824 trámites'),'Google Maps y evidencia municipal');
  check(doc.querySelectorAll('.v9-stages button').length===5,'flujo V9 alterado');
- await until(()=>doc.querySelector('#gg-google-toolbar')&&doc.querySelector('.v9-extra-panel')?.textContent.includes('824 trámites'),'Fuente MPA 2026 y Google Maps');
- check(doc.querySelector('#gg-google-api-key'),'El mapa Google debe permitir una API key de sesión');
- check(doc.querySelector('#v9-safe-map #ggv5 svg'),'El mapa V5 de respaldo debe seguir disponible');
- doc.querySelector('[data-gm-google]').click();
- check(doc.querySelector('#gg-maps-status')?.textContent.includes('Introduce una API key'),'No cargar Google Maps de pago sin clave');
- check(doc.querySelector('#gg-google-api-key'),'La clave se configura solo si el usuario activa Google Maps');
+ check(!doc.querySelector('#v9-safe-map #ggv5'),'No debe existir mapa V5 en el buscador');
+ doc.querySelector('[data-gm-config]').click();
+ check(doc.querySelector('#gg-config-dialog[open] #gg-config-key'),'Configuración API ausente');
+ doc.querySelector('[data-gm-close]').click();
  const stages=['work','score','opportunity','plan','execution'];
  const nav=(id)=>[...doc.querySelectorAll(id+' [data-view]')].map(el=>el.dataset.view);
  const same=(a,b)=>a.length===b.length&&a.every((x,i)=>x===b[i]);
  check(same(nav('#sidenav'),stages),'Analista: sidebar debe contener solo cinco etapas');
  check(same(nav('#mobilemenu'),stages),'Analista: menú móvil debe contener solo cinco etapas');
  doc.querySelector('[data-v9-role="admin"]').click();
- check(doc.querySelector('.v9-extra-panel')?.textContent.includes('Administrador'),'vista Admin ausente');
+ check(doc.querySelector('[data-v9-role="admin"][aria-pressed="true"]'),'vista Admin ausente');
  for(const id of ['home','explore','sources','readiness']){
    check(nav('#sidenav').includes(id),'Administrador debe conservar '+id);
    check(nav('#mobilemenu').includes(id),'Administrador móvil debe conservar '+id);
@@ -53,11 +49,8 @@ async function test(){
  doc.querySelector('[data-v9-role="analista"]').click();
  check(same(nav('#sidenav'),stages),'Al regresar a Analista deben ocultarse las otras vistas');
  check(same(nav('#mobilemenu'),stages),'Al regresar a Analista móvil deben ocultarse las otras vistas');
- await until(()=>doc.querySelector('.v9-extra-license'),'licencias del analista');
- const district=doc.querySelector('.v9-extra-license [data-v9-district]');
- check(district,'no hay acción de investigación');
- district.click();
- await until(()=>doc.querySelector('#go-ubigeo')?.value==='040101','distrito de licencia no seleccionado');
+ const district=doc.querySelector('#go-ubigeo');district.value='040101';district.dispatchEvent(new frame.contentWindow.Event('change',{bubbles:true}));
+ await until(()=>doc.querySelector('#go-ubigeo')?.value==='040101','distrito seleccionado');
  doc.querySelector('[data-go-section="score"]').click();
  await until(()=>doc.querySelector('.v9-formula'),'fórmula IIT');
  check(same(nav('#sidenav'),stages),'Analista debe conservar su menú de cinco etapas en Scoring');
@@ -136,12 +129,12 @@ async function test(){
  await until(()=>doc.querySelector('#go-import-results'),'importar resultados JSON');
  check(!doc.querySelector('#v9-safe-map'),'El mapa no debe aparecer en Ejecución y resultados');
  doc.querySelector('[data-go-section="work"]').click();
- await until(()=>doc.querySelector('#v9-safe-map #ggv5 svg'),'restauración de mapa en Seleccionar territorio');
+ await until(()=>doc.querySelector('#gg-google-map-canvas'),'restauración de mapa en Seleccionar territorio');
  // V3 CajaRadar: filtros reales sobre Data Pack y provincias INEI, sin romper la V9.
  await until(()=>doc.querySelector('#gg-filter-province option[value="0402"]'),'carga de 196 provincias');
  check(doc.querySelector('#gg-filter-type option[value="nuevos"]'),'Falta tipo nuevos negocios');
  check(doc.querySelector('#gg-filter-type option[value="estacionales"]'),'Falta estacionalidad sin datos');
- check(doc.querySelector('#gg-filter-results'),'Falta búsqueda territorial');
+ check(doc.querySelector('#gg-official-evidence'),'Falta evidencia territorial');
  const dep=doc.querySelector('#go-dep');
  dep.value='Piura';
  dep.dispatchEvent(new frame.contentWindow.Event('change',{bubbles:true}));
@@ -153,12 +146,8 @@ async function test(){
  let type=doc.querySelector('#gg-filter-type');
  type.value='nuevos';
  type.dispatchEvent(new frame.contentWindow.Event('change',{bubbles:true}));
- await until(()=>doc.querySelector('#gg-filter-results [data-gg-filter-pick="200501"]'),'licencia externa Paita');
- check(doc.querySelectorAll('#gg-filter-results [data-gg-filter-pick]').length===1,'La provincia Paita no debe mostrar otros distritos');
- check(doc.querySelector('#gg-filter-results').textContent.includes('No integrada'),'Las licencias externas no pueden figurar como cargadas');
- await until(()=>doc.querySelector('#v9-safe-map circle.gg-point[data-ubigeo="200501"]'),'mapa V5 Paita');
- const points=[...doc.querySelectorAll('#v9-safe-map circle.gg-point[data-ubigeo]')];
- check(points.filter(x=>!x.dataset.ubigeo.startsWith('2005')).some(x=>x.style.opacity==='0.08'),'El mapa no refleja el filtro de provincia');
+ await until(()=>doc.querySelector('#gg-official-evidence')?.textContent.includes('Sin evidencia oficial específica'),'Paita sin datos integrados');
+ check(!doc.querySelector('#v9-safe-map #ggv5'),'No debe haber mapa alternativo');
  doc.querySelector('[data-go-section="opportunity"]').click();
  await until(()=>doc.querySelector('#gg-opportunity-lens'),'lente de oportunidad en brief');
  check(doc.querySelector('#gg-opportunity-lens').textContent.includes('no se han importado'),'El agente debe distinguir fuente sin ETL');
@@ -177,8 +166,7 @@ async function test(){
  type=doc.querySelector('#gg-filter-type');
  type.value='estacionales';
  type.dispatchEvent(new frame.contentWindow.Event('change',{bubbles:true}));
- await until(()=>doc.querySelector('#gg-filter-results')?.textContent.includes('No hay series de estacionalidad'),'advertencia estacional');
- check(doc.querySelectorAll('#gg-filter-results [data-gg-filter-pick]').length===0,'No inventar oportunidades estacionales');
+ await until(()=>doc.querySelector('#gg-official-evidence')?.textContent.includes('Sin series de ventas'),'advertencia estacional');
  doc.querySelector('[data-go-section="plan"]').click();
  await until(()=>doc.querySelector('#gg-campaign-lens'),'campaña estacional bloqueada');
  check(doc.querySelector('#gg-campaign-lens').textContent.includes('No se generan distritos elegibles'),'No hay datos temporales para priorizar');
@@ -193,8 +181,7 @@ async function test(){
  await until(()=>doc.querySelector('#go-ubigeo')?.value==='080901','selección Santa Ana por provincia');
  const typeCusco=doc.querySelector('#gg-filter-type');typeCusco.value='nuevos';
  typeCusco.dispatchEvent(new frame.contentWindow.Event('change',{bubbles:true}));
- await until(()=>doc.querySelector('#gg-filter-results [data-gg-filter-pick="080901"]'),'Santa Ana en filtro Nuevos negocios');
- check(doc.querySelector('#gg-filter-results').textContent.includes('56 licencias Q2 2026'),'La fuente integrada aparece como no disponible');
+ await until(()=>doc.querySelector('#gg-official-evidence')?.textContent.includes('56 licencias'),'Santa Ana integrada');
  doc.querySelector('[data-go-section="opportunity"]').click();
  await until(()=>doc.querySelector('#gg-opportunity-brief'),'brief Santa Ana');
  doc.querySelector('[data-gg-export-brief]').click();
@@ -218,7 +205,7 @@ async function test(){
    maps:{Map:FakeMap,InfoWindow:FakeInfoWindow},
    core:{LatLng:class{constructor(o){Object.assign(this,o);}},LatLngBounds:class{extend(){}}},
    marker:{AdvancedMarkerElement:FakeMarker},
-   geometry:{spherical:{computeDistanceBetween(){return 1000;}}}
+   geocoding:{Geocoder:class{async geocode(){return {results:[{geometry:{viewport:{}}}]};}}},places:{Place:{async searchByText(){return {places:[{id:"TEST_PLACE",displayName:"Negocio simulado CI",formattedAddress:"Calle de prueba",location:{lat:-12,lng:-77}}]};}}}
  };
  frame.contentWindow.google={maps:{importLibrary:async name=>{
    invoked.push(name);
@@ -226,11 +213,13 @@ async function test(){
    return lib[name];
  }}};
  frame.contentWindow.GeoGrowthGoogleMaps.activateForTest('FAKE_TEST_ONLY');
- await until(()=>doc.querySelector('#gg-google-map-canvas')&&doc.querySelector('#gg-maps-status')?.textContent.includes('Google Maps activo'),'Google Maps con bibliotecas simuladas');
- for(const x of ['maps','core','marker','geometry'])check(invoked.includes(x),'No se importó biblioteca Google '+x);
+ await until(()=>doc.querySelector('#gg-google-map-canvas')&&doc.querySelector('#gg-maps-status')?.textContent.includes('busca establecimientos'),'Google Maps con bibliotecas simuladas');
+ for(const x of ['maps','core','marker','geocoding'])check(invoked.includes(x),'No se importó biblioteca Google '+x);
  check(!invoked.includes('drawing'),'Drawing no debe cargarse');
- doc.querySelector('[data-gm-v5]').click();
- await until(()=>doc.querySelector('#v9-safe-map #ggv5 svg'),'restauración a mapa V5 tras Google');
+ doc.querySelector('[data-gm-places]').click();
+ await until(()=>doc.querySelector('#gg-google-places-results')?.textContent.includes('Negocio simulado CI'),'Places mock');
+ check(invoked.includes('places'),'Places no importado');
+ check(!doc.querySelector('#v9-safe-map #ggv5'),'No volver al mapa V5');
   status.textContent='RESULTADO_BROWSER_V9_OK: mapa, agentes, 5 etapas, 196 provincias, filtrado y campaña explicables';
 }
 window.addEventListener('load',()=>test().catch(e=>{status.textContent='RESULTADO_BROWSER_V9_FALLO: '+e.message}));
