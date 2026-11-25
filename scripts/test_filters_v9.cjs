@@ -22,6 +22,7 @@ const events={},outs=[];
 const field={value:"",innerHTML:"",dispatchEvent(){}};
 const sandbox={
  DATA,URLSearchParams,console,
+ Event:class{constructor(type,options){this.type=type;this.bubbles=options?.bubbles;}},
  window:{location:{search:"?modo=ampliado"}},
  state:{view:"work",selected:"200501",dep:"Piura",w:55,budget:2400,plan:[]},
  render(){},
