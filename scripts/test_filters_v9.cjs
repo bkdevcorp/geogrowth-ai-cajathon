@@ -13,10 +13,13 @@ assert.equal(unique.length,196,"Must cover all provinces represented in GeoGrowt
 assert.equal(unique.filter(x=>!provinces.provincias[x]).length,0);
 assert.equal(DATA.length,1879);
 assert.equal(catalog.territorios.length,7);
+const santa=catalog.territorios.find(x=>x.ubigeo==="080901");
+assert.equal(santa.estado,"RESUMEN_MUNICIPAL_AGREGADO_INTEGRADO");
+assert.equal(santa.registros_integrados_q2,56);
 for(const item of catalog.territorios)assert(DATA.some(x=>x.ubigeo===item.ubigeo),"External reference missing in DATA: "+item.ubigeo);
 assert.equal(catalog.territorios.filter(x=>x.estado==="PORTAL_GENERAL_SIN_DATASET_VERIFICADO").length,1);
 const html=load("GeoGrowth_AI_Dashboard_V3.html");
-assert.match(html,/geogrowth-filtros-v1\.js\?v=1/);
+assert.match(html,/geogrowth-filtros-v1\.js\?v=2/);
 assert.match(html,/geogrowth-operacion-v9\.js\?v=90/);
 const events={},outs=[];
 const field={value:"",innerHTML:"",dispatchEvent(){}};
@@ -52,6 +55,8 @@ setImmediate(()=>{
   assert.equal(api.getSource("200501").distrito,"Paita");
   assert.equal(api.provinceName("2005"),"Paita");
   assert.equal(api.getSource("220601").estado,"PORTAL_GENERAL_SIN_DATASET_VERIFICADO");
+  assert.equal(api.getSource("080901").estado,"RESUMEN_MUNICIPAL_AGREGADO_INTEGRADO");
+  assert.equal(api.describe(DATA.find(x=>x.ubigeo==="080901")).fuente_municipal_externa,null);
   trigger("gg-filter-province","2005");
   assert.equal(api.province,"2005");
   assert(scoped().every(x=>x.ubigeo.startsWith("2005")),"Province selection leaks other provinces");
