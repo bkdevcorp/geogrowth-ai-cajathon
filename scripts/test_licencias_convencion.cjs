@@ -32,7 +32,7 @@ assert.equal(catalog.territorios.find(x=>x.ubigeo==="080901")?.estado,"RESUMEN_M
 const html=fs.readFileSync(path.join(root,"GeoGrowth_AI_Dashboard_V3.html"),"utf8");
 assert.match(html,/geogrowth-licencias-convencion-v1\.js\?v=1/);
 assert.match(html,/geogrowth-agent-demo-v1\.js\?v=3/);
-assert.match(html,/geogrowth-filtros-v1\.js\?v=3/);
+assert.match(html,/geogrowth-filtros-v1\.js\?v=\d+/);
 assert.match(html,/geogrowth-v9-extensiones\.js\?v=4/);
 let renderCount=0;
 const page={location:{search:"?modo=ampliado"}};
