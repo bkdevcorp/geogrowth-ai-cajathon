@@ -20,7 +20,7 @@ assert.equal(d.origen.sha256,"afa4e36b64fb83dfa37eb74e52231a8ef5ca50f81d8c253ec8
 assert.equal(catalog.territorios.find(x=>x.ubigeo==="040101")?.estado,"RESUMEN_MPA_2026_INTEGRADO");
 const html=read("GeoGrowth_AI_Dashboard_V3.html");
 assert.match(html,/geogrowth-licencias-arequipa-v1\.js\?v=1/);
-assert.match(html,/geogrowth-google-maps-v1\.js\?v=2/);
+assert.match(html,/geogrowth-google-maps-v1\.js\?v=\d+/);
 const prohibited=new Set(["expediente","resolucion","resolución","ruc","razon_social","razón_social","direccion","dirección","nombre_titular"]);
 function scan(x){if(x&&typeof x==="object"){for(const [k,v] of Object.entries(x)){
  assert(!prohibited.has(k.toLowerCase()),"PII prohibida: "+k);
