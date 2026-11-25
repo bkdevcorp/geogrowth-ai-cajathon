@@ -39,13 +39,13 @@ function show(host,pack){
  </div><div class="actions-row"><button class="btn primary" id="ex-search" type="submit">Buscar oportunidades</button></div><p class="muted">Con Google Maps activo, Buscar realiza hasta 10 consultas de Google Places por solicitud (pueden consumir cuota). Los registros sin ubicación siguen en la tabla.</p><p id="ex-error" class="muted" role="status"></p><div id="ex-search-feedback" role="status" aria-live="polite" style="display:none;margin-top:12px;padding:12px 14px;background:#edf8f4;border:1px solid #cdece2;border-radius:10px;color:#225b50"></div></form></section>
  <div id="ex-kpi" class="kpi-grid"></div>
  <section class="card" id="ex-map-card"><div class="card-header"><div><h2>Mapa comercial</h2><p id="ex-map-caption">Referencia territorial; selecciona Localizar en un registro.</p></div><span class="badge" id="ex-map-badge">Sin coordenadas precargadas</span></div>
- <div id="ex-map" style="min-height:360px;border:1px solid #dce6ee;border-radius:12px;overflow:hidden"></div>
+ <div id="ex-diagnostic" role="status" style="margin:0 0 12px;padding:10px 12px;background:#f4f7fb;border:1px solid #dce6ee;border-radius:8px;font-size:13px">Pulsa Buscar para consultar los registros filtrados.</div><div id="ex-map" style="min-height:360px;border:1px solid #dce6ee;border-radius:12px;overflow:hidden"></div>
  <div class="actions-row"><a class="btn" id="ex-open" target="_blank" rel="noopener noreferrer">Abrir en Google Maps</a><label class="field" style="flex:1;min-width:220px"><span>Clave Google Maps (opcional, solo sesión)</span><input id="ex-key" type="password" autocomplete="off" placeholder="Maps Demo Key o clave restringida"></label><button id="ex-google" type="button" class="btn">Activar Google Maps</button></div><p class="muted" id="ex-map-status"></p></section>
  <section class="card" id="ex-results-card" tabindex="-1"><div class="card-header"><div><h2 id="ex-title">Resultados</h2><p id="ex-count"></p></div><button class="btn small" type="button" id="ex-export">Exportar resultados JSON</button></div><div id="ex-results"></div><div class="actions-row"><button class="btn small" id="ex-prev" type="button">Anterior</button><span id="ex-page"></span><button class="btn small" id="ex-next" type="button">Siguiente</button></div><div id="ex-detail" tabindex="-1"></div></section>
  <section class="card"><h2>Fuente y metodología</h2><p>${esc(pack.metodo)}</p><p class="muted" id="ex-source-info"></p><a id="ex-source" class="btn" target="_blank" rel="noopener noreferrer">Consultar fuente oficial</a></section>`;
  function territoryQuery(){return d.distrito+", "+d.provincia+", San Martín, Perú";}
  function iframe(src,title){const f=document.createElement("iframe");f.title=title;f.width="100%";f.height="360";f.style.cssText="border:0;display:block";f.src=src;$("ex-map").replaceChildren(f);}
- function resetMap(){seq++;selected=null;clearSearchPins();marker?.setMap(null);marker=null;info?.close();info=null;
+ function resetMap(){seq++;selected=null;clearSearchPins();$("ex-diagnostic").textContent="Pulsa Buscar para consultar los registros filtrados.";marker?.setMap(null);marker=null;info?.close();info=null;
   $("ex-open").href=searchUrl(territoryQuery());$("ex-map-caption").textContent=d.distrito+" · referencia territorial SBS; no es un domicilio comercial.";$("ex-map-badge").textContent="Sin coordenadas precargadas";
   if(map&&!authFailed){map.setCenter(d.ref);map.setZoom(13);$("ex-map-status").textContent="Google Maps activo. Pulsa Buscar para consultar Google Places.";}
   else{const {lat,lng}=d.ref;iframe("https://www.openstreetmap.org/export/embed.html?bbox="+encodeURIComponent([lng-.04,lat-.04,lng+.04,lat+.04].join(","))+"&layer=mapnik","Mapa territorial de "+d.distrito);$("ex-map-status").textContent="Mapa de respaldo OpenStreetMap. Localizar abre una búsqueda comercial en el mapa.";}
@@ -55,18 +55,21 @@ function show(host,pack){
  function nameKey(s){return normalizeName(s).replace(/\b(S A C|S A|S R L|E I R L|SAC|SA|SRL|EIRL)\b/g,"").replace(/\s+/g," ").trim();}
  function streetKey(s){return normalizeName(s).replace(/\b(AVENIDA|AV)\b/g,"AV").replace(/\b(JIRON|JR)\b/g,"JR").replace(/\b(CALLE|CL)\b/g,"CL").replace(/\b(NUMERO|NRO|NO|N)\b/g,"").replace(/\s+/g," ").trim();}
  function addressMatch(a,b){const x=streetKey(String(a||"").split(" - ")[0]),y=streetKey(b);return x.length>5&&(" "+y+" ").includes(" "+x+" ");}
- function safeError(e){const raw=String(e?.code||e?.status||e?.message||e?.name||"UNKNOWN");const code=raw.match(/\b(PERMISSION_DENIED|REQUEST_DENIED|RESOURCE_EXHAUSTED|OVER_QUERY_LIMIT|INVALID_ARGUMENT|API_KEY_SERVICE_BLOCKED|API_KEY_INVALID|SERVICE_DISABLED|UNAUTHENTICATED|ZERO_RESULTS|NOT_FOUND|DEADLINE_EXCEEDED|UNKNOWN_ERROR|INTERNAL|UNAVAILABLE|429|403|400)\b/i);return code?code[0].toUpperCase():(e?.name==="TypeError"?"TYPE_ERROR":"ERROR_API");}
+ function nameRelated(a,b){const x=nameKey(a),y=nameKey(b);return !!x&&!!y&&(x===y||(x.length>=8&&(" "+y+" ").includes(" "+x+" ")));}
+ function safeError(e){const raw=[e?.code,e?.status,e?.message,e?.name].filter(Boolean).join(" ");const codes=raw.match(/\b(PERMISSION_DENIED|REQUEST_DENIED|RESOURCE_EXHAUSTED|OVER_QUERY_LIMIT|INVALID_ARGUMENT|API_KEY_SERVICE_BLOCKED|API_KEY_INVALID|SERVICE_DISABLED|UNAUTHENTICATED|ZERO_RESULTS|NOT_FOUND|DEADLINE_EXCEEDED|UNKNOWN_ERROR|INTERNAL|UNAVAILABLE|429|403|400)\b/gi);if(codes)return [...new Set(codes.map(x=>x.toUpperCase()))].join(" / ");if(/quota|rate limit/i.test(raw))return "CUOTA_AGOTADA";if(/denied|not authorized|not enabled|blocked/i.test(raw))return "AUTORIZACION_DENEGADA";if(/not a constructor|not a function/i.test(raw))return "FUNCION_NO_DISPONIBLE";return e?.name==="TypeError"?"TYPE_ERROR":"ERROR_API";}
  async function resolveBusiness(x,territory,districtName,ref){
-  // Demo Key supports Place class; the legacy JS Geocoder uses v3 and is not included.
   const {Place}=await google.maps.importLibrary("places");
-  const response=await Place.searchByText({textQuery:[x.nombre,x.direccion,territory].filter(Boolean).join(", "),fields:["id","displayName","formattedAddress","location"],maxResultCount:5,language:"es",region:"pe"});
-  const local=(response.places||[]).filter(p=>p.id&&p.location&&normalizeName(p.formattedAddress).includes(districtName));
-  const named=x.nombre?local.filter(p=>nameKey(p.displayName)===nameKey(x.nombre)):[];
+  // Short text query avoids duplicating municipality, neighbourhood and legal suffixes.
+  const textQuery=[x.nombre||x.direccion,territory].filter(Boolean).join(", ");
+  const response=await Place.searchByText({textQuery,fields:["displayName","formattedAddress","location"],maxResultCount:5,language:"es",region:"pe",locationBias:ref});
+  const places=response.places||[];
+  const local=places.filter(p=>p.location&&normalizeName(p.formattedAddress).includes(districtName));
+  const named=x.nombre?local.filter(p=>nameRelated(x.nombre,p.displayName)):[];
   const exact=named.filter(p=>addressMatch(x.direccion,p.formattedAddress));
-  if(exact.length===1)return {position:exact[0].location,address:exact[0].formattedAddress,label:"Coincidencia de nombre y dirección en Google Places",matched:true};
-  if(!x.nombre){const matches=local.filter(p=>addressMatch(x.direccion,p.formattedAddress));if(matches.length===1)return {position:matches[0].location,address:matches[0].formattedAddress,label:"Coincidencia de dirección; identidad del local por verificar",matched:false};return null;}
-  if(named.length===1)return {position:named[0].location,address:named[0].formattedAddress,label:x.direccion?"Coincidencia por nombre; dirección de la licencia NO confirmada":"Coincidencia por nombre; sin dirección municipal publicable",matched:false};
-  return null;
+  if(exact.length===1)return {position:exact[0].location,address:exact[0].formattedAddress,label:"Coincidencia de nombre y dirección en Google Places",matched:true,received:places.length};
+  if(!x.nombre){const matches=local.filter(p=>addressMatch(x.direccion,p.formattedAddress));if(matches.length===1)return {position:matches[0].location,address:matches[0].formattedAddress,label:"Coincidencia de dirección; identidad del local por verificar",matched:false,received:places.length};}
+  if(named.length===1)return {position:named[0].location,address:named[0].formattedAddress,label:x.direccion?"Coincidencia por nombre; dirección de la licencia NO confirmada":"Coincidencia por nombre; sin dirección municipal publicable",matched:false,received:places.length};
+  return {received:places.length,local:local.length,reason:places.length?"Sin coincidencia identificable en el distrito":"Google no devolvió establecimientos"};
  }
  async function mapResults(rows){
   const token=++seq;selected=null;clearSearchPins();marker?.setMap(null);marker=null;info?.close();info=null;
@@ -74,19 +77,19 @@ function show(host,pack){
   const available=rows.filter(x=>x.nombre||x.direccion), unique=[...new Map(available.map(x=>[normalizeName(x.direccion||x.nombre),x])).values()], batch=unique.slice(0,10);
   $("ex-map-caption").textContent=d.distrito+" · "+fmt(rows.length)+" registros filtrados";
   $("ex-open").href=searchUrl(territory);
-  if(!current||authFailed){$("ex-map-status").textContent=fmt(available.length)+" registros con información comercial buscable. Activa Google Maps para colocar marcadores, o pulsa Localizar.";return;}
+  if(!current||authFailed){$("ex-diagnostic").textContent="Activa Google Maps para localizar establecimientos.";$("ex-map-status").textContent=fmt(available.length)+" registros con información comercial buscable. Activa Google Maps para colocar marcadores, o pulsa Localizar.";return;}
   current.setCenter(ref);current.setZoom(13);
-  $("ex-map-badge").textContent="Buscando ubicaciones…";
+  $("ex-map-badge").textContent="Buscando ubicaciones…";$("ex-diagnostic").textContent="Consultando Google Places…";
   $("ex-map-status").textContent="Consultando Google: "+batch.length+" búsquedas como máximo. "+(rows.length-available.length)+" registros sin datos comerciales publicables.";
-  if(!batch.length){$("ex-map-badge").textContent="0 ubicaciones";$("ex-map-status").textContent="No hay nombre ni dirección comercial publicable en los resultados. No se pueden dibujar marcadores.";return;}
-  let found=0,failed=0,apiErrors=0,attempted=0,confirmed=0;const errors=new Set();
+  if(!batch.length){$("ex-diagnostic").textContent="No hay registros con datos comerciales publicables.";$("ex-map-badge").textContent="0 ubicaciones";$("ex-map-status").textContent="No hay nombre ni dirección comercial publicable en los resultados. No se pueden dibujar marcadores.";return;}
+  let found=0,failed=0,apiErrors=0,attempted=0,confirmed=0,received=0;const errors=new Set(),details=[];
   try{
-   const {Marker}=await google.maps.importLibrary("marker"),{InfoWindow}=await google.maps.importLibrary("maps"),{LatLngBounds}=await google.maps.importLibrary("core");const bounds=new LatLngBounds();
+   const markerLib=await google.maps.importLibrary("marker"),mapsLib=await google.maps.importLibrary("maps");const Marker=markerLib.Marker||google.maps.Marker,InfoWindow=mapsLib.InfoWindow||google.maps.InfoWindow;const bounds=new google.maps.LatLngBounds();
    for(const x of batch){
     if(token!==seq||!host.isConnected||authFailed)return;
     let result=null;attempted++;
-    try{result=await resolveBusiness(x,territory,districtName,ref);}
-    catch(err){apiErrors++;const code=safeError(err);errors.add(code);if(/PERMISSION_DENIED|REQUEST_DENIED|SERVICE_DISABLED|API_KEY|RESOURCE_EXHAUSTED|OVER_QUERY_LIMIT|UNAUTHENTICATED|403|429/.test(code))break;}
+    try{result=await resolveBusiness(x,territory,districtName,ref);received+=result.received||0;details.push([x.nombre||x.id,result.position?result.label:result.reason+" ("+result.received+" resultados de Google)"]);}
+    catch(err){apiErrors++;const code=safeError(err);errors.add(code);details.push([x.nombre||x.id,code]);if(/PERMISSION_DENIED|REQUEST_DENIED|SERVICE_DISABLED|API_KEY|RESOURCE_EXHAUSTED|OVER_QUERY_LIMIT|UNAUTHENTICATED|403|429/.test(code))break;}
     const {position,address,label,matched}=result||{};
     if(token!==seq||!host.isConnected||authFailed)return;
     if(!position){failed++;continue;}
@@ -96,7 +99,7 @@ function show(host,pack){
    if(found===1){current.setCenter(searchPins[0].getPosition());current.setZoom(16);}else if(found>1)current.fitBounds(bounds,60);
   }catch(err){apiErrors++;errors.add(safeError(err));}
   if(token!==seq||!host.isConnected||authFailed)return;
-  $("ex-map-badge").textContent=found+" ubicaciones encontradas";
+  $("ex-map-badge").textContent=found+" ubicaciones encontradas";$("ex-diagnostic").innerHTML="<b>"+found+" marcadores · "+attempted+" solicitudes · "+received+" resultados devueltos por Google · "+apiErrors+" errores</b>"+(apiErrors?"<p>Diagnóstico: "+esc([...errors].join(", "))+"</p>":"")+(details.length?"<details open><summary>Ver resultado por negocio</summary>"+details.map(([n,v])=>"<div>"+esc(n)+" — "+esc(v)+"</div>").join("")+"</details>":"");
   $("ex-map-status").textContent=found+" marcadores ("+confirmed+" con nombre y dirección coincidentes; "+(found-confirmed)+" por verificar) de "+attempted+" consultas Places; "+failed+" sin coincidencia. "+(apiErrors?"Errores: "+[...errors].join(", ")+". Revisa Places API (New), autorización y cuota. ":"")+(unique.length>10?"Límite de 10 por búsqueda; usa Localizar para los demás. ":"")+(rows.length-available.length)+" registros sin datos comerciales publicables. Los marcadores no confirman actividad ni apertura.";
  }
  function query(x){return [x.nombre,x.direccion,territoryQuery()].filter(Boolean).join(", ");}
@@ -111,7 +114,7 @@ function show(host,pack){
   $("ex-map-status").textContent="Buscando negocio en Google Places…";marker?.setMap(null);marker=null;info?.close();
   try{const hit=await resolveBusiness(x,territoryQuery(),normalizeName(d.distrito),d.ref);
    if(token!==seq||!host.isConnected)return;
-   if(!hit){$("ex-map-badge").textContent="Sin coincidencia";$("ex-map-status").textContent="Google Places no devolvió una coincidencia suficientemente identificable. Usa Abrir en Google Maps para verificar manualmente.";return;}
+   if(!hit?.position){$("ex-map-badge").textContent="Sin coincidencia";$("ex-map-status").textContent="Google Places no devolvió una coincidencia suficientemente identificable. Usa Abrir en Google Maps para verificar manualmente.";return;}
    const {Marker}=await google.maps.importLibrary("marker");const {InfoWindow}=await google.maps.importLibrary("maps");if(token!==seq||!host.isConnected)return;
    map.setCenter(hit.position);map.setZoom(17);marker=new Marker({map,position:hit.position,title:x.nombre||x.id,label:hit.matched?undefined:"?"});info=new InfoWindow({content:"<b>"+esc(x.nombre||x.id)+"</b><p>"+esc(hit.address)+"</p><small>"+esc(hit.label)+"; negocio y vigencia por verificar.</small>"});info.open({map,anchor:marker});$("ex-map-badge").textContent=hit.matched?"Nombre y dirección coincidentes":"Ubicación por verificar";$("ex-map-status").textContent=hit.label+": "+hit.address+". No confirma actividad ni presencia actual.";
   }catch(e){if(token===seq&&host.isConnected){$("ex-map-badge").textContent="Error de consulta";$("ex-map-status").textContent="Google Places: "+safeError(e)+". Revisa autorización y cuota, o pulsa Abrir en Google Maps.";}}
