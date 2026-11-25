@@ -1,0 +1,70 @@
+{
+  "version": "1.0",
+  "source_id": "LIC-MPA-2026-ENE-JUN:040101",
+  "fuente": "Municipalidad Provincial de Arequipa",
+  "territorio": {
+    "departamento": "Arequipa",
+    "provincia": "Arequipa",
+    "distrito": "Arequipa (Cercado)",
+    "ubigeo_inei": "040101",
+    "rotulo_original": "Arequipa (Cercado) es 40101"
+  },
+  "origen": {
+    "archivo": "Listado de Licencias de Funcionamiento Registrados en la Municipalidad Provincial de Arequipa de Enero - Julio 2026 - (MPA).xlsx",
+    "sha256": "afa4e36b64fb83dfa37eb74e52231a8ef5ca50f81d8c253ec8e7ca69ac43f775",
+    "hoja": "LICENCIAS",
+    "rango": "A1:M825",
+    "periodo_titulo": "enero–julio 2026",
+    "periodo_fechas_observado": "enero–junio 2026",
+    "valor_fecha_de_cierre_uniforme": "2026-07-02",
+    "nota_cierre": "No interpretar Fecha de cierre como fecha de cese: el mismo valor aparece en todos los registros."
+  },
+  "calidad": {
+    "registros": 824,
+    "expedientes_distintos": 824,
+    "emitidos_2026_enero_junio": 824,
+    "emitidos_julio_2026": 0,
+    "estados_registrados": 2,
+    "tipos_tramite": 8,
+    "domicilios_individuales": false,
+    "coordenadas_comerciales_individuales": false,
+    "clientes_contactables_verificados": false
+  },
+  "resumen": {
+    "por_mes": {
+      "2026-01": 130,
+      "2026-02": 151,
+      "2026-03": 141,
+      "2026-04": 125,
+      "2026-05": 106,
+      "2026-06": 171,
+      "2026-07": 0
+    },
+    "por_tipo": {
+      "3. LF RIESGO BAJO O MEDIO": 712,
+      "5. LF RIESGO MUY ALTO": 35,
+      "6. CESIONARIO RIESGO BAJO O MEDIO": 34,
+      "2. DUPLICADO": 14,
+      "12.CAMBIO DE DENOMINACION": 13,
+      "4. LF RIESGO ALTO": 12,
+      "9. TRANSFERENCIA": 3,
+      "15. CORPORATIVA": 1
+    },
+    "por_estado": {
+      "ACTIVA": 815,
+      "INACTIVA CESE": 9
+    }
+  },
+  "interpretacion": {
+    "perfil": "Concentración documental de licencias de riesgo bajo/medio; la base también contiene trámites de duplicado, cesionario, transferencia y cambios de denominación.",
+    "hipotesis": "Investigar vigencia de los establecimientos, tipo de actividad y necesidades declaradas mediante fuentes y contactos autorizados.",
+    "limitaciones": [
+      "No son 824 empresas recién creadas.",
+      "El estado ACTIVA es el estado documental de la fuente, no una verificación comercial actual.",
+      "Sin direcciones por registro no se pueden colocar pines individuales.",
+      "No hay observaciones de emisión de julio pese a su presencia en el título.",
+      "No sumar automáticamente a las 894 licencias municipales de julio–diciembre 2025 sin conciliar universo, periodos y alcance."
+    ]
+  },
+  "tratamiento": "Datos agregados; no se han publicado expedientes, resoluciones ni datos de personas."
+}
