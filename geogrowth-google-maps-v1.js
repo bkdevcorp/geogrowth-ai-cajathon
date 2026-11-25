@@ -99,16 +99,60 @@ function scope(){
  const p=f?.province||"all",district=document.getElementById("go-ubigeo")?.value;
  const row=DATA.find(r=>String(r.ubigeo)===String(district));
  const name=row&&row.departamento===dep&&(p==="all"||String(row.ubigeo).slice(0,4)===p)&&row.nombre_distrito&&!/^UBIGEO|^Distrito UBIGEO/i.test(row.nombre_distrito)?row.nombre_distrito:"";
- return {dep,province:p==="all"?"":f.provinceName(p),district:name,type:f?.type||"todas",custom:f?.custom||""};
+ return {dep,provinceCode:p,ubigeo:name?String(district):null,province:p==="all"?"":f.provinceName(p),district:name,type:f?.type||"todas",custom:f?.custom||""};
 }
 function status(t){const el=document.getElementById("gg-maps-status");if(el)el.textContent=t;}
 function clearDynamic(){for(const m of placesMarkers)m.map=null;placesMarkers=[];active=null;}
 function address(s){return [...new Set([s.district,s.province,s.dep,"Perú"].filter(Boolean))].join(", ");}
 function same(a,b){return JSON.stringify(a)===JSON.stringify(b);}
+// Official evidence is scoped by UBIGEO and never assigned to unrelated Places markers.
+let evidenceCache=null;
+function officialEvidence(){
+ if(!evidenceCache)evidenceCache=Promise.allSettled(["licencias_prospeccion","licencias_arequipa_2026_resumen","licencias_convencion_2026q2_resumen","expansion_moyobamba"].map(n=>fetch("data/"+n+".json").then(r=>{if(!r.ok)throw Error(n+" HTTP "+r.status);return r.json();}))).then(items=>items.map(i=>i.status==="fulfilled"?i.value:null));
+ return evidenceCache;
+}
+function inScope(r,sc){
+ return r.departamento===sc.dep&&(sc.provinceCode==="all"||String(r.ubigeo).slice(0,4)===sc.provinceCode)&&(!sc.ubigeo||String(r.ubigeo)===sc.ubigeo);
+}
+function norm(v){return String(v||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toUpperCase().replace(/[^A-Z0-9 ]/g," ").replace(/\s+/g," ").trim();}
+function matchLicense(licenses,p){
+ const n=norm(p.displayName),a=norm(p.formattedAddress);
+ if(n.length<4||!a)return null;
+ const matches=licenses.filter(l=>l.direccion&&norm(l.nombre)===n&&norm(l.direccion).length>=8&&a.includes(norm(l.direccion)));
+ return matches.length===1?matches[0]:null;
+}
+async function renderEvidence(sc,results=[]){
+ const host=document.getElementById("gg-official-evidence");if(!host)return;
+ const [licenses,aq,cv,moy]=await officialEvidence();if(!host.isConnected||!same(sc,scope()))return;
+ const rows=DATA.filter(r=>inScope(r,sc));
+ const selected=(licenses?.registros||[]).filter(l=>inScope(l,sc));
+ const cards=[];
+ const card=(title,body)=>'<div class="v9-extra-license"><b>'+safe(title)+'</b>'+body+'</div>';
+ const line=t=>'<small>'+safe(t)+'</small>';
+ if(["todas","nuevos","otros"].includes(sc.type)){
+ if(selected.length)cards.push(card("Licencias municipales · registros disponibles",line(selected.length+" registros de bandeja; no prueban apertura ni operación vigente.")+line("Periodo y cobertura según fuente. Lima 2026 sin identificación comercial; Arequipa 2025 con direcciones cuando disponibles.")));
+ if(aq&&rows.some(r=>r.ubigeo==="040101"))cards.push(card("Arequipa · enero–junio 2026",line(aq.calidad.registros+" trámites; julio: 0. Sin domicilios individuales.")));
+ if(cv&&rows.some(r=>r.ubigeo==="080901"))cards.push(card("Santa Ana · segundo trimestre 2026",line(cv.calidad.registros_q2_2026+" licencias; 1 registro histórico excluido. Sin ubicación individual.")));
+ }
+ if(["todas","expansion","otros"].includes(sc.type)&&moy&&rows.some(r=>r.ubigeo===moy.ubigeo)){
+ const counts={};for(const c of moy.candidatos)counts[c.sector]=(counts[c.sector]||0)+1;
+ cards.push(card("Moyobamba · metodología de expansión",line(moy.candidatos.length+" candidatos anonimizados · "+moy.licencias+" licencias históricas · "+moy.ruc_multidireccion+" RUC multidirección.")+line(Object.entries(counts).map(([k,v])=>k+": "+v).join(" · "))+line("Corte "+moy.corte+". Sin nombre, RUC ni dirección publicados: no se pueden vincular a Places.")+'<details><summary>Ver candidatos</summary>'+moy.candidatos.map(c=>line(c.id+" · "+c.sector+" · "+c.fecha_nueva+" · "+c.direcciones_anteriores+" anteriores / "+c.direcciones_nuevas+" nuevas")).join("")+'</details>'));
+ }
+ if(["todas","desatendidos","otros"].includes(sc.type)){
+ const comparable=rows.filter(r=>r.ambas_fuentes);
+ if(comparable.length)cards.push(card("Contexto territorial · SBS 2025 / PRODUCE 2015",line(comparable.length+" distritos con ambas fuentes; "+fmt(comparable.reduce((n,r)=>n+Number(r.sbs_oficinas_2025||0),0))+" oficinas SBS; "+fmt(comparable.reduce((n,r)=>n+Number(r.micro_2015||0),0))+" microempresas históricas.")+line("No demuestra brecha financiera actual.")));
+ }
+ if(sc.type==="estacionales")cards.push(card("Campañas estacionales",line("Sin series de ventas ni calendario sectorial validado. Places aporta establecimientos para investigar, no estacionalidad comprobada.")));
+ const matches=results.map(p=>({p,l:matchLicense(selected,p)})).filter(x=>x.l);
+ if(results.length)cards.push(card("Cruce individual con licencias",line(matches.length+" coincidencias exactas de nombre y dirección; requieren confirmación.")+line("No se asignan licencias por cercanía ni se inventan coincidencias.")+matches.map(({p,l})=>line(p.displayName+" · "+l.id+" · "+l.fecha)).join("")));
+ const unavailable=[licenses,aq,cv,moy].filter(x=>!x).length;
+ host.innerHTML='<h4>Evidencia oficial del territorio</h4><p>Fuentes independientes de Google Places; no representan pines de negocios.</p>'+cards.join("")+(!cards.length?'<p>Sin evidencia oficial específica integrada para este filtro.</p>':"")+(unavailable?'<p>'+unavailable+' archivos no disponibles; no se interpretan como cero registros.</p>':"");
+}
 function display(results,plan){
  if(!active)return;
  for(const m of placesMarkers)m.map=null;placesMarkers=[];
  const panel=document.getElementById("gg-google-places-results");
+ void renderEvidence(scope(),results);
  panel.innerHTML="<h4>Establecimientos en Google Places</h4><p>"+results.length+" resultados de la consulta, no un censo ni oportunidades crediticias confirmadas.</p>";
  const bounds=new active.core.LatLngBounds();
  for(const p of results){
@@ -129,7 +173,8 @@ async function mount(){
  shell.querySelector(".v9-extra-label").textContent="Google Maps · Google Places";
  shell.querySelector(":scope > .v9-extra-note")?.remove();
  host.innerHTML='<div id="gg-google-map-canvas" class="gg-google-map-canvas" aria-label="Google Maps"></div>';
- panel.innerHTML='<div id="gg-google-places-results"><h4>Establecimientos encontrados</h4><p>Ejecuta una búsqueda para mostrar negocios publicados en Google Maps.</p></div>';
+ panel.innerHTML='<div id="gg-google-places-results"><h4>Establecimientos encontrados</h4><p>Ejecuta una búsqueda para mostrar negocios publicados en Google Maps.</p></div><div id="gg-official-evidence" style="border-top:1px solid #dce6ef;margin-top:14px;padding-top:12px"></div>';
+ void renderEvidence(scope());
  if(!key){host.firstElementChild.innerHTML='<div class="gg-map-empty"><strong>Conecta Google Maps</strong><p>Configura tu API para visualizar el territorio y buscar establecimientos.</p><button type="button" data-gm-config class="go-primary">Configurar API</button></div>';status("Configuración API pendiente.");return;}
  try{
  await loader(key);
@@ -188,6 +233,6 @@ document.addEventListener("click",event=>{
  else if(b.hasAttribute("data-gm-clear")){key="";mapId="DEMO_MAP_ID";saveSession();lastSearch=null;location.reload();}
  else void searchPlaces();
 },true);
-window.GeoGrowthGoogleMaps={libraries:{initial:["maps","core","marker","geocoding"],onDemand:["places"]},get mode(){return "google";},get enabled(){return Boolean(key);},activateForTest(apiKey,configuredMapId="DEMO_MAP_ID"){key=apiKey;mapId=configuredMapId;render();}};
+window.GeoGrowthGoogleMaps={libraries:{initial:["maps","core","marker","geocoding"],onDemand:["places"]},get mode(){return "google";},matchLicense,get enabled(){return Boolean(key);},activateForTest(apiKey,configuredMapId="DEMO_MAP_ID"){key=apiKey;mapId=configuredMapId;render();}};
 render();
 })();
