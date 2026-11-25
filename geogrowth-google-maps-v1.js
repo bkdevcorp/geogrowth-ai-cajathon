@@ -1,6 +1,6 @@
 /* GeoGrowth AI: Google Maps JavaScript API — proveedor cartográfico único V9.
  * Bibliotecas reales: maps, core, marker y geometry; places y routes solo bajo demanda.
- * Nunca se almacena ni se registra la API key. Sin respaldo cartográfico en la etapa 01.
+ * La clave de usuario se conserva en sessionStorage, nunca en el repositorio. Sin respaldo cartográfico en la etapa 01.
  * No usar drawing (DrawingManager no disponible en Maps JS 3.65+).
  */
 (function(){
@@ -23,7 +23,34 @@ function takePrivateKey(){
  return {key:supplied,mapId:/^[0-9A-Za-z_-]{4,100}$/.test(suppliedId)?suppliedId:"DEMO_MAP_ID"};
 }
 const privateLaunch=takePrivateKey();
-let key=privateLaunch.key,mapId=privateLaunch.mapId,mode="google",loading=null,active=null,seq=0;
+const config=window.GEOGROWTH_CONFIG||{};
+const sessionName="geogrowth.maps.config.v1";
+function readSession(){try{return JSON.parse(sessionStorage.getItem(sessionName)||"{}")||{};}catch(_){return {};}}
+const saved=readSession();
+let key=privateLaunch.key||(saved.GOOGLE_MAPS_API_KEY??config.GOOGLE_MAPS_API_KEY??""),mapId=(privateLaunch.key?privateLaunch.mapId:saved.GOOGLE_MAPS_MAP_ID||config.GOOGLE_MAPS_MAP_ID)||"DEMO_MAP_ID",mode="google",loading=null,active=null,seq=0;
+function saveSession(){try{sessionStorage.setItem(sessionName,JSON.stringify({GOOGLE_MAPS_API_KEY:key,GOOGLE_MAPS_MAP_ID:mapId}));}catch(_){}}
+if(privateLaunch.key)saveSession();
+let authFailed=false;
+window.gm_authFailure=()=>{authFailed=true;active=null;status("Google Maps rechazó la clave. Revisa restricciones, APIs y facturación.");updateConfigButton();};
+function updateConfigButton(){const b=document.querySelector("[data-gm-config]");if(b)b.textContent="Configuración API · "+(authFailed?"Revisar":key?"Configurada":"Pendiente");}
+function configButton(){const host=document.getElementById("v9-role-switch")||document.querySelector(".top");if(!host)return;let b=host.querySelector("[data-gm-config]");if(!b){b=document.createElement("button");b.type="button";b.dataset.gmConfig="1";host.append(b);}updateConfigButton();}
+function openConfig(){
+ let dialog=document.getElementById("gg-config-dialog");
+ if(!dialog){dialog=document.createElement("dialog");dialog.id="gg-config-dialog";dialog.innerHTML='<form id="gg-config-form"><h3>Configuración de Google Maps</h3><p>La clave se conserva solo en esta pestaña durante la sesión. No se envía al repositorio. Usa restricciones HTTP referrer.</p><label for="gg-config-key">GOOGLE_MAPS_API_KEY</label><input id="gg-config-key" type="password" autocomplete="off" required><label for="gg-config-mapid">GOOGLE_MAPS_MAP_ID (opcional)</label><input id="gg-config-mapid" autocomplete="off" placeholder="DEMO_MAP_ID"><p class="gg-config-note">Habilita Maps JavaScript API, Places API (New) y Geocoding API, con facturación activa.</p><div class="gg-config-actions"><button type="button" data-gm-clear>Eliminar clave</button><button type="button" data-gm-close>Cancelar</button><button type="submit" class="go-primary">Guardar y conectar</button></div></form>';document.body.append(dialog);}
+ dialog.querySelector("#gg-config-key").value=key;
+ dialog.querySelector("#gg-config-mapid").value=mapId;
+ if(!dialog.open)dialog.showModal();
+}
+document.addEventListener("submit",e=>{
+ if(e.target.id!=="gg-config-form")return;e.preventDefault();
+ const next=document.getElementById("gg-config-key").value.trim();
+ const nextId=document.getElementById("gg-config-mapid").value.trim()||"DEMO_MAP_ID";
+ if(!/^AIza[0-9A-Za-z_-]{30,60}$/.test(next)){document.getElementById("gg-config-key").setCustomValidity("Introduce una clave de Google Maps válida.");document.getElementById("gg-config-key").reportValidity();return;}
+ const reload=Boolean(window.google?.maps)||Boolean(loading)||authFailed;
+ key=next;mapId=nextId;saveSession();authFailed=false;lastSearch=null;
+ document.getElementById("gg-config-dialog").close();if(reload){location.reload();return;}render();
+});
+document.addEventListener("input",e=>{if(e.target.id==="gg-config-key")e.target.setCustomValidity("");});
 let target=null,origin=null,placesMarkers=[],routeLines=[];
 const libraryPlan={initial:["maps","core","marker","geometry"],onDemand:["places","routes"],deprecatedExcluded:["drawing"]};
 const safe=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -103,7 +130,7 @@ async function mount(){
  shell.querySelector(":scope > .v9-extra-note")?.remove();
  host.innerHTML='<div id="gg-google-map-canvas" class="gg-google-map-canvas" aria-label="Google Maps"></div>';
  panel.innerHTML='<div id="gg-google-places-results"><h4>Establecimientos encontrados</h4><p>Ejecuta una búsqueda para mostrar negocios publicados en Google Maps.</p></div>';
- if(!key){status("Configura una clave de Google Maps para iniciar.");return;}
+ if(!key){host.firstElementChild.innerHTML='<div class="gg-map-empty"><strong>Conecta Google Maps</strong><p>Configura tu API para visualizar el territorio y buscar establecimientos.</p><button type="button" data-gm-config class="go-primary">Configurar API</button></div>';status("Configuración API pendiente.");return;}
  try{
  await loader(key);
  const [{Map,InfoWindow},{LatLngBounds},{AdvancedMarkerElement},{Geocoder}]=await Promise.all(["maps","core","marker","geocoding"].map(x=>google.maps.importLibrary(x)));
@@ -112,14 +139,15 @@ async function mount(){
  active={map,info:new InfoWindow(),core:{LatLngBounds},mark:AdvancedMarkerElement,geocoder:new Geocoder()};
  const sc=scope();
  const geo=await active.geocoder.geocode({address:address(sc),componentRestrictions:{country:"PE"}});
- if(my!==seq||!host.isConnected)return;
+ if(my!==seq||!host.isConnected||authFailed)return;
  const g=geo.results[0]?.geometry;if(g?.viewport)map.fitBounds(g.viewport);else if(g?.location){map.setCenter(g.location);map.setZoom(12);}
  if(lastSearch&&same(lastSearch.scope,sc)){display(lastSearch.results,lastSearch.plan);status("Resultados de esta sesión.");}
  else status("Selecciona el tipo de oportunidad y busca establecimientos.");
  }catch(e){if(my===seq)status("Google Maps no disponible: "+e.message);}
 }
 async function searchPlaces(){
- if(!active)return status("Google Maps aún no está disponible.");
+ if(!key){openConfig();return;}
+ if(!active||authFailed)return status("Google Maps aún no está disponible. Revisa la configuración.");
  const sc=scope();if(sc.type==="otros"&&!sc.custom.trim())return status("Describe la oportunidad antes de buscar.");
  const token=++searchEpoch,my=seq;
  const plan=sc.type==="otros"?{terms:[sc.custom.trim().slice(0,300)],missing:"Consulta personalizada literal; falta conectar un LLM para interpretar y planificar búsquedas."}:plans[sc.type]||plans.todas;
@@ -138,16 +166,14 @@ async function searchPlaces(){
  }catch(e){if(token===searchEpoch&&my===seq)status("No se completó la consulta Places: "+e.message);}
 }
 function toolbox(){
- return '<div id="gg-google-toolbar" style="margin-top:12px">'+
- (!key?'<label>Clave Google Maps (solo esta sesión)<input id="gg-google-api-key" type="password" autocomplete="off"></label> <button type="button" data-gm-google>Activar Google Maps</button>':'')+
- '<button type="button" class="go-primary" data-gm-places>Buscar oportunidades</button><p id="gg-maps-status" class="gg-maps-disclaimer" role="status"></p></div>';
+ return '<div id="gg-google-toolbar" class="gg-search-actions"><button type="button" class="go-primary" data-gm-places>Buscar oportunidades</button><p id="gg-maps-status" class="gg-maps-disclaimer" role="status"></p></div>';
 }
 const style=document.createElement("style");
-style.textContent=".gg-maps-toolbar{border:1px solid #cadfed;border-radius:12px;background:#f3f9fe;padding:12px;margin:0 0 13px;display:grid;gap:9px}.gg-maps-toolbar b{color:#244e71;font-size:12px}.gg-maps-toolbar small{font-size:10px;color:#617d95}.gg-maps-tools{display:flex;align-items:center;gap:7px;flex-wrap:wrap}.gg-maps-tools button{background:white;border:1px solid #bcd1e5;color:#255b8b;padding:7px 11px;border-radius:8px;font-size:11px;cursor:pointer;font-weight:700}.gg-maps-tools button[aria-pressed=true]{background:#1f5b92;color:#fff}.gg-maps-tools select{padding:6px;border:1px solid #c5d8e8;border-radius:7px;font-size:11px}.gg-maps-key{font-size:11px;color:#456d8c;display:flex;gap:8px;align-items:center;flex-wrap:wrap}.gg-maps-key input{padding:7px;border:1px solid #bdd4e5;border-radius:7px;font-size:11px;min-width:170px}.gg-maps-disclaimer{font-size:11px;color:#476d8b;line-height:1.6;margin:0}.gg-google-map-canvas{height:330px;min-height:290px;width:100%;border-radius:11px}.gg-google-map-note{font-size:10px;line-height:1.6;color:#5f7690;margin-top:7px}.gg-maps-toolbar ol{margin:7px 0 0;padding-left:21px;font-size:11px;color:#4c6680}.gg-maps-toolbar li{margin:7px 0}.gg-maps-toolbar a{color:#2965a3}";
+style.textContent=`.gg-search-actions{display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-top:14px}.gg-search-actions button,.gg-map-empty button,#gg-config-dialog button{border:1px solid #cbdbe9;border-radius:8px;padding:9px 14px;font-size:12px;font-weight:700;cursor:pointer;background:#fff;color:#245792}.gg-search-actions .go-primary,.gg-map-empty .go-primary,#gg-config-dialog .go-primary{background:#205b92;color:#fff;border-color:#205b92}.gg-maps-disclaimer{margin:0;font-size:11px;color:#526982;line-height:1.5}.gg-google-map-canvas{height:440px;width:100%;border-radius:11px;overflow:hidden;background:#f0f5fa}.gg-map-empty{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:25px;text-align:center;color:#244e71}.gg-map-empty p{font-size:12px;color:#617d95;max-width:280px}.v9-extra-panel{max-height:440px!important}.v9-extra-license a{font-size:11px;color:#235aa1}#gg-config-dialog{border:1px solid #dce7f3;border-radius:14px;padding:24px;width:min(460px,calc(100% - 32px));color:#193d63;box-shadow:0 16px 50px #132b4940}#gg-config-dialog::backdrop{background:#132b4966}#gg-config-dialog h3{margin:0 0 12px;font-size:17px}#gg-config-dialog p{font-size:12px;line-height:1.6;color:#526982}#gg-config-dialog label{display:block;font-size:12px;font-weight:700;margin:14px 0 6px}#gg-config-dialog input{box-sizing:border-box;width:100%;padding:11px;border:1px solid #c5d8e8;border-radius:8px;font:inherit;font-size:13px}#gg-config-dialog .gg-config-actions{display:flex;justify-content:flex-end;flex-wrap:wrap;gap:8px;margin-top:16px}@media(max-width:760px){.gg-google-map-canvas{height:340px}.v9-extra-panel{max-height:340px!important}}`;
 document.head.appendChild(style);
 const prev=render;
 render=function(){
- prev();if(state.view!=="work")return;
+ prev();configButton();if(state.view!=="work")return;
  const shell=document.getElementById("v9-safe-map");if(!shell)return;
  document.querySelectorAll("#content .go-block").forEach(el=>el.remove());
  const subtitle=document.querySelector(".go-pick .go-subtle");if(subtitle)subtitle.textContent="Búsqueda comercial · Google Places";
@@ -155,9 +181,11 @@ render=function(){
  void mount();
 };
 document.addEventListener("click",event=>{
- const b=event.target.closest("[data-gm-google],[data-gm-places]");if(!b)return;
+ const b=event.target.closest("[data-gm-config],[data-gm-close],[data-gm-clear],[data-gm-places]");if(!b)return;
  event.preventDefault();event.stopImmediatePropagation();
- if(b.hasAttribute("data-gm-google")){const supplied=document.getElementById("gg-google-api-key")?.value?.trim();if(!supplied)return status("Ingresa la clave.");key=supplied;render();}
+ if(b.hasAttribute("data-gm-config"))openConfig();
+ else if(b.hasAttribute("data-gm-close"))document.getElementById("gg-config-dialog")?.close();
+ else if(b.hasAttribute("data-gm-clear")){key="";mapId="DEMO_MAP_ID";saveSession();lastSearch=null;location.reload();}
  else void searchPlaces();
 },true);
 window.GeoGrowthGoogleMaps={libraries:{initial:["maps","core","marker","geocoding"],onDemand:["places"]},get mode(){return "google";},get enabled(){return Boolean(key);},activateForTest(apiKey,configuredMapId="DEMO_MAP_ID"){key=apiKey;mapId=configuredMapId;render();}};
