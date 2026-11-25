@@ -16,7 +16,7 @@ assert.equal(hash("GeoGrowth_AI_Campo_V3.html"),"1286bfe49223444dbb6adea8f134734
 const html=read("GeoGrowth_AI_Dashboard_V3.html");
 assert.match(html,/<script src="geogrowth-map\.js\?v=50"><\/script>/);
 assert.match(html,/<script src="geogrowth-operacion-v9\.js\?v=90"><\/script>/);
-assert.match(html,/<script defer src="geogrowth-v9-extensiones\.js\?v=2"><\/script>/);
+assert.match(html,/<script defer src="geogrowth-v9-extensiones\.js\?v=3"><\/script>/);
 assert.match(read("index.html"),/href="GeoGrowth_AI_Dashboard_V3\.html"/,"Stable link must be preserved");
 const code=read("geogrowth-v9-extensiones.js");
 
