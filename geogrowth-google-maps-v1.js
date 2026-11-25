@@ -86,6 +86,12 @@ function loader(apiKey){
  });
  return loading;
 }
+// Session-only validation index: no invented coordinates or persisted Places payloads.
+const validatedDistricts=new Set();
+function rememberValidated(results){
+ for(const p of results)if(p.id&&p.location&&p.officialLicense?.ubigeo)validatedDistricts.add(String(p.officialLicense.ubigeo));
+ if(results.length)window.dispatchEvent(new Event("geogrowth:validated"));
+}
 let lastSearch=null,searchEpoch=0;
 function scope(){
  const f=window.GeoGrowthTerritoryFilters,dep=document.getElementById("go-dep")?.value||state.dep;
@@ -257,6 +263,7 @@ async function searchPlaces(next=false){
   checked.push(l);
  }
  const results=[...found.values()];lookupPage++;
+ rememberValidated(results);
  lastSearch={scope:sc,results,plan,failed,errors,checked,unmatched,total:candidates.length,records};
  display(results,plan);
  datasetSummary(sc,unmatched,records,results,failed,checked.length,candidates.length,errors);
@@ -286,6 +293,6 @@ document.addEventListener("click",event=>{
  else if(b.hasAttribute("data-gm-clear")){key="";mapId="DEMO_MAP_ID";saveSession();lastSearch=null;location.reload();}
  else void searchPlaces(b.hasAttribute("data-gm-next"));
 },true);
-window.GeoGrowthGoogleMaps={libraries:{initial:["maps","core","marker","geocoding"],onDemand:["places"]},get mode(){return "google";},matchLicense,sourceCandidates,selectMatch,lookupQuery,get enabled(){return Boolean(key);},activateForTest(apiKey,configuredMapId="DEMO_MAP_ID"){key=apiKey;mapId=configuredMapId;render();}};
+window.GeoGrowthGoogleMaps={libraries:{initial:["maps","core","marker","geocoding"],onDemand:["places"]},get mode(){return "google";},matchLicense,sourceCandidates,selectMatch,lookupQuery,hasValidated:u=>validatedDistricts.has(String(u)),get enabled(){return Boolean(key);},activateForTest(apiKey,configuredMapId="DEMO_MAP_ID"){key=apiKey;mapId=configuredMapId;render();}};
 render();
 })();
