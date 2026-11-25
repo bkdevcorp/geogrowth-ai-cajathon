@@ -71,7 +71,7 @@ function formatDate(s){if(!s)return 'Sin fecha';if(/^\d{4}$/.test(s))return s;co
 function badgeStatus(s){const cls=['ACTIVA','VIGENTE'].includes(s)?'green':'warn';return `<span class="tag ${cls}">${esc(s)}</span>`}
 function roleNav(){
  const navAdmin=[['resumen','Mapa y resumen'],['fuentes','Datos y nuevos registros'],['modelo','Fórmula IIT'],['campanas','Diseño de campañas'],['resultados','Resultados y embudo']];
- const navAnalyst=[['bandeja','Mapa y oportunidades'],['expansion','Expansión comercial'],['brief','Opportunity Brief'],['micanpana','Mi campaña'],['seguimiento','Seguimiento comercial']];
+ const navAnalyst=[['bandeja','Mapa y oportunidades'],['expansion','Expansión comercial'],['desatendidos','Mercados desatendidos'],['brief','Opportunity Brief'],['micanpana','Mi campaña'],['seguimiento','Seguimiento comercial']];
  const set=ROLE==='admin'?navAdmin:navAnalyst;
  $('nav').innerHTML=set.map(([id,name],i)=>`<button type="button" data-nav="${id}" class="${id===app.nav?'active':''}"><span class="number">${String(i+1).padStart(2,'0')}</span>${esc(name)}</button>`).join('');
  $('roleSwitch').innerHTML=ROLE==='admin'?`<a href="GeoGrowth_Analista.html" class="btn small">Abrir vista del analista</a>`:`<a href="GeoGrowth_Admin.html" class="btn small">Vista administrador</a>`;
@@ -79,10 +79,11 @@ function roleNav(){
 }
 function render(){roleNav();
  const pages=ROLE==='admin'?{resumen:adminHome,fuentes:adminSources,modelo:adminModel,campanas:adminCampaign,resultados:adminResults}:
- {bandeja:analystInbox,expansion:()=>window.GeoGrowthExpansion.shell(),brief:analystBrief,micanpana:analystCampaign,seguimiento:analystFollowup};
+ {bandeja:analystInbox,expansion:()=>window.GeoGrowthExpansion.shell(),desatendidos:()=>window.GeoGrowthDesatendidos.shell(),brief:analystBrief,micanpana:analystCampaign,seguimiento:analystFollowup};
  $('content').innerHTML=(pages[app.nav]||Object.values(pages)[0])();
  if(ROLE==='analista'&&window.GeoGrowthGoogleV11){window.GeoGrowthGoogleV11.header();if(app.nav==='bandeja')void window.GeoGrowthGoogleV11.mount(app,{expansion:()=>{app.nav='expansion';render()},scope:(dep,u)=>{app.dept=dep;app.licenseUbigeo=u||null;app.page=0;render();document.getElementById('leadDept')?.scrollIntoView({block:'center'})}});}else window.GeoGrowthMapView?.mount(app);
  if(ROLE==='analista'&&app.nav==='expansion')window.GeoGrowthExpansion.mount();
+ if(ROLE==='analista'&&app.nav==='desatendidos')window.GeoGrowthDesatendidos?.mount(app,{goExpansion:()=>{app.nav='expansion';render()},toast});
 }
 function adminHome(){const st=resultStats();const hot=topLeads('Arequipa',4);const national=app.territories.length;
  return pagehead('Panel de control','Inteligencia comercial territorial','Monitorea fuentes, oportunidades investigables, campañas y resultados. Sin afirmar captación crediticia observada.')+
@@ -295,7 +296,7 @@ async function boot(){try{
  const qs=new URLSearchParams(location.search);
  if(qs.has('lead')&&leadById(qs.get('lead'))){app.leadId=qs.get('lead');app.nav='brief';app.dept=leadById(app.leadId).departamento;app.mapDep=app.dept;}
  if(qs.has('section')&&ROLE==='admin')app.nav=qs.get('section');
- if(ROLE==='analista'&&qs.get('section')==='expansion')app.nav='expansion';
+ if(ROLE==='analista'&&['expansion','desatendidos'].includes(qs.get('section')))app.nav=qs.get('section');
  render();
 }catch(err){$('content').innerHTML=`<div class="card"><h2>No se pudo cargar el Data Pack</h2><p class="muted">${esc(err.message)}</p><div class="callout">Abre esta web desde GitHub Pages o inicia un servidor HTTP local; las páginas abiertas como file:// pueden bloquear fetch.</div></div>`;}}
 boot();
