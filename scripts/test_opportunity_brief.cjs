@@ -79,6 +79,18 @@ assert.equal(with2026.investigacion.licencias_adicionales.por_codigo_giro["5610"
 assert.match(with2026.evidencia.licencias,/56 licencias/);
 assert(with2026.evidencia.ids.includes("LIC-MPLC-2026Q2:080901"));
 assert.equal(with2026.investigacion.ejemplos_publicados.length,0,"No exponer negocios individuales de Santa Ana");
+const mpa26=JSON.parse(fs.readFileSync(path.join(root,"data/licencias_arequipa_2026_resumen.json"),"utf8"));
+w.GeoGrowthMunicipalArequipa2026={forUbigeo:ubigeo=>ubigeo==="040101"?mpa26:null};
+const arequipa=DATA.find(x=>x.ubigeo==="040101");
+const arequipaBrief=w.GeoGrowthOpportunityBriefV2.build(arequipa,55);
+assert.equal(arequipaBrief.investigacion.licencias_arequipa_2026.registros,824);
+assert.equal(arequipaBrief.investigacion.licencias_arequipa_2026.emitidos_julio_2026,0);
+assert.equal(arequipaBrief.investigacion.licencias_arequipa_2026.por_tipo["3. LF RIESGO BAJO O MEDIO"],712);
+assert.match(arequipaBrief.evidencia.licencias,/824/);
+assert.match(arequipaBrief.evidencia.licencias,/2025/,"Preserve distinct earlier municipal period");
+assert(arequipaBrief.evidencia.ids.includes("LIC-MPA-2026-ENE-JUN:040101"));
+assert.equal(arequipaBrief.investigacion.licencias_arequipa_2026.por_estado.ACTIVA,815);
+assert.equal(w.GeoGrowthOpportunityBriefV2.build(target,55).investigacion.licencias_arequipa_2026,null,"Do not leak MPA source to another district");
 const w70=w.GeoGrowthOpportunityBriefV2.build(target,70);
 assert.notEqual(w70.iit.puntuacion,brief.iit.puntuacion);
 assert.equal(w70.iit.peso_empresas_pct,70);
