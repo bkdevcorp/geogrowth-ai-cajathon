@@ -6,7 +6,24 @@
 (function(){
 "use strict";
 if(new URLSearchParams(window.location.search).get("modo")!=="ampliado")return;
-let key="",mapId="DEMO_MAP_ID",mode="v5",loading=null,active=null,seq=0;
+// Lanzamiento de sesión: la clave viaja solo en el fragmento (#) del navegador,
+// que no se envía al servidor. Se elimina de la URL inmediatamente y nunca se persiste.
+function takePrivateKey(){
+ const fragment=String(window.location.hash||"");
+ if(!fragment.startsWith("#"))return {key:"",mapId:"DEMO_MAP_ID"};
+ const search=new URLSearchParams(fragment.slice(1));
+ if(!search.has("ggmaps"))return {key:"",mapId:"DEMO_MAP_ID"};
+ const supplied=String(search.get("ggmaps")||"").trim();
+ const suppliedId=String(search.get("map_id")||"DEMO_MAP_ID").trim();
+ try{
+  window.history?.replaceState?.(null,"",window.location.pathname+window.location.search);
+ }catch(_){}
+ // Una clave inválida nunca activa el proveedor ni queda visible.
+ if(!/^AIza[0-9A-Za-z_-]{30,60}$/.test(supplied))return {key:"",mapId:"DEMO_MAP_ID"};
+ return {key:supplied,mapId:/^[0-9A-Za-z_-]{4,100}$/.test(suppliedId)?suppliedId:"DEMO_MAP_ID"};
+}
+const privateLaunch=takePrivateKey();
+let key=privateLaunch.key,mapId=privateLaunch.mapId,mode=key?"google":"v5",loading=null,active=null,seq=0;
 let target=null,origin=null,placesMarkers=[],routeLines=[];
 const libraryPlan={initial:["maps","core","marker","geometry"],onDemand:["places","routes"],deprecatedExcluded:["drawing"]};
 const safe=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
