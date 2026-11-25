@@ -272,7 +272,7 @@ document.addEventListener("click",e=>{
   const chosen=DATA.find(x=>String(x.ubigeo)===String(state.selected));
   if(!chosen)return;
   e.preventDefault();e.stopImmediatePropagation();
-  const list=window.GeoGrowthCampaignGuide?.models(chosen,Number(I?.budget||2400))||[];
+  const list=window.GeoGrowthCampaignGuide?.models(chosen,Number(document.getElementById("go-budget")?.value||state.budget||2400))||[];
   const method=list.find(x=>x.id===action.dataset.goModel);
   if(!method)return;
   state.plan=method.rows.map(x=>x.ubigeo);
