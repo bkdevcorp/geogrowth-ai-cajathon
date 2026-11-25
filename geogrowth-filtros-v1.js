@@ -159,6 +159,7 @@ function enhancePicker(){
  const existing=document.getElementById("gg-filter-results");if(existing)existing.remove();
  if(focus.type==="otros"){const custom=document.createElement("div");custom.style.cssText="margin-top:12px";custom.innerHTML='<label for="gg-custom-opportunity">Describe la oportunidad</label><textarea id="gg-custom-opportunity" rows="3" style="width:100%;padding:10px;border:1px solid #c5d8e8;border-radius:8px" placeholder="Ej.: ferreterías para capital de trabajo">'+esc(focus.custom)+'</textarea>';opts.after(custom);}
  if(budget)budget.remove();
+ const quick=container.querySelector(".go-quick");if(quick)quick.remove();
 }
 function updateMap(){
  const map=document.getElementById("ggv5");
