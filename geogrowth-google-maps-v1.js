@@ -87,13 +87,6 @@ function loader(apiKey){
  return loading;
 }
 let lastSearch=null,searchEpoch=0;
-const plans={
- todas:{terms:["restaurantes","tiendas","ferreterías"],missing:"Validar necesidad financiera y actividad real."},
- nuevos:{terms:["negocios","tiendas"],missing:"Places no acredita fecha de apertura; faltan altas SUNAT o licencias vinculadas."},
- expansion:{terms:["comercios","ferreterías","distribuidores"],missing:"Faltan series de ventas, sucursales y evidencia histórica de crecimiento."},
- desatendidos:{terms:["mercados","comercios","bancos","cajas municipales"],missing:"Faltan cobertura SBS individual, cartera propia y datos de acceso financiero."},
- estacionales:{terms:()=>{const m=new Date().getMonth()+1;return m>=10?["jugueterías","tiendas de regalos","ropa"]:m<=3?["librerías","útiles escolares","uniformes"]:["restaurantes","hoteles","comercio"];},missing:"Calendario y demanda estacional aún no validados."}
-};
 function scope(){
  const f=window.GeoGrowthTerritoryFilters,dep=document.getElementById("go-dep")?.value||state.dep;
  const p=f?.province||"all",district=document.getElementById("go-ubigeo")?.value;
@@ -142,8 +135,8 @@ async function renderEvidence(sc,results=[]){
  const comparable=rows.filter(r=>r.ambas_fuentes);
  if(comparable.length)cards.push(card("Contexto territorial · SBS 2025 / PRODUCE 2015",line(comparable.length+" distritos con ambas fuentes; "+fmt(comparable.reduce((n,r)=>n+Number(r.sbs_oficinas_2025||0),0))+" oficinas SBS; "+fmt(comparable.reduce((n,r)=>n+Number(r.micro_2015||0),0))+" microempresas históricas.")+line("No demuestra brecha financiera actual.")));
  }
- if(sc.type==="estacionales")cards.push(card("Campañas estacionales",line("Sin series de ventas ni calendario sectorial validado. Places aporta establecimientos para investigar, no estacionalidad comprobada.")));
- const matches=results.map(p=>({p,l:matchLicense(selected,p)})).filter(x=>x.l);
+ if(sc.type==="estacionales")cards.push(card("Campañas estacionales",line("Sin series de ventas ni calendario sectorial validado. No hay candidatos oficiales individualizados para consultar Places.")));
+ const matches=results.map(p=>({p,l:p.officialLicense||matchLicense(selected,p)})).filter(x=>x.l);
  if(results.length)cards.push(card("Cruce individual con licencias",line(matches.length+" coincidencias exactas de nombre y dirección; requieren confirmación.")+line("No se asignan licencias por cercanía ni se inventan coincidencias.")+matches.map(({p,l})=>line(p.displayName+" · "+l.id+" · "+l.fecha)).join("")));
  const unavailable=[licenses,aq,cv,moy].filter(x=>!x).length;
  host.innerHTML='<h4>Evidencia oficial del territorio</h4><p>Fuentes independientes de Google Places; no representan pines de negocios.</p>'+cards.join("")+(!cards.length?'<p>Sin evidencia oficial específica integrada para este filtro.</p>':"")+(unavailable?'<p>'+unavailable+' archivos no disponibles; no se interpretan como cero registros.</p>':"");
@@ -153,12 +146,12 @@ function display(results,plan){
  for(const m of placesMarkers)m.map=null;placesMarkers=[];
  const panel=document.getElementById("gg-google-places-results");
  void renderEvidence(scope(),results);
- panel.innerHTML="<h4>Establecimientos en Google Places</h4><p>"+results.length+" resultados de la consulta, no un censo ni oportunidades crediticias confirmadas.</p>";
+ panel.innerHTML="<h4>Registros oficiales localizados en Google Maps</h4><p>"+results.length+" coincidencias únicas de los datos cargados. No se incluyen resultados externos.</p>";
  const bounds=new active.core.LatLngBounds();
  for(const p of results){
   const div=document.createElement("div");div.className="v9-extra-license";
   const title=document.createElement("b");title.textContent=p.displayName||"Establecimiento";div.append(title);
-  const detail=document.createElement("small");detail.textContent=[p.formattedAddress,p.businessStatus,p.rating==null?"":("Calificación "+p.rating+" · "+(p.userRatingCount??"N/D")+" reseñas")].filter(Boolean).join(" · ");div.append(detail);
+  const detail=document.createElement("small");detail.textContent=[p.officialLicense?"Registro oficial "+p.officialLicense.id+" · "+p.officialLicense.fecha:"",p.formattedAddress,p.businessStatus,p.rating==null?"":("Calificación "+p.rating+" · "+(p.userRatingCount??"N/D")+" reseñas")].filter(Boolean).join(" · ");div.append(detail);
   if(p.googleMapsURI){const a=document.createElement("a");a.href=p.googleMapsURI;a.target="_blank";a.rel="noopener noreferrer";a.textContent="Ver en Google Maps";div.append(a);}
   panel.append(div);
   if(p.location){bounds.extend(p.location);const marker=new active.mark({map:active.map,position:p.location,title:p.displayName||"Establecimiento"});placesMarkers.push(marker);marker.addListener("click",()=>{const node=document.createElement("div");node.textContent=(p.displayName||"Establecimiento")+" — "+(p.formattedAddress||"");active.info.setContent(node);active.info.open({map:active.map,anchor:marker});div.scrollIntoView({block:"nearest"});});}
@@ -173,7 +166,7 @@ async function mount(){
  shell.querySelector(".v9-extra-label").textContent="Google Maps · Google Places";
  shell.querySelector(":scope > .v9-extra-note")?.remove();
  host.innerHTML='<div id="gg-google-map-canvas" class="gg-google-map-canvas" aria-label="Google Maps"></div>';
- panel.innerHTML='<div id="gg-google-places-results"><h4>Establecimientos encontrados</h4><p>Ejecuta una búsqueda para mostrar negocios publicados en Google Maps.</p></div><div id="gg-official-evidence" style="border-top:1px solid #dce6ef;margin-top:14px;padding-top:12px"></div>';
+ panel.innerHTML='<div id="gg-google-places-results"><h4>Establecimientos encontrados</h4><p>Ejecuta una búsqueda para localizar exclusivamente registros identificados en las fuentes oficiales.</p></div><div id="gg-official-evidence" style="border-top:1px solid #dce6ef;margin-top:14px;padding-top:12px"></div>';
  void renderEvidence(scope());
  if(!key){host.firstElementChild.innerHTML='<div class="gg-map-empty"><strong>Conecta Google Maps</strong><p>Configura tu API para visualizar el territorio y buscar establecimientos.</p><button type="button" data-gm-config class="go-primary">Configurar API</button></div>';status("Configuración API pendiente.");return;}
  try{
@@ -186,28 +179,87 @@ async function mount(){
  const geo=await active.geocoder.geocode({address:address(sc),componentRestrictions:{country:"PE"}});
  if(my!==seq||!host.isConnected||authFailed)return;
  const g=geo.results[0]?.geometry;if(g?.viewport)map.fitBounds(g.viewport);else if(g?.location){map.setCenter(g.location);map.setZoom(12);}
- if(lastSearch&&same(lastSearch.scope,sc)){display(lastSearch.results,lastSearch.plan);status("Resultados de esta sesión.");}
- else status("Selecciona el tipo de oportunidad y busca establecimientos.");
+ if(lastSearch&&same(lastSearch.scope,sc)){display(lastSearch.results,lastSearch.plan);datasetSummary(sc,lastSearch.unmatched||[],lastSearch.records,lastSearch.results,lastSearch.failed,lastSearch.checked?.length||0,lastSearch.total,lastSearch.errors);status("Resultados de esta sesión.");}
+ else status("Selecciona el tipo de oportunidad y valida registros oficiales.");
  }catch(e){if(my===seq)status("Google Maps no disponible: "+e.message);}
 }
-async function searchPlaces(){
+// Dataset-first: only identifiable records in the selected source can produce a Places lookup.
+const PAGE_SIZE=10;
+let lookupPage=0,lookupScope=null;
+function sourceCandidates(data,sc){
+ if(!["todas","nuevos","otros"].includes(sc.type))return [];
+ const terms=sc.type==="otros"?norm(sc.custom).split(" ").filter(t=>t.length>=4):[];
+ return (data?.registros||[]).filter(l=>inScope(l,sc)&&l.nombre&&l.direccion&&norm(l.nombre).length>=4&&norm(l.direccion).length>=8&&(!terms.length||terms.some(t=>norm([l.nombre,l.giro,l.sector,l.direccion].join(" ")).includes(t))));
+}
+function lookupQuery(l){return [l.nombre,l.direccion,l.departamento,"Perú"].filter(Boolean).join(", ");}
+function exactAddress(l,p){
+ const a=norm(l.direccion),b=norm(p.formattedAddress);
+ if(!a||!b)return false;
+ if((" "+b+" ").includes(" "+a+" "))return true;
+ // Standardize only documented street abbreviations and require matching street number.
+ const simplify=v=>norm(v).replace(/\\b(AVENIDA|AV)\\b/g,"AV").replace(/\\b(CALLE|CL)\\b/g,"CL").replace(/\\b(JIRON|JR)\\b/g,"JR").replace(/\\b(NRO|NUMERO|NO|N)\\b/g,"").replace(/\\s+/g," ").trim();
+ const x=simplify(a),y=simplify(b);
+ return /\\b\\d+\\b/.test(x)&&(" "+y+" ").includes(" "+x+" ");
+}
+function selectMatch(l,places){
+ const matches=(places||[]).filter(p=>p.id&&p.location&&norm(p.displayName)===norm(l.nombre)&&exactAddress(l,p));
+ return matches.length===1?matches[0]:null;
+}
+function datasetSummary(sc,candidates,records,results,failed,processed,total,errors=0){
+ const el=document.getElementById("gg-google-places-results");if(!el)return;
+ const box=document.createElement("div");box.className="v9-extra-license";
+ const h=document.createElement("b");h.textContent="Cruce de registros oficiales con Google Places";box.append(h);
+ const line=document.createElement("small");line.textContent=total+" registros identificables · "+processed+" consultados · "+results.length+" coincidencias únicas · "+failed+" sin coincidencia verificable · "+errors+" errores de consulta.";box.append(line);
+ if(!total){const note=document.createElement("small");note.textContent=records?"La fuente disponible no contiene registros identificables compatibles con este tipo de oportunidad. No se buscarán negocios ajenos a la data.":"No hay registros individuales compatibles en el ámbito seleccionado. Consulta la evidencia oficial inferior.";box.append(note);}
+ if(failed){const details=document.createElement("details"),summary=document.createElement("summary");summary.textContent="Registros consultados sin coincidencia";details.append(summary);const matched=new Set(results.map(p=>p.officialLicense?.id));for(const l of candidates.filter(l=>!matched.has(l.id))){const row=document.createElement("small");row.textContent=l.id+" · "+l.nombre+" · "+l.direccion;details.append(row);}box.append(details);}
+ if(processed<total){const button=document.createElement("button");button.type="button";button.className="go-primary";button.dataset.gmNext="1";button.textContent="Consultar siguientes "+Math.min(PAGE_SIZE,total-processed);box.append(button);}
+ el.prepend(box);
+}
+async function searchPlaces(next=false){
+ const sc=scope();if(sc.type==="otros"&&!sc.custom.trim())return status("Describe el sector, negocio o actividad presente en tus datos.");
+ const token=++searchEpoch,my=seq;
+ status("Filtrando registros oficiales…");
+ const [licenses,aq,cv,moy]=await officialEvidence();
+ if(token!==searchEpoch||my!==seq)return;
+ const candidates=sourceCandidates(licenses,sc);
+ const records=(licenses?.registros||[]).filter(l=>inScope(l,sc)).length;
+ if(!candidates.length){
+  lastSearch=null;lookupPage=0;lookupScope=null;
+  if(active)display([],{missing:"Sin registros identificables para consultar Google Places."});
+  else{const host=document.getElementById("gg-google-places-results");if(host)host.innerHTML="";}
+  datasetSummary(sc,[],records,[],0,0,0);
+  void renderEvidence(sc,[]);
+  return status("No se realizó ninguna consulta Places: faltan registros oficiales identificables para este filtro.");
+ }
  if(!key){openConfig();return;}
  if(!active||authFailed)return status("Google Maps aún no está disponible. Revisa la configuración.");
- const sc=scope();if(sc.type==="otros"&&!sc.custom.trim())return status("Describe la oportunidad antes de buscar.");
- const token=++searchEpoch,my=seq;
- const plan=sc.type==="otros"?{terms:[sc.custom.trim().slice(0,300)],missing:"Consulta personalizada literal; falta conectar un LLM para interpretar y planificar búsquedas."}:plans[sc.type]||plans.todas;
- const terms=typeof plan.terms==="function"?plan.terms():plan.terms;
- status("Consultando Google Places…");
+ if(!next||!lookupScope||!same(lookupScope,sc)){lookupPage=0;lookupScope=sc;lastSearch=null;}
+ const batch=candidates.slice(lookupPage*PAGE_SIZE,(lookupPage+1)*PAGE_SIZE);
+ if(!batch.length)return;
+ const plan={missing:"Coincidencias de nombre y dirección sujetas a validación. No confirman apertura, actividad actual ni elegibilidad crediticia."};
+ const prior=lastSearch&&same(lastSearch.scope,sc)?lastSearch:null;
+ const found=new globalThis.Map((prior?.results||[]).map(p=>[p.id,p]));
+ let failed=prior?.failed||0,errors=prior?.errors||0;
+ const checked=[...(prior?.checked||[])],unmatched=[...(prior?.unmatched||[])];
+ status("Validando "+batch.length+" registros oficiales en Google Places…");
  try{
  const {Place}=await google.maps.importLibrary("places");
- const found=new globalThis.Map();
- for(const term of terms){
- const response=await Place.searchByText({textQuery:term+" en "+address(sc),fields:["id","displayName","location","formattedAddress","googleMapsURI","businessStatus","rating","userRatingCount"],maxResultCount:20,region:"pe",language:"es"});
- if(token!==searchEpoch||my!==seq)return;
- for(const p of response.places||[])if(p.id&&p.location)found.set(p.id,p);
+ for(const l of batch){
+  if(token!==searchEpoch||my!==seq||!same(sc,scope()))return;
+  try{
+   const response=await Place.searchByText({textQuery:lookupQuery(l),fields:["id","displayName","location","formattedAddress","googleMapsURI","businessStatus","rating","userRatingCount"],maxResultCount:5,region:"pe",language:"es"});
+   if(token!==searchEpoch||my!==seq||!same(sc,scope()))return;
+   const p=selectMatch(l,response.places);
+   if(p){if(!found.has(p.id))found.set(p.id,{id:p.id,displayName:p.displayName,location:p.location,formattedAddress:p.formattedAddress,googleMapsURI:p.googleMapsURI,businessStatus:p.businessStatus,rating:p.rating,userRatingCount:p.userRatingCount,officialLicense:l});}
+   else{failed++;unmatched.push(l);}
+  }catch(e){errors++;}
+  checked.push(l);
  }
- const results=[...found.values()];lastSearch={scope:sc,results,plan};display(results,plan);
- status(results.length+" establecimientos encontrados. La búsqueda no demuestra necesidad de crédito.");
+ const results=[...found.values()];lookupPage++;
+ lastSearch={scope:sc,results,plan,failed,errors,checked,unmatched,total:candidates.length,records};
+ display(results,plan);
+ datasetSummary(sc,unmatched,records,results,failed,checked.length,candidates.length,errors);
+ status(results.length+" coincidencias verificables de "+checked.length+" registros consultados. No se muestran negocios externos a la fuente.");
  }catch(e){if(token===searchEpoch&&my===seq)status("No se completó la consulta Places: "+e.message);}
 }
 function toolbox(){
@@ -221,18 +273,18 @@ render=function(){
  prev();configButton();if(state.view!=="work")return;
  const shell=document.getElementById("v9-safe-map");if(!shell)return;
  document.querySelectorAll("#content .go-block").forEach(el=>el.remove());
- const subtitle=document.querySelector(".go-pick .go-subtle");if(subtitle)subtitle.textContent="Búsqueda comercial · Google Places";
+ const subtitle=document.querySelector(".go-pick .go-subtle");if(subtitle)subtitle.textContent="Datos oficiales · Validación Google Places";
  document.querySelector(".go-pick")?.insertAdjacentHTML("beforeend",toolbox());
  void mount();
 };
 document.addEventListener("click",event=>{
- const b=event.target.closest("[data-gm-config],[data-gm-close],[data-gm-clear],[data-gm-places]");if(!b)return;
+ const b=event.target.closest("[data-gm-config],[data-gm-close],[data-gm-clear],[data-gm-places],[data-gm-next]");if(!b)return;
  event.preventDefault();event.stopImmediatePropagation();
  if(b.hasAttribute("data-gm-config"))openConfig();
  else if(b.hasAttribute("data-gm-close"))document.getElementById("gg-config-dialog")?.close();
  else if(b.hasAttribute("data-gm-clear")){key="";mapId="DEMO_MAP_ID";saveSession();lastSearch=null;location.reload();}
- else void searchPlaces();
+ else void searchPlaces(b.hasAttribute("data-gm-next"));
 },true);
-window.GeoGrowthGoogleMaps={libraries:{initial:["maps","core","marker","geocoding"],onDemand:["places"]},get mode(){return "google";},matchLicense,get enabled(){return Boolean(key);},activateForTest(apiKey,configuredMapId="DEMO_MAP_ID"){key=apiKey;mapId=configuredMapId;render();}};
+window.GeoGrowthGoogleMaps={libraries:{initial:["maps","core","marker","geocoding"],onDemand:["places"]},get mode(){return "google";},matchLicense,sourceCandidates,selectMatch,lookupQuery,get enabled(){return Boolean(key);},activateForTest(apiKey,configuredMapId="DEMO_MAP_ID"){key=apiKey;mapId=configuredMapId;render();}};
 render();
 })();
