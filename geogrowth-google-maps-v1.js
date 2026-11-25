@@ -205,9 +205,11 @@ async function mount(){
  const map=new Map(host.firstElementChild,{center:{lat:-9.19,lng:-75.02},zoom:5,mapId,streetViewControl:true,gestureHandling:"greedy"});
  active={map,info:new InfoWindow(),core:{LatLngBounds},mark:AdvancedMarkerElement,geocoder:new Geocoder()};
  const sc=scope();
- const geo=await active.geocoder.geocode({address:address(sc),componentRestrictions:{country:"PE"}});
+ const row=DATA.find(r=>String(r.ubigeo)===sc.ubigeo);
+ if(row&&coord(row)){map.setCenter(coord(row));map.setZoom(12);}
+ let geo=null;try{geo=await active.geocoder.geocode({address:address(sc).replace(/\s*\(Cercado\)/gi,""),componentRestrictions:{country:"PE"}});}catch(e){console.warn("Geocoding territorial:",errorText(e));}
  if(my!==seq||!host.isConnected||authFailed)return;
- const g=geo.results[0]?.geometry;if(g?.viewport)map.fitBounds(g.viewport);else if(g?.location){map.setCenter(g.location);map.setZoom(12);}
+ const g=geo?.results?.[0]?.geometry;if(g?.viewport)map.fitBounds(g.viewport);else if(g?.location){map.setCenter(g.location);map.setZoom(12);}
  if(lastSearch&&same(lastSearch.scope,sc)){display(lastSearch.results,lastSearch.plan);datasetSummary(sc,lastSearch.unmatched||[],lastSearch.records,lastSearch.results,lastSearch.failed,lastSearch.checked?.length||0,lastSearch.total,lastSearch.errors);status("Resultados de esta sesión.");}
  else {
  status("Selecciona el tipo de oportunidad y valida registros oficiales.");
@@ -231,19 +233,33 @@ function sourceCandidates(data,sc){
  return (data?.registros||[]).filter(l=>inScope(l,sc)&&l.nombre&&l.direccion&&norm(l.nombre).length>=4&&norm(l.direccion).length>=8&&(!terms.length||terms.some(t=>norm([l.nombre,l.giro,l.sector,l.direccion].join(" ")).includes(t))));
 }
 function lookupQuery(l){return [l.nombre,l.direccion,l.departamento,"Perú"].filter(Boolean).join(", ");}
+function addressCore(v){
+ return norm(v).replace(/\b(AVENIDA|AV|CALLE|CL|JIRON|JR|NRO|NUMERO|NO)\b/g," ").replace(/\s+/g," ").trim();
+}
 function exactAddress(l,p){
- const a=norm(l.direccion),b=norm(p.formattedAddress);
+ const a=addressCore(l.direccion),b=addressCore(p.formattedAddress);
  if(!a||!b)return false;
  if((" "+b+" ").includes(" "+a+" "))return true;
- // Standardize only documented street abbreviations and require matching street number.
- const simplify=v=>norm(v).replace(/\b(AVENIDA|AV)\b/g,"AV").replace(/\b(CALLE|CL)\b/g,"CL").replace(/\b(JIRON|JR)\b/g,"JR").replace(/\b(NRO|NUMERO|NO|N)\b/g,"").replace(/\s+/g," ").trim();
- const x=simplify(a),y=simplify(b);
- return /\b\d+\b/.test(x)&&(" "+y+" ").includes(" "+x+" ");
+ // Match street and number, not municipality alone. Ignore trailing unit/reference text.
+ const m=a.match(/^(.+?)\s+(\d+)(?:\s+([A-Z]))?(?=\s|$)/);
+ if(!m)return false;
+ const street=m[1].trim(),number=m[2],suffix=m[3]||"";
+ if(street.length<4)return false;
+ const escaped=street.replace(/[.*+?^$(){}|[\]\\]/g,"\\$&");
+ return new RegExp("(?:^|\\s)"+escaped+"\\s+"+number+(suffix?"\\s+"+suffix:"")+"(?=\\s|$)").test(b);
+}
+function nameCore(v){return norm(v).replace(/\b(SAC|EIRL|SRL|S A C|E I R L|S R L)\b/g,"").replace(/\s+/g," ").trim();}
+function nameMatch(a,b){
+ const x=nameCore(a),y=nameCore(b);
+ if(x===y&&x.length>=4)return true;
+ if(Math.min(x.length,y.length)<8)return false;
+ return (" "+x+" ").includes(" "+y+" ")||(" "+y+" ").includes(" "+x+" ");
 }
 function selectMatch(l,places){
- const matches=(places||[]).filter(p=>p.id&&p.location&&norm(p.displayName)===norm(l.nombre)&&exactAddress(l,p));
+ const matches=(places||[]).filter(p=>p.id&&p.location&&nameMatch(p.displayName,l.nombre)&&exactAddress(l,p));
  return matches.length===1?matches[0]:null;
 }
+function errorText(e){return [e?.code,e?.message||String(e)].filter(Boolean).join(" · ").slice(0,250);}
 function datasetSummary(sc,candidates,records,results,failed,processed,total,errors=0){
  const el=document.getElementById("gg-google-places-results");if(!el)return;
  const box=document.createElement("div");box.className="v9-extra-license";
@@ -315,7 +331,7 @@ async function prepareDemo(){
  if(!candidates.length)return status("Este territorio no tiene registros con nombre y dirección. Selecciona Arequipa Cercado.");
  preparing=true;
  const button=document.querySelector("[data-gm-prepare]");if(button)button.disabled=true;
- const results=new Map();let processed=0,errors=0;
+ const results=new Map();let processed=0,errors=0;const reasons=[];
  try{
  const {Place}=await google.maps.importLibrary("places");
  const refs=new Set(demoIndex.map(x=>x.recordId));
@@ -333,14 +349,14 @@ async function prepareDemo(){
  if(token!==searchEpoch||my!==seq||!same(sc,scope()))break;
  const p=selectMatch(l,response.places);
  if(p){const item=placeResult(p,l);results.set(p.id,item);rememberValidated([item]);}
- }catch(_){errors++;demoAttempted.delete(l.id);}
+ }catch(e){errors++;reasons.push(errorText(e));demoAttempted.delete(l.id);}
  }
  if(token!==searchEpoch||my!==seq)return;
  const list=[...results.values()];
  const restored=await restoreDemo(sc,candidates);
  if(token!==searchEpoch||my!==seq)return;
  if(restored.length||list.length)display([...new Map([...restored,...list].map(p=>[p.id,p])).values()],{missing:"Coincidencias de la fuente verificadas por nombre y dirección; sin inferencia de crédito."});
- status("Preparación: "+list.length+" nuevos lugares validados, "+processed+" registros consultados, "+errors+" errores. "+(list.length?"Referencias guardadas en este navegador.":"No se encontraron coincidencias nuevas. Puedes preparar el siguiente lote sin repetir los registros ya consultados."));
+ status("Preparación: "+list.length+" nuevos lugares validados, "+processed+" registros consultados, "+errors+" errores. "+(reasons.length?"Google Places: "+[...new Set(reasons)].join(" | ")+". ":"")+(list.length?"Referencias guardadas en este navegador.":"No se encontraron coincidencias nuevas. Puedes preparar el siguiente lote sin repetir los registros ya consultados."));
  }catch(e){status("No se pudo preparar la demo: "+e.message);}
  finally{preparing=false;if(button?.isConnected)button.disabled=false;}
 }
@@ -348,7 +364,7 @@ function toolbox(){
  return '<div id="gg-google-toolbar" class="gg-search-actions"><button type="button" class="go-primary" data-gm-places>Buscar oportunidades</button><label for="gg-demo-limit" style="font-size:11px">Límite de consultas</label><select id="gg-demo-limit"><option value="30">30</option><option value="60">60</option><option value="100">100</option></select><button type="button" data-gm-prepare>Preparar demo (hasta 5 coincidencias)</button><p id="gg-maps-status" class="gg-maps-disclaimer" role="status"></p></div>';
 }
 const style=document.createElement("style");
-style.textContent=`.gg-search-actions{display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-top:14px}.gg-search-actions button,.gg-map-empty button,#gg-config-dialog button{border:1px solid #cbdbe9;border-radius:8px;padding:9px 14px;font-size:12px;font-weight:700;cursor:pointer;background:#fff;color:#245792}.gg-search-actions .go-primary,.gg-map-empty .go-primary,#gg-config-dialog .go-primary{background:#205b92;color:#fff;border-color:#205b92}.gg-maps-disclaimer{margin:0;font-size:11px;color:#526982;line-height:1.5}.gg-google-map-canvas{height:440px;width:100%;border-radius:11px;overflow:hidden;background:#f0f5fa}.gg-map-empty{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:25px;text-align:center;color:#244e71}.gg-map-empty p{font-size:12px;color:#617d95;max-width:280px}.v9-extra-panel{max-height:440px!important}.v9-extra-license a{font-size:11px;color:#235aa1}#gg-config-dialog{border:1px solid #dce7f3;border-radius:14px;padding:24px;width:min(460px,calc(100% - 32px));color:#193d63;box-shadow:0 16px 50px #132b4940}#gg-config-dialog::backdrop{background:#132b4966}#gg-config-dialog h3{margin:0 0 12px;font-size:17px}#gg-config-dialog p{font-size:12px;line-height:1.6;color:#526982}#gg-config-dialog label{display:block;font-size:12px;font-weight:700;margin:14px 0 6px}#gg-config-dialog input{box-sizing:border-box;width:100%;padding:11px;border:1px solid #c5d8e8;border-radius:8px;font:inherit;font-size:13px}#gg-config-dialog .gg-config-actions{display:flex;justify-content:flex-end;flex-wrap:wrap;gap:8px;margin-top:16px}@media(max-width:760px){.gg-google-map-canvas{height:340px}.v9-extra-panel{max-height:340px!important}}`;
+style.textContent=`.gg-search-actions{display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-top:14px}#gg-demo-limit{width:auto;min-width:80px;padding:8px;border:1px solid #c5d8e8;border-radius:8px}.gg-search-actions button,.gg-map-empty button,#gg-config-dialog button{border:1px solid #cbdbe9;border-radius:8px;padding:9px 14px;font-size:12px;font-weight:700;cursor:pointer;background:#fff;color:#245792}.gg-search-actions .go-primary,.gg-map-empty .go-primary,#gg-config-dialog .go-primary{background:#205b92;color:#fff;border-color:#205b92}.gg-maps-disclaimer{margin:0;font-size:11px;color:#526982;line-height:1.5}.gg-google-map-canvas{height:440px;width:100%;border-radius:11px;overflow:hidden;background:#f0f5fa}.gg-map-empty{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:25px;text-align:center;color:#244e71}.gg-map-empty p{font-size:12px;color:#617d95;max-width:280px}.v9-extra-panel{max-height:440px!important}.v9-extra-license a{font-size:11px;color:#235aa1}#gg-config-dialog{border:1px solid #dce7f3;border-radius:14px;padding:24px;width:min(460px,calc(100% - 32px));color:#193d63;box-shadow:0 16px 50px #132b4940}#gg-config-dialog::backdrop{background:#132b4966}#gg-config-dialog h3{margin:0 0 12px;font-size:17px}#gg-config-dialog p{font-size:12px;line-height:1.6;color:#526982}#gg-config-dialog label{display:block;font-size:12px;font-weight:700;margin:14px 0 6px}#gg-config-dialog input{box-sizing:border-box;width:100%;padding:11px;border:1px solid #c5d8e8;border-radius:8px;font:inherit;font-size:13px}#gg-config-dialog .gg-config-actions{display:flex;justify-content:flex-end;flex-wrap:wrap;gap:8px;margin-top:16px}@media(max-width:760px){.gg-google-map-canvas{height:340px}.v9-extra-panel{max-height:340px!important}}`;
 document.head.appendChild(style);
 const prev=render;
 render=function(){
