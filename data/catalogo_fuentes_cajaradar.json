@@ -8,7 +8,7 @@
       "departamento": "Piura",
       "provincia": "Paita",
       "distrito": "Paita",
-      "periodo_indicado": "2020–2026",
+      "periodo_indicado": "2020–2025 (la fuente enlazada); existe publicación 2026 separada no incorporada",
       "foco_sugerido": "Pesca, logística y comercio",
       "referencia": "https://www.datosabiertos.gob.pe/dataset/registro-licencia-funcionamiento-2020-al-2025-de-la-municipalidad-provincial-de-paita",
       "estado": "FUENTE_EXTERNA_NO_INTEGRADA",
@@ -77,8 +77,8 @@
       "periodo_indicado": "Restaurantes y hospedajes, 2026",
       "foco_sugerido": "Gastronomía y turismo",
       "referencia": "https://www.datosabiertos.gob.pe/",
-      "estado": "FUENTE_EXTERNA_NO_INTEGRADA",
-      "aviso": "Referencia de búsqueda aportada por el prototipo CajaRadar AI. No se han incorporado expedientes de esta fuente al Data Pack ni validado el foco sectorial."
+      "estado": "PORTAL_GENERAL_SIN_DATASET_VERIFICADO",
+      "aviso": "El HTML solo enlaza al inicio del portal. Falta identificar el dataset municipal concreto; no hay licencias incorporadas ni sectorialidad verificada."
     }
   ]
 }
