@@ -67,7 +67,7 @@ assert.match(withLicenses.investigacion.foco_comercial,/inventarios/);
 assert.equal(withLicenses.investigacion.alternativas_departamentales.length,3);
 assert(withLicenses.investigacion.sensibilidad.length>=2);
 assert.equal(withLicenses.investigacion.ejemplos_publicados.length,3);
-const santa=JSON.parse(read("data/licencias_convencion_2026q2_resumen.json"));
+const santa=JSON.parse(fs.readFileSync(path.join(root,"data/licencias_convencion_2026q2_resumen.json"),"utf8"));
 w.GeoGrowthMunicipalAdditional={forUbigeo:ubigeo=>ubigeo==="080901"?santa:null};
 const territory=DATA.find(x=>x.ubigeo==="080901");
 const with2026=w.GeoGrowthOpportunityBriefV2.build(territory,55);
