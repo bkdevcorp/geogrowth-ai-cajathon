@@ -1,0 +1,84 @@
+{
+  "version": "1.0",
+  "origen": "CajaRadar-AI-filtros-v3.html (archivo proporcionado por usuario)",
+  "naturaleza": "Catálogo de fuentes de investigación, NO dataset de licencias integrado",
+  "territorios": [
+    {
+      "ubigeo": "200501",
+      "departamento": "Piura",
+      "provincia": "Paita",
+      "distrito": "Paita",
+      "periodo_indicado": "2020–2026",
+      "foco_sugerido": "Pesca, logística y comercio",
+      "referencia": "https://www.datosabiertos.gob.pe/dataset/registro-licencia-funcionamiento-2020-al-2025-de-la-municipalidad-provincial-de-paita",
+      "estado": "FUENTE_EXTERNA_NO_INTEGRADA",
+      "aviso": "Referencia de búsqueda aportada por el prototipo CajaRadar AI. No se han incorporado expedientes de esta fuente al Data Pack ni validado el foco sectorial."
+    },
+    {
+      "ubigeo": "220101",
+      "departamento": "San Martín",
+      "provincia": "Moyobamba",
+      "distrito": "Moyobamba",
+      "periodo_indicado": "Publicación de julio de 2026",
+      "foco_sugerido": "Agricultura, café y turismo",
+      "referencia": "https://www.datosabiertos.gob.pe/dataset/lista-de-registros-de-licencia-de-funcionamiento-de-la-municipalidad-provincial-de-moyobamba",
+      "estado": "FUENTE_EXTERNA_NO_INTEGRADA",
+      "aviso": "Referencia de búsqueda aportada por el prototipo CajaRadar AI. No se han incorporado expedientes de esta fuente al Data Pack ni validado el foco sectorial."
+    },
+    {
+      "ubigeo": "040101",
+      "departamento": "Arequipa",
+      "provincia": "Arequipa",
+      "distrito": "Arequipa (Cercado)",
+      "periodo_indicado": "2025–2026",
+      "foco_sugerido": "Comercio, manufactura y turismo",
+      "referencia": "https://www.datosabiertos.gob.pe/dataset/listado-de-licencias-de-funcionamiento-registrados-en-la-municipalidad-provincial-de",
+      "estado": "FUENTE_EXTERNA_NO_INTEGRADA",
+      "aviso": "Referencia de búsqueda aportada por el prototipo CajaRadar AI. No se han incorporado expedientes de esta fuente al Data Pack ni validado el foco sectorial."
+    },
+    {
+      "ubigeo": "200104",
+      "departamento": "Piura",
+      "provincia": "Piura",
+      "distrito": "Castilla",
+      "periodo_indicado": "2023–2025",
+      "foco_sugerido": "Comercio y servicios",
+      "referencia": "https://www.datosabiertos.gob.pe/dataset/licencias-de-funcionamiento-2025-municipalidad-distrital-de-castilla",
+      "estado": "FUENTE_EXTERNA_NO_INTEGRADA",
+      "aviso": "Referencia de búsqueda aportada por el prototipo CajaRadar AI. No se han incorporado expedientes de esta fuente al Data Pack ni validado el foco sectorial."
+    },
+    {
+      "ubigeo": "080901",
+      "departamento": "Cusco",
+      "provincia": "La Convención",
+      "distrito": "Santa Ana (Quillabamba)",
+      "periodo_indicado": "Primer y segundo trimestre de 2026",
+      "foco_sugerido": "Agricultura y comercio",
+      "referencia": "https://www.datosabiertos.gob.pe/dataset/licencias-de-funcionamiento-de-municipalidad-provincial-la-convenci%C3%B3n",
+      "estado": "FUENTE_EXTERNA_NO_INTEGRADA",
+      "aviso": "Referencia de búsqueda aportada por el prototipo CajaRadar AI. No se han incorporado expedientes de esta fuente al Data Pack ni validado el foco sectorial."
+    },
+    {
+      "ubigeo": "150201",
+      "departamento": "Lima",
+      "provincia": "Barranca",
+      "distrito": "Barranca",
+      "periodo_indicado": "2023–2025",
+      "foco_sugerido": "Agrocomercio y servicios",
+      "referencia": "https://www.datosabiertos.gob.pe/dataset/licencias-de-funcionamiento-barranca-municipalidad%C2%A0provincial-de-barranca",
+      "estado": "FUENTE_EXTERNA_NO_INTEGRADA",
+      "aviso": "Referencia de búsqueda aportada por el prototipo CajaRadar AI. No se han incorporado expedientes de esta fuente al Data Pack ni validado el foco sectorial."
+    },
+    {
+      "ubigeo": "220601",
+      "departamento": "San Martín",
+      "provincia": "Mariscal Cáceres",
+      "distrito": "Juanjuí",
+      "periodo_indicado": "Restaurantes y hospedajes, 2026",
+      "foco_sugerido": "Gastronomía y turismo",
+      "referencia": "https://www.datosabiertos.gob.pe/",
+      "estado": "FUENTE_EXTERNA_NO_INTEGRADA",
+      "aviso": "Referencia de búsqueda aportada por el prototipo CajaRadar AI. No se han incorporado expedientes de esta fuente al Data Pack ni validado el foco sectorial."
+    }
+  ]
+}
