@@ -4,7 +4,7 @@ const assert=require("node:assert/strict"),fs=require("node:fs"),path=require("n
 const root=path.resolve(__dirname,"..");
 const src=fs.readFileSync(path.join(root,"geogrowth-google-maps-v1.js"),"utf8");
 const html=fs.readFileSync(path.join(root,"GeoGrowth_AI_Dashboard_V3.html"),"utf8");
-assert.match(html,/geogrowth-google-maps-v1\.js\?v=1/);
+assert.match(html,/geogrowth-google-maps-v1\.js\?v=2/);
 assert(!/api_key\s*[:=]\s*['"]AIza/i.test(src),"Do not ship an API key");
 assert.match(src,/maps\.googleapis\.com\/maps\/api\/js/);
 assert.match(src,/google\.maps\.importLibrary/);
