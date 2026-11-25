@@ -129,10 +129,9 @@ function filterSummary(department){
    ' · <a href="'+esc(x.referencia)+'" target="_blank" rel="noopener noreferrer">'+(x.estado==='PORTAL_GENERAL_SIN_DATASET_VERIFICADO'?'Buscar en portal':'Consultar dataset')+'</a> · '+(x.estado==='RESUMEN_MPA_2026_INTEGRADO'?'Resumen MPA ene-jun 2026 integrado (julio: 0)':x.estado==='RESUMEN_MUNICIPAL_AGREGADO_INTEGRADO'?'Resumen agregado 2026-T2 integrado':x.estado==='FUENTE_EXTERNA_NO_INTEGRADA'?'No integrada':'Dataset concreto no identificado')+'</p>').join("")+'</div>':'')+
  '</section>';
 }
-// Coverage tiers: actual municipal records, then aggregate evidence, then other territories.
-const coverageByUbigeo={"040101":3,"220101":2,"150101":2,"080901":2};
-const coverageLabel={3:"Con nombres y direcciones",2:"Datos oficiales sin ubicación individual",1:"Fuente pendiente de integrar",0:"Sin datos municipales integrados"};
-function coverage(u){return coverageByUbigeo[String(u)]||((catalog||[]).some(x=>String(x.ubigeo)===String(u))?1:0);}
+// Prioritize actual Google-resolved source records, not address availability.
+const coverageLabel={3:"Con ubicación validada en Google Maps",0:"Sin ubicación validada"};
+function coverage(u){return window.GeoGrowthGoogleMaps?.hasValidated?.(String(u))?3:0;}
 function regionCoverage(dep){return DATA.filter(r=>r.departamento===dep).reduce((m,r)=>Math.max(m,coverage(r.ubigeo)),0);}
 function provinceCoverage(code){return DATA.filter(r=>key(r)===code).reduce((m,r)=>Math.max(m,coverage(r.ubigeo)),0);}
 function groupOptions(select,rank){
@@ -151,13 +150,16 @@ function groupOptions(select,rank){
  select.replaceChildren(fragment);select.value=value;
 }
 function opportunityCoverage(id,dep,province,district){
- const rows=DATA.filter(r=>r.departamento===dep&&(province==="all"||key(r)===province)&&(!district||String(r.ubigeo)===district));
- const ids=rows.map(r=>String(r.ubigeo));
- if(id==="todas"||id==="nuevos"||id==="otros")return ids.includes("040101")?3:ids.some(u=>coverage(u)===2)?2:ids.some(u=>coverage(u)===1)?1:0;
- if(id==="expansion")return ids.includes("220101")?2:0;
- if(id==="desatendidos")return rows.some(r=>r.ambas_fuentes)?2:0;
- return 0;
+ if(!["todas","nuevos","otros"].includes(id))return 0;
+ if(id==="otros")return 0; // A new free-text query is not prevalidated.
+ return DATA.some(r=>r.departamento===dep&&(province==="all"||key(r)===province)&&(!district||String(r.ubigeo)===district)&&coverage(r.ubigeo)===3)?3:0;
 }
+function refreshCoverage(){
+ const dep=document.getElementById("go-dep"),p=document.getElementById("gg-filter-province"),d=document.getElementById("go-ubigeo"),t=document.getElementById("gg-filter-type");
+ if(!dep)return;
+ groupOptions(dep,regionCoverage);groupOptions(p,provinceCoverage);groupOptions(d,coverage);groupOptions(t,id=>opportunityCoverage(id,dep.value,focus.province,d?.value));
+}
+window.addEventListener?.("geogrowth:validated",refreshCoverage);
 function enhancePicker(){
  const container=document.querySelector(".go-pick");
  if(!container)return;
@@ -192,7 +194,7 @@ function enhancePicker(){
  groupOptions(p.querySelector("select"),provinceCoverage);
  groupOptions(select,coverage);
  groupOptions(t.querySelector("select"),id=>opportunityCoverage(id,dept.value,focus.province,select?.value));
- const hint=document.createElement("p");hint.className="gg-filter-note";hint.textContent="Ordenado por disponibilidad de datos. Los territorios con nombres y direcciones permiten consultar Google Places; los demás pueden tener evidencia agregada, no coincidencias individuales garantizadas.";opts.after(hint);
+ const hint=document.createElement("p");hint.className="gg-filter-note";hint.textContent="Primero aparecen los territorios con al menos un negocio de la fuente localizado y validado en Google Maps durante esta sesión. Los demás quedan debajo.";opts.after(hint);
  const quick=container.querySelector(".go-quick");if(quick)quick.remove();
 }
 function updateMap(){
