@@ -65,3 +65,7 @@ Configuración en Google Cloud Console:
 Google Maps se utiliza **solo como cartografía**, no como fuente de prospectos:
 los puntos siguen siendo coordenadas medias de la infraestructura reportada
 por SBS 2025; no corresponden a ubicaciones empresariales individuales.
+
+## Filtros por provincia y respaldo V9
+
+En el modo ampliado del Analista, la búsqueda territorial incluye Departamento, Provincia (UBIGEO), Distrito y tipo de oportunidad para investigar. Los resultados y campañas solo usan datos realmente disponibles; las referencias municipales externas no se presentan como negocios captados. Consultar [metodología, fuentes, pruebas y respaldo](FILTROS_TERRITORIALES_Y_RESPALDO.md).
