@@ -72,3 +72,22 @@ python scripts/test_browser_v9.py
 La prueba de navegador usa dobles de prueba de Google Maps para **no realizar consultas facturables** en CI; verifica carga de las bibliotecas y retorno a V5. Una comprobación con Google real requerirá una clave habilitada por el propietario del proyecto.
 
 Documentación oficial: https://developers.google.com/maps/documentation/javascript/libraries y https://developers.google.com/maps/documentation/javascript/advanced-markers/start.
+
+
+## Inicio privado con una Maps Demo Key facilitada por el usuario
+
+**No se ha subido ninguna clave a GitHub.** La demo soporta un acceso privado en la misma pestaña:
+
+```text
+GeoGrowth_AI_Dashboard_V3.html?modo=ampliado&perfil=analista#ggmaps=CLAVE_DEL_USUARIO&map_id=DEMO_MAP_ID
+```
+
+La URL anterior es únicamente un **patrón**, no una clave real. Para evitar copiar claves en chats o enlaces públicos, se genera localmente un archivo HTML de acceso privado para el propietario de la clave; dicho archivo **no forma parte del repositorio** y no debe compartirse con el jurado ni subirse a un servidor público.
+
+- El navegador no envía el fragmento `#...` en la petición HTTP de GitHub Pages.
+- Al arrancar, `geogrowth-google-maps-v1.js` lee la clave, valida su formato, elimina el fragmento inmediatamente mediante `history.replaceState` y activa Google Maps en **01 · Seleccionar territorio**.
+- La clave queda en memoria JavaScript durante esa carga; no se guarda en `localStorage`, cookies, ni en archivos del repositorio. Se envía a Google para autenticar Maps JavaScript API al cargar el mapa; es visible en las solicitudes que el navegador dirige a Google, por lo que conviene aplicar restricciones HTTP referrer.
+- Para volver al mapa autónomo, se utiliza **Mapa V5**. Si la clave no es válida o el mapa falla, se conserva V5.
+- La clave demo sin facturación es útil para prototipado, con cuotas y servicios limitados. No equivale a credencial empresarial de producción. Para una demo pública permanente, configurar una clave de navegador restringida al dominio y APIs desde Google Cloud.
+
+Esta característica se comprueba con una **clave sintética** en CI, sin efectuar solicitudes reales a Google.
