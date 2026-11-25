@@ -30,7 +30,8 @@
       ["Distrito seleccionado",r?(r.nombre_distrito||r.ubigeo)+" · "+r.ubigeo:"Pendiente de seleccionar"],
       ["Empresas registradas, PRODUCE 2015",r?fmt(r.empresas_2015):"Elegir distrito"],
       ["Oficinas, SBS diciembre 2025",r?fmt(r.sbs_oficinas_2025):"Elegir distrito"],
-      ["Licencias municipales",r?(r.licencias_municipales_ref==null?"Sin cobertura municipal":fmt(r.licencias_municipales_ref)):"Cobertura parcial"]
+      ["Licencias municipales",r?(r.licencias_municipales_ref==null?"Sin cobertura municipal":fmt(r.licencias_municipales_ref)):"Cobertura parcial"],
+      ["MPA 2026 (nueva fuente independiente)",r?.ubigeo==="040101"?(window.GeoGrowthMunicipalArequipa2026?.forUbigeo("040101")?.calidad?.registros??"Cargando"): "No aplica"]
     ];
     return '<h4>Administrador · fuentes y decisiones</h4><p>Conservamos el cálculo IIT y los escenarios M0/M1/M2 originales de V9. Estos datos no equivalen a negocios captados.</p>'+
       rows.map(([a,b])=>'<div class="v9-extra-row"><span>'+esc(a)+'</span><strong>'+esc(b)+'</strong></div>').join("")+
@@ -38,6 +39,13 @@
       '<div class="v9-extra-links"><button type="button" data-go-section="score">Explicación IIT</button><button type="button" data-go-section="plan">Comparar campañas</button><button type="button" data-go-section="execution">Ver resultados</button></div>';
   }
   function licensesPanel(r){
+    const mpa26=window.GeoGrowthMunicipalArequipa2026?.forUbigeo(r?.ubigeo)||null;
+    const arequipa2026Panel=mpa26?'<div class="v9-extra-license"><b>MPA 2026 · registro administrativo adicional</b>'+
+      '<small><b>824 trámites</b> entre enero y junio; julio: 0 emisiones en el archivo. Fechas Jan-Jun: '+
+      Object.entries(mpa26.resumen.por_mes).filter(([m])=>m!=="2026-07").map(([m,n])=>esc(m)+': '+esc(fmt(n))).join(' · ')+'</small>'+
+      '<small>Estado registrado: 815 ACTIVA; 9 INACTIVA CESE. LF RIESGO BAJO O MEDIO: 712; otros tipos de trámite: 112.</small>'+
+      '<small>Esta fuente es distinta de las 894 licencias MPA jul–dic 2025. No implica 824 negocios nuevos y no contiene domicilios comerciales para marcadores.</small>'+
+      '</div>':'';
     const added=window.GeoGrowthMunicipalAdditional?.forUbigeo(r?.ubigeo);
     if(added){
       const q=added.q2_2026;
@@ -66,7 +74,7 @@
       r?String(l.ubigeo)===String(r.ubigeo):
       dep==="Todo el Perú" || !dep || l.departamento===dep
     ).length;
-    return '<h4>Analista · señales administrativas verificables</h4>'+
+    return arequipa2026Panel+'<h4>Analista · señales administrativas verificables</h4>'+
       '<p><b>'+esc(fmt(count))+'</b> registros en esta vista ('+esc(title)+'). Son <b>fechas de licencia</b>, no fechas de creación ni confirmación de operación del negocio.</p>'+
       (rows.length?rows.map(l=>
         '<div class="v9-extra-license"><b>'+esc(l.nombre||"Expediente municipal "+l.id)+'</b>'+
