@@ -8,6 +8,7 @@ const start=html.indexOf("const DATA=")+"const DATA=".length,end=html.indexOf(";
 assert(start>10&&end>start,"La página V9 debe conservar el Data Pack");
 const DATA=JSON.parse(html.slice(start,end));
 const licenses=JSON.parse(read("data/licencias_prospeccion.json")).registros;
+const newLicenses=JSON.parse(read("data/licencias_convencion_2026q2_resumen.json"));
 const page={location:{search:"?modo=ampliado"}};
 const env={
  window:page,URLSearchParams,DATA,state:{view:"work",selected:"040101",dep:"Arequipa",w:55},
@@ -22,7 +23,7 @@ const env={
 vm.runInNewContext(read("geogrowth-agent-demo-v1.js"),env,{filename:"geogrowth-agent-demo-v1.js"});
 const create=page.GeoGrowthAgentDemo.create;
 assert.equal(typeof create,"function");
-assert.equal(page.GeoGrowthAgentDemo.samples.length,4);
+assert.equal(page.GeoGrowthAgentDemo.samples.length,5);
 function scenario(ubigeo){
  const r=DATA.find(x=>x.ubigeo===ubigeo);
  assert(r,"Falta distrito "+ubigeo);
@@ -32,8 +33,9 @@ function scenario(ubigeo){
  sectorRows.forEach(x=>count.set(x.sector,(count.get(x.sector)||0)+1));
  const sectores=[...count].sort((a,b)=>b[1]-a[1]).map(([sector,registros])=>({sector,registros}));
  const comparable=DATA.filter(x=>x.departamento===r.departamento&&x.ambas_fuentes);
+ const additional=ubigeo==="080901"?{emitidas_q2_2026:newLicenses.calidad.registros_q2_2026,fuera_de_periodo:newLicenses.calidad.registros_fuera_de_periodo,por_codigo_giro:newLicenses.q2_2026.por_codigo_giro}:null;
  const result=create(r,{puntuacion:55,puesto:10,total:comparable.length,peso:55,categoria:"observacion",
-   investigacion:{licencias_individuales:members.length,licencias_con_sector_y_nombre:sectorRows.length,sectores}});
+   investigacion:{licencias_individuales:members.length,licencias_con_sector_y_nombre:sectorRows.length,sectores,licencias_adicionales:additional}});
  assert.equal(result.ubigeo,ubigeo);
  assert.equal(result.departamento,r.departamento);
  assert.equal(result.especialista.length,4);
@@ -47,10 +49,12 @@ const trujillo=scenario("130101");
 const lima=scenario("150101");
 const arequipa=scenario("040101");
 const cajamarca=scenario("060101");
+const santaAna=scenario("080901");
 assert.match(trujillo.hipotesis_territorial,/Trujillo/);
 assert.match(lima.hipotesis_territorial,/Lima Cercado/);
 assert.match(arequipa.hipotesis_territorial,/Arequipa Cercado/);
 assert.match(cajamarca.hipotesis_territorial,/Cajamarca/);
+assert.match(santaAna.hipotesis_territorial,/Santa Ana/);
 assert.equal(arequipa.fuentes.licencias,"individualizada");
 assert.match(arequipa.segmento_demo,/Comercio/);
 assert.equal(lima.fuentes.licencias,"expedientes_sin_identificacion");
@@ -58,10 +62,13 @@ assert.match(lima.especialista[0].conclusion,/sin nombre comercial, giro ni dire
 assert.match(lima.segmento_demo,/no un padrón comercial/);
 assert.equal(trujillo.fuentes.licencias,"sin_cobertura");
 assert.equal(cajamarca.fuentes.licencias,"sin_cobertura");
+assert.equal(santaAna.fuentes.licencias,"agregada_2026q2");
+assert.match(santaAna.especialista[0].conclusion,/56 licencias/);
+assert.match(santaAna.segmento_demo,/5610/);
 assert(!trujillo.segmento_demo.includes("expedientes de Comercio"));
 assert(!cajamarca.segmento_demo.includes("expedientes de Comercio"));
-const signatures=[trujillo,lima,arequipa,cajamarca].map(x=>x.hipotesis_territorial);
-assert.equal(new Set(signatures).size,4,"Los cuatro escenarios deben tener recomendaciones distintas");
+const signatures=[trujillo,lima,arequipa,cajamarca,santaAna].map(x=>x.hipotesis_territorial);
+assert.equal(new Set(signatures).size,5,"Los cinco escenarios deben tener recomendaciones distintas");
 const deps=[...new Set(DATA.map(x=>x.departamento))];
 assert.equal(deps.length,25);
 for(const dep of deps){
@@ -79,6 +86,6 @@ if(missing){
  assert.equal(result.piloto_demo.fichas,0);
  assert.match(result.especialista[3].conclusion,/no comparable/);
 }
-assert.match(html,/geogrowth-agent-demo-v1\.js\?v=1/);
+assert.match(html,/geogrowth-agent-demo-v1\.js\?v=2/);
 assert.match(html,/geogrowth-opportunity-brief-v2\.js\?v=\d+/);
-console.log("OK: 4 casos distintos, 25 departamentos, licencias agregadas/individuales/ausentes y casos sin IIT.");
+console.log("OK: 5 casos distintos, 25 departamentos, fuente Santa Ana 2026-Q2, datos agregados y casos sin IIT.");
