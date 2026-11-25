@@ -38,6 +38,22 @@
       '<div class="v9-extra-links"><button type="button" data-go-section="score">Explicación IIT</button><button type="button" data-go-section="plan">Comparar campañas</button><button type="button" data-go-section="execution">Ver resultados</button></div>';
   }
   function licensesPanel(r){
+    const added=window.GeoGrowthMunicipalAdditional?.forUbigeo(r?.ubigeo);
+    if(added){
+      const q=added.q2_2026;
+      const giros=Object.entries(q.por_codigo_giro).sort((a,b)=>Number(b[1])-Number(a[1])).slice(0,5);
+      return '<h4>Analista · licencias de Santa Ana (Cusco)</h4>'+
+        '<p>Fuente municipal integrada: <b>'+esc(fmt(added.calidad.registros_q2_2026))+
+        ' licencias entre abril y junio de 2026</b>. El archivo también contiene <b>'+
+        esc(fmt(added.calidad.registros_fuera_de_periodo))+' registro de 2024</b>, que no se cuenta en el trimestre.</p>'+
+        '<div class="v9-extra-row"><span>Abril</span><strong>'+esc(fmt(q.por_mes["2026-04"]))+'</strong></div>'+
+        '<div class="v9-extra-row"><span>Mayo</span><strong>'+esc(fmt(q.por_mes["2026-05"]))+'</strong></div>'+
+        '<div class="v9-extra-row"><span>Junio</span><strong>'+esc(fmt(q.por_mes["2026-06"]))+'</strong></div>'+
+        '<p><b>Códigos de giro más frecuentes:</b></p>'+
+        giros.map(([code,n])=>'<div class="v9-extra-row"><span>GIRO '+esc(code)+'</span><strong>'+esc(fmt(n))+' licencias</strong></div>').join("")+
+        '<p class="v9-extra-note">Homologación territorial: CSV 070901 → INEI 080901 (Santa Ana). Datos agregados sin RUC, nombres ni direcciones. Los códigos de giro requieren diccionario oficial; la licencia no confirma un negocio activo.</p>'+
+        '<div class="v9-extra-links"><button type="button" data-go-section="opportunity">Analizar oportunidad</button><button type="button" data-go-section="plan">Diseñar campaña</button></div>';
+    }
     if(loading)return '<h4>Analista · licencias municipales</h4><p>Cargando registros publicados para priorizar verificaciones.</p>';
     if(error)return '<h4>Analista · licencias municipales</h4><p>No fue posible cargar las licencias: '+esc(error)+'. El resto del dashboard sigue disponible.</p>';
     const dep=r?r.departamento:state.dep;
