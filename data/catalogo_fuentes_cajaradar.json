@@ -33,8 +33,12 @@
       "periodo_indicado": "2025–2026",
       "foco_sugerido": "Comercio, manufactura y turismo",
       "referencia": "https://www.datosabiertos.gob.pe/dataset/listado-de-licencias-de-funcionamiento-registrados-en-la-municipalidad-provincial-de",
-      "estado": "FUENTE_EXTERNA_NO_INTEGRADA",
-      "aviso": "Referencia de búsqueda aportada por el prototipo CajaRadar AI. No se han incorporado expedientes de esta fuente al Data Pack ni validado el foco sectorial."
+      "estado": "RESUMEN_MPA_2026_INTEGRADO",
+      "aviso": "Resumen agregado MPA 2026 cargado: 824 trámites, sin emisiones de julio, 712 LF riesgo bajo/medio. No son 824 negocios nuevos. La URL de referencia previa no sustituye al archivo Excel de 2026.",
+      "referencia_2026": "Archivo de usuario: MPA enero-julio 2026 (emisiones reales enero-junio 2026)",
+      "dataset_integrado_2026": "data/licencias_arequipa_2026_resumen.json",
+      "registros_2026": 824,
+      "cobertura": "MPA 2025 jul-dic (894 en fuente previa) y MPA 2026 ene-jun (824 trámites nuevos en otro archivo): conjuntos independientes, no deduplicados."
     },
     {
       "ubigeo": "200104",
