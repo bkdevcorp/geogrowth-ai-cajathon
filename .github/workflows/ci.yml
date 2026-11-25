@@ -39,9 +39,12 @@ jobs:
           node --check geogrowth-opportunity-brief-v2.js
           node --check geogrowth-campaign-guide-v1.js
           node --check geogrowth-agent-demo-v1.js
+          node --check geogrowth-filtros-v1.js
       - name: Validar Opportunity Brief por territorio e IIT
         run: node scripts/test_opportunity_brief.cjs
       - name: Simulación de agentes en cuatro casos y 25 departamentos
         run: node scripts/test_agent_demo.cjs
+      - name: Validar 196 provincias y filtros de oportunidad
+        run: node scripts/test_filters_v9.cjs
       - name: Prueba real de navegador de V9 ampliado
         run: python scripts/test_browser_v9.py
