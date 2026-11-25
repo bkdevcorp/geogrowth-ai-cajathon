@@ -31,7 +31,9 @@ function build(r,weight){
   investigacion_focalizada:"Desarrollar investigación focalizada y comparar con distritos de mayor IIT. Escalar solo cuando existan negocios operativos verificados, interés declarado y condiciones logísticas.",
   observacion:"No lanzar una campaña amplia basándose solo en el IIT. Mantener el distrito en observación o realizar una validación puntual cuando exista evidencia comercial reciente y verificable."
  }[categoria];
- const licenses=has(r.licencias_municipales_ref)
+ const added=window.GeoGrowthMunicipalAdditional?.forUbigeo(r.ubigeo)||null;
+ const licenses=added?fmt(added.calidad.registros_q2_2026)+" licencias emitidas durante abril–junio 2026 y "+fmt(added.calidad.registros_fuera_de_periodo)+" registro de febrero de 2024. Fuente agregada, sin prospectos identificados."
+  :has(r.licencias_municipales_ref)
   ?fmt(r.licencias_municipales_ref)+" expedientes o registros municipales ("+(r.anio_licencias||"periodo no detallado")+"). No equivalen necesariamente a negocios activos únicos."
   :"No hay registros municipales individuales disponibles en este Data Pack para el distrito; ello no demuestra ausencia de licencias.";
  const hipotesis=[
@@ -77,7 +79,9 @@ function build(r,weight){
    .map(([sector,n])=>({sector,registros:n,porcion:registros.length?round(n*100/registros.length):null}));
  const ejemplos=sectorRows.slice(0,3).map(x=>({nombre:x.nombre,giro:x.giro||null,fecha_licencia:x.fecha||null,sector:x.sector}));
  const topSector=sectores[0]?.sector||null;
- const foco=topSector==="Comercio"
+ const foco=added
+   ?"En Santa Ana (Quillabamba), investigar giros reportados en licencias del segundo trimestre de 2026: código 5610 ("+fmt(added.q2_2026.por_codigo_giro["5610"]||0)+" registros) y código 5630 ("+fmt(added.q2_2026.por_codigo_giro["5630"]||0)+"). Verificar la clasificación oficial del giro, los establecimientos vigentes y las necesidades antes de proponer productos."
+   :topSector==="Comercio"
    ?"Investigar establecimientos comerciales vigentes y contrastar rotación de inventarios, reposición de mercadería y medios de cobro. La necesidad debe ser expresada por el negocio."
    :topSector==="Alimentos y gastronomía"
    ?"Investigar negocios gastronómicos actuales y contrastar compra de insumos, equipamiento y estacionalidad; no inferir demanda de crédito por una licencia."
@@ -107,9 +111,19 @@ function build(r,weight){
    sensibilidad.push({peso_empresarial_pct:alternateW,puesto:ind<0?null:ind+1,puntuacion:ind<0?null:seq[ind].score});
  }
  const investigacion={
-   estado_evidencia:registros.length?"Licencias publicadas para el distrito, no confirmación de empresas vigentes.":"No hay licencias individuales vinculables al distrito en la bandeja publicada.",
+   estado_evidencia:added?"Licencias agregadas 2026-T2 incorporadas: no incluyen domicilios ni identificación de negocios en la demo.":registros.length?"Licencias publicadas para el distrito, no confirmación de empresas vigentes.":"No hay licencias individuales vinculables al distrito en la bandeja publicada.",
    licencias_individuales:registros.length,licencias_con_sector_y_nombre:sectorRows.length,
    sectores,ejemplos_publicados:ejemplos,foco_comercial:foco,
+   licencias_adicionales:added?{
+     fuente:"Municipalidad Provincial de La Convención",
+     ubigeo_csv:added.ubicacion.ubigeo_original_csv,
+     ubigeo_inei:added.ubicacion.ubigeo_inei,
+     emitidas_q2_2026:added.calidad.registros_q2_2026,
+     fuera_de_periodo:added.calidad.registros_fuera_de_periodo,
+     por_mes:added.q2_2026.por_mes,
+     por_codigo_giro:added.q2_2026.por_codigo_giro,
+     sha256_fuente:added.origen.sha256
+   }:null,
    diagnostico:"IIT "+(entry?dec(entry.score):"no comparable")+", posición "+(rank||"N/D")+
      " de "+n+". "+lecturaPesos+" "+lecturaOficinas,
    alternativas_departamentales:alternativas,sensibilidad,
@@ -135,7 +149,7 @@ function build(r,weight){
   decision:{categoria,recomendacion},
   evidencia:{produce_2015:{micro:r.micro_2015??null,pequenas:r.pequena_2015??null,empresas:r.empresas_2015??null},
     sbs_2025:{oficinas:r.sbs_oficinas_2025??null,puntos:r.sbs_puntos_2025??null,atm:r.sbs_atm_2025??null,pos:r.sbs_pos_2025??null},
-    licencias:licenses,ids:String(r.evidencia||"").split("|").filter(Boolean)},
+    licencias:licenses,ids:String(r.evidencia||"").split("|").filter(Boolean).concat(added?["LIC-MPLC-2026Q2:"+r.ubigeo]:[])},
   hipotesis,productos,acciones,criterios,faltantes,investigacion,
   filtros_busqueda:window.GeoGrowthTerritoryFilters?.describe(r)||null,
   agentes_demo:window.GeoGrowthAgentDemo?.create(r,{
@@ -222,12 +236,25 @@ function agentHtml(b){
  const importance=i.puesto_departamental==null?"Sin clasificación":
    b.decision.categoria==="prioridad_exploratoria"?"Validación prioritaria":
    b.decision.categoria==="investigacion_focalizada"?"Investigación selectiva":"Observación con verificación puntual";
- const sectorText=a.sectores.length
+ const sectorText=a.licencias_adicionales
+   ?"El municipio reporta "+fmt(a.licencias_adicionales.emitidas_q2_2026)+" licencias emitidas en el segundo trimestre de 2026 (abril: "+
+     fmt(a.licencias_adicionales.por_mes["2026-04"])+", mayo: "+fmt(a.licencias_adicionales.por_mes["2026-05"])+
+     ", junio: "+fmt(a.licencias_adicionales.por_mes["2026-06"])+"). Los códigos de giro más frecuentes son 5610 ("+
+     fmt(a.licencias_adicionales.por_codigo_giro["5610"]) +") y 5630 ("+
+     fmt(a.licencias_adicionales.por_codigo_giro["5630"])+"). No se publica información individual ni se asume actividad vigente; confirmar el diccionario municipal de giros."
+   :a.sectores.length
    ?"En los "+fmt(a.licencias_individuales)+" registros municipales individualizados disponibles, los giros con mayor frecuencia publicada son "+
      a.sectores.slice(0,3).map(x=>x.sector+" ("+fmt(x.registros)+" expedientes, "+dec(x.porcion)+" %)").join("; ")+
      ". Esta distribución describe expedientes disponibles, no empresas operativas ni demanda de crédito."
    :"No hay giros municipales individualizados suficientes en este distrito para inferir un segmento comercial con la fuente publicada.";
- const sectorHtml=a.sectores.length
+ const sectorHtml=a.licencias_adicionales
+   ?'<div class="gg-brief-metrics">'+
+     stat(fmt(a.licencias_adicionales.emitidas_q2_2026),"Licencias 2026-T2")+
+     stat(fmt(a.licencias_adicionales.por_codigo_giro["5610"]),"GIRO 5610 · por validar")+
+     stat(fmt(a.licencias_adicionales.por_codigo_giro["5630"]),"GIRO 5630 · por validar")+
+     stat(fmt(a.licencias_adicionales.fuera_de_periodo),"Registro histórico 2024")+
+     '</div>'
+   :a.sectores.length
   ?'<div class="gg-brief-metrics">'+a.sectores.slice(0,4).map(x=>stat(fmt(x.registros),x.sector+" · expedientes")).join("")+'</div>'
   :'<div class="gg-ai-insight"><p>'+esc(a.estado_evidencia)+'</p></div>';
  const examples=a.ejemplos_publicados.length
