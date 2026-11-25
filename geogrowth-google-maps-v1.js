@@ -23,7 +23,7 @@ function takePrivateKey(){
  return {key:supplied,mapId:/^[0-9A-Za-z_-]{4,100}$/.test(suppliedId)?suppliedId:"DEMO_MAP_ID"};
 }
 const privateLaunch=takePrivateKey();
-let key=privateLaunch.key,mapId=privateLaunch.mapId,mode=key?"google":"v5",loading=null,active=null,seq=0;
+let key=privateLaunch.key,mapId=privateLaunch.mapId,mode="google",loading=null,active=null,seq=0;
 let target=null,origin=null,placesMarkers=[],routeLines=[];
 const libraryPlan={initial:["maps","core","marker","geometry"],onDemand:["places","routes"],deprecatedExcluded:["drawing"]};
 const safe=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -127,7 +127,7 @@ async function searchPlaces(){
  status("Consultando Google Places…");
  try{
  const {Place}=await google.maps.importLibrary("places");
- const found=new Map();
+ const found=new globalThis.Map();
  for(const term of terms){
  const response=await Place.searchByText({textQuery:term+" en "+address(sc),fields:["id","displayName","location","formattedAddress","googleMapsURI","businessStatus","rating","userRatingCount"],maxResultCount:20,region:"pe",language:"es"});
  if(token!==searchEpoch||my!==seq)return;
@@ -149,6 +149,8 @@ const prev=render;
 render=function(){
  prev();if(state.view!=="work")return;
  const shell=document.getElementById("v9-safe-map");if(!shell)return;
+ document.querySelectorAll("#content .go-block").forEach(el=>el.remove());
+ const subtitle=document.querySelector(".go-pick .go-subtle");if(subtitle)subtitle.textContent="Búsqueda comercial · Google Places";
  document.querySelector(".go-pick")?.insertAdjacentHTML("beforeend",toolbox());
  void mount();
 };
