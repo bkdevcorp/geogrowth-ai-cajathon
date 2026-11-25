@@ -20,9 +20,14 @@ assert.equal(Object.values(summary.q2_2026.por_codigo_giro).reduce((a,b)=>a+b,0)
 assert.equal(summary.q2_2026.por_codigo_giro["5610"],12);
 assert.equal(summary.q2_2026.por_codigo_giro["5630"],6);
 assert.equal(summary.origen.sha256,"b15742ef8c3b135ffb83365ccae12ba1f307b8ece8d77473f8ccf6e0b372de15");
-const text=JSON.stringify(summary).toLowerCase();
-assert(!/"ruc"\\s*:|"razon_social"\\s*:|"nombre_comercial"\\s*:/i.test(text),"No deben difundirse identificadores comerciales");
-assert(!/"direccion"\\s*:|"representante"\\s*:|"contacto"\\s*:/i.test(text),"No almacenar domicilios o contactos individuales");
+const forbidden=new Set(["ruc","razon_social","nombre_comercial","direccion","contacto","representante"]);
+function scanKeys(obj){
+ for(const [name,value] of Object.entries(obj||{})){
+  assert(!forbidden.has(name.toLowerCase()),"No divulgar datos comerciales/personales bajo la clave "+name);
+  if(value&&typeof value==="object")scanKeys(value);
+ }
+}
+scanKeys(summary);
 assert.equal(catalog.territorios.find(x=>x.ubigeo==="080901")?.estado,"RESUMEN_MUNICIPAL_AGREGADO_INTEGRADO");
 const html=fs.readFileSync(path.join(root,"GeoGrowth_AI_Dashboard_V3.html"),"utf8");
 assert.match(html,/geogrowth-licencias-convencion-v1\.js\?v=1/);
