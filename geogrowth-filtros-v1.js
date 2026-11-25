@@ -129,6 +129,35 @@ function filterSummary(department){
    ' · <a href="'+esc(x.referencia)+'" target="_blank" rel="noopener noreferrer">'+(x.estado==='PORTAL_GENERAL_SIN_DATASET_VERIFICADO'?'Buscar en portal':'Consultar dataset')+'</a> · '+(x.estado==='RESUMEN_MPA_2026_INTEGRADO'?'Resumen MPA ene-jun 2026 integrado (julio: 0)':x.estado==='RESUMEN_MUNICIPAL_AGREGADO_INTEGRADO'?'Resumen agregado 2026-T2 integrado':x.estado==='FUENTE_EXTERNA_NO_INTEGRADA'?'No integrada':'Dataset concreto no identificado')+'</p>').join("")+'</div>':'')+
  '</section>';
 }
+// Coverage tiers: actual municipal records, then aggregate evidence, then other territories.
+const coverageByUbigeo={"040101":3,"220101":2,"150101":2,"080901":2};
+const coverageLabel={3:"Con nombres y direcciones",2:"Datos oficiales sin ubicación individual",1:"Fuente pendiente de integrar",0:"Sin datos municipales integrados"};
+function coverage(u){return coverageByUbigeo[String(u)]||((catalog||[]).some(x=>String(x.ubigeo)===String(u))?1:0);}
+function regionCoverage(dep){return DATA.filter(r=>r.departamento===dep).reduce((m,r)=>Math.max(m,coverage(r.ubigeo)),0);}
+function provinceCoverage(code){return DATA.filter(r=>key(r)===code).reduce((m,r)=>Math.max(m,coverage(r.ubigeo)),0);}
+function groupOptions(select,rank){
+ if(!select)return;
+ const value=select.value,options=Array.from(select.options),placeholder=options.filter(o=>!o.value||o.value==="all"),items=options.filter(o=>o.value&&o.value!=="all");
+ const groups=new Map();
+ for(const o of items){const level=rank(o.value);if(!groups.has(level))groups.set(level,[]);groups.get(level).push(o);}
+ const fragment=document.createDocumentFragment();
+ for(const o of placeholder)fragment.append(o);
+ for(const level of [3,2,1,0]){
+  if(!groups.has(level))continue;
+  const group=document.createElement("optgroup");group.label=coverageLabel[level];
+  for(const o of groups.get(level).sort((a,b)=>sortText(a.textContent,b.textContent)))group.append(o);
+  fragment.append(group);
+ }
+ select.replaceChildren(fragment);select.value=value;
+}
+function opportunityCoverage(id,dep,province,district){
+ const rows=DATA.filter(r=>r.departamento===dep&&(province==="all"||key(r)===province)&&(!district||String(r.ubigeo)===district));
+ const ids=rows.map(r=>String(r.ubigeo));
+ if(id==="todas"||id==="nuevos"||id==="otros")return ids.includes("040101")?3:ids.some(u=>coverage(u)===2)?2:ids.some(u=>coverage(u)===1)?1:0;
+ if(id==="expansion")return ids.includes("220101")?2:0;
+ if(id==="desatendidos")return rows.some(r=>r.ambas_fuentes)?2:0;
+ return 0;
+}
 function enhancePicker(){
  const container=document.querySelector(".go-pick");
  if(!container)return;
@@ -159,6 +188,11 @@ function enhancePicker(){
  const existing=document.getElementById("gg-filter-results");if(existing)existing.remove();
  if(focus.type==="otros"){const custom=document.createElement("div");custom.style.cssText="margin-top:12px";custom.innerHTML='<label for="gg-custom-opportunity">Describe la oportunidad</label><textarea id="gg-custom-opportunity" rows="3" style="width:100%;padding:10px;border:1px solid #c5d8e8;border-radius:8px" placeholder="Ej.: ferreterías para capital de trabajo">'+esc(focus.custom)+'</textarea>';opts.after(custom);}
  if(budget)budget.remove();
+ groupOptions(dept,regionCoverage);
+ groupOptions(p.querySelector("select"),provinceCoverage);
+ groupOptions(select,coverage);
+ groupOptions(t.querySelector("select"),id=>opportunityCoverage(id,dept.value,focus.province,select?.value));
+ const hint=document.createElement("p");hint.className="gg-filter-note";hint.textContent="Ordenado por disponibilidad de datos. Los territorios con nombres y direcciones permiten consultar Google Places; los demás pueden tener evidencia agregada, no coincidencias individuales garantizadas.";opts.after(hint);
  const quick=container.querySelector(".go-quick");if(quick)quick.remove();
 }
 function updateMap(){
@@ -264,7 +298,7 @@ document.addEventListener("change",e=>{
   focus.province=t.value;
   state.plan=[];api.selectedMethod=null;
   const dept=document.getElementById("go-dep")?.value;
-  const first=DATA.find(x=>x.departamento===dept&&(focus.province==="all"||key(x)===focus.province));
+  const first=DATA.filter(x=>x.departamento===dept&&(focus.province==="all"||key(x)===focus.province)).sort((a,b)=>coverage(b.ubigeo)-coverage(a.ubigeo)||sortText(a.nombre_distrito,b.nombre_distrito))[0];
   if(first){
    const district=document.getElementById("go-ubigeo");
    district.innerHTML='<option value="'+esc(first.ubigeo)+'">'+esc(first.nombre_distrito||first.ubigeo)+'</option>';
