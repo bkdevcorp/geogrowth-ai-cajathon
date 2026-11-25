@@ -15,6 +15,8 @@ function models(territory,budget){
  const old=state.dep;let region;
  try{state.dep=territory.departamento;region=getScored();}
  finally{state.dep=old;}
+ // La provincia y el tipo de oportunidad delimitan los candidatos sin alterar el motor M0/M1/M2.
+ region=window.GeoGrowthTerritoryFilters?.scopeRows(territory,region)||region;
  const methods=[
   {id:"M0",title:"Volumen histórico",desc:"Comenzar por los distritos con más microempresas registradas en PRODUCE 2015.",rows:greedy([...region].sort((a,b)=>(b.micro_2015||0)-(a.micro_2015||0)),budget)},
   {id:"M1",title:"Prioridad IIT",desc:"Recorrer distritos del IIT más alto al más bajo e incluirlos mientras alcance el presupuesto simulado.",rows:greedy(region,budget)},
@@ -60,7 +62,7 @@ function campaignHtml(info){
  '<div class="gc-explain"><b>¿Qué significa M2 (optimización 0/1)?</b> Cada distrito es una decisión binaria: se incluye (1) o no (0). Se ensayan combinaciones entre los 30 distritos de mayor IIT para lograr la suma IIT más alta dentro del presupuesto simulado. No optimiza conversiones, ingresos o cercanía geográfica.</div>'+
  '<p>'+esc(explanation)+'</p></section>'+
  '<section class="gc-section"><h3>3. Revisa la propuesta que llevarás a campo</h3>'+
- '<div class="gc-current"><h4>Selección actual: '+(activeMethod?"Método "+esc(activeMethod):"Selección inicial o manual")+'</h4>'+
+ '<div class="gc-current"><h4>Selección actual: '+((window.GeoGrowthTerritoryFilters?.selectedMethod||activeMethod)?"Método "+esc(window.GeoGrowthTerritoryFilters?.selectedMethod||activeMethod):"Selección inicial o manual")+'</h4>'+
  '<div class="gc-kpis"><div class="gc-kpi"><b>'+selected.length+'</b><small>Distritos en el plan</small></div>'+
  '<div class="gc-kpi"><b>S/ '+fmt(selectedCost)+'</b><small>Costo simulado total</small></div>'+
  '<div class="gc-kpi"><b>'+dec(selectedScore)+'</b><small>Suma IIT (no conversiones)</small></div></div>'+
