@@ -13,6 +13,7 @@ const samples=[
 ];
 function create(r,context){
  const meta=context.investigacion||{};
+ const mpa26=meta.licencias_arequipa_2026||null;
  const cohort=DATA.filter(x=>x.departamento===r.departamento&&x.ambas_fuentes);
  const total=cohort.length||1;
  const micro=Number(r.micro_2015||0);
@@ -34,6 +35,10 @@ function create(r,context){
   :municipality==="agregada"
   ?"Hay "+number(r.licencias_municipales_ref)+" expedientes administrativos sin segmentación comercial individualizada verificable en esta fuente."
   :"No hay registros municipales individualizados publicados para este UBIGEO en el paquete; no significa que no haya empresas ni licencias.";
+ const mpa26Note=mpa26?" MPA registra "+number(mpa26.registros)+
+  " trámites de licencia enero–junio 2026 (0 emitidos en julio del archivo), incluyendo "+
+  number(mpa26.por_tipo?.["3. LF RIESGO BAJO O MEDIO"]||0)+" LF riesgo bajo/medio y "+
+  number(mpa26.por_estado?.["INACTIVA CESE"]||0)+" con estado documental INACTIVA CESE. No son negocios nuevos ni pines individuales.":"";
  const lens=hasMicro&&hasOffices
   ?"El distrito se sitúa aproximadamente en el percentil "+microPct+" de microempresas históricas y en el percentil "+officePct+" de oficinas SBS entre los distritos comparables de "+r.departamento+". Son posiciones sobre datos de distintos años."
   :"Al menos una fuente no permite un posicionamiento comparable de microempresas y oficinas.";
@@ -47,7 +52,7 @@ function create(r,context){
    interview:"¿El negocio opera actualmente y su actividad puede contrastarse con una fuente vigente y autorizada?"
   },
   "040101":{
-   angle:"Arequipa Cercado: usar los giros municipales publicados como pista para validar comercios y servicios concretos, nunca como clientes identificados automáticamente.",
+   angle:"Arequipa Cercado: contrastar los giros de licencias MPA 2025 con los 824 trámites administrativos MPA enero–junio 2026. Los tipos de licencia 2026 no son sectores económicos ni 824 clientes nuevos.",
    interview:"¿La actividad declarada en la licencia sigue vigente y cuál es su necesidad comercial hoy?"
   },
   "080901":{
@@ -86,9 +91,9 @@ function create(r,context){
  const roles=[
   {id:"evidencia",name:"Agente de datos",type:"Hecho / cobertura",
    conclusion:(hasMicro?number(micro)+" microempresas PRODUCE (2015). ":"Sin cifra microempresarial comparable. ")+
-    (hasOffices?number(offices)+" oficinas SBS (2025). ":"Sin oficinas SBS comparables. ")+sourceNote,
+    (hasOffices?number(offices)+" oficinas SBS (2025). ":"Sin oficinas SBS comparables. ")+sourceNote+mpa26Note,
    next:"Contrastar ambas series con registros más recientes y conservar su periodo de origen.",
-   sources:[hasMicro?"PRODUCE-2015:"+r.ubigeo:null,hasOffices?"SBS-2025:"+r.ubigeo:null,municipality==="agregada_2026q2"?"LIC-MPLC-2026Q2:"+r.ubigeo:null].filter(Boolean)},
+   sources:[hasMicro?"PRODUCE-2015:"+r.ubigeo:null,hasOffices?"SBS-2025:"+r.ubigeo:null,municipality==="agregada_2026q2"?"LIC-MPLC-2026Q2:"+r.ubigeo:null,mpa26?"LIC-MPA-2026-ENE-JUN:"+r.ubigeo:null].filter(Boolean)},
   {id:"mercado",name:"Agente de oportunidades",type:"Hipótesis",
    conclusion:special?.angle||sectorFocus,
    next:sectorQuestion,sources:municipality==="individualizada"?["LIC-MPA:"+r.ubigeo]:municipality==="agregada_2026q2"?["LIC-MPLC-2026Q2:"+r.ubigeo]:[]},
@@ -104,7 +109,7 @@ function create(r,context){
   tipo:"GeoGrowthMultiAgentDemoV1",modalidad:"Simulación determinista de roles sin LLM",
   ubigeo:String(r.ubigeo),departamento:r.departamento,distrito:r.nombre_distrito||null,
   iit:{puntuacion:context.puntuacion,puesto:context.puesto,total:context.total,peso_empresarial_pct:context.peso},
-  fuentes:{produce_2015:r.micro_2015??null,sbs_2025:r.sbs_oficinas_2025??null,licencias:municipality},
+  fuentes:{produce_2015:r.micro_2015??null,sbs_2025:r.sbs_oficinas_2025??null,licencias:municipality,licencias_mpa_2026:mpa26?mpa26.registros:null},
   posicion_relativa:{percentil_microempresas_historicas:hasMicro?microPct:null,percentil_oficinas_2025:hasOffices?officePct:null},
   segmento_demo:sectorFocus,hipotesis_territorial:special?.angle||sectorFocus,
   piloto_demo:pilot,pregunta_clave:sectorQuestion,

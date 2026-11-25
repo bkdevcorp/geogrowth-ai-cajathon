@@ -32,7 +32,9 @@ function build(r,weight){
   observacion:"No lanzar una campaña amplia basándose solo en el IIT. Mantener el distrito en observación o realizar una validación puntual cuando exista evidencia comercial reciente y verificable."
  }[categoria];
  const added=window.GeoGrowthMunicipalAdditional?.forUbigeo(r.ubigeo)||null;
+ const mpa26=window.GeoGrowthMunicipalArequipa2026?.forUbigeo(r.ubigeo)||null;
  const licenses=added?fmt(added.calidad.registros_q2_2026)+" licencias emitidas durante abril–junio 2026 y "+fmt(added.calidad.registros_fuera_de_periodo)+" registro de febrero de 2024. Fuente agregada, sin prospectos identificados."
+  :mpa26?fmt(mpa26.calidad.registros)+" trámites de licencia registrados con emisión entre enero y junio 2026 (julio: 0 en el archivo). Fuente anterior MPA 2025: "+fmt(r.licencias_municipales_ref)+" expedientes en julio-diciembre 2025. Son bases independientes, sin suma ni deduplicación."
   :has(r.licencias_municipales_ref)
   ?fmt(r.licencias_municipales_ref)+" expedientes o registros municipales ("+(r.anio_licencias||"periodo no detallado")+"). No equivalen necesariamente a negocios activos únicos."
   :"No hay registros municipales individuales disponibles en este Data Pack para el distrito; ello no demuestra ausencia de licencias.";
@@ -114,6 +116,16 @@ function build(r,weight){
    estado_evidencia:added?"Licencias agregadas 2026-T2 incorporadas: no incluyen domicilios ni identificación de negocios en la demo.":registros.length?"Licencias publicadas para el distrito, no confirmación de empresas vigentes.":"No hay licencias individuales vinculables al distrito en la bandeja publicada.",
    licencias_individuales:registros.length,licencias_con_sector_y_nombre:sectorRows.length,
    sectores,ejemplos_publicados:ejemplos,foco_comercial:foco,
+   licencias_arequipa_2026:mpa26?{
+     fuente_id:"LIC-MPA-2026-ENE-JUN:"+r.ubigeo,
+     registros:mpa26.calidad.registros,
+     emitidos_julio_2026:mpa26.calidad.emitidos_julio_2026,
+     por_mes:mpa26.resumen.por_mes,
+     por_tipo:mpa26.resumen.por_tipo,
+     por_estado:mpa26.resumen.por_estado,
+     sha256_fuente:mpa26.origen.sha256,
+     advertencia:"Los tipos de licencia son categorías administrativas; no son rubros económicos ni negocios nuevos."
+   }:null,
    licencias_adicionales:added?{
      fuente:"Municipalidad Provincial de La Convención",
      ubigeo_csv:added.ubicacion.ubigeo_original_csv,
@@ -149,7 +161,7 @@ function build(r,weight){
   decision:{categoria,recomendacion},
   evidencia:{produce_2015:{micro:r.micro_2015??null,pequenas:r.pequena_2015??null,empresas:r.empresas_2015??null},
     sbs_2025:{oficinas:r.sbs_oficinas_2025??null,puntos:r.sbs_puntos_2025??null,atm:r.sbs_atm_2025??null,pos:r.sbs_pos_2025??null},
-    licencias:licenses,ids:String(r.evidencia||"").split("|").filter(Boolean).concat(added?["LIC-MPLC-2026Q2:"+r.ubigeo]:[])},
+    licencias:licenses,ids:String(r.evidencia||"").split("|").filter(Boolean).concat(added?["LIC-MPLC-2026Q2:"+r.ubigeo]:[]).concat(mpa26?["LIC-MPA-2026-ENE-JUN:"+r.ubigeo]:[])},
   hipotesis,productos,acciones,criterios,faltantes,investigacion,
   filtros_busqueda:window.GeoGrowthTerritoryFilters?.describe(r)||null,
   agentes_demo:window.GeoGrowthAgentDemo?.create(r,{
@@ -247,6 +259,15 @@ function agentHtml(b){
      a.sectores.slice(0,3).map(x=>x.sector+" ("+fmt(x.registros)+" expedientes, "+dec(x.porcion)+" %)").join("; ")+
      ". Esta distribución describe expedientes disponibles, no empresas operativas ni demanda de crédito."
    :"No hay giros municipales individualizados suficientes en este distrito para inferir un segmento comercial con la fuente publicada.";
+ const mpa26Html=a.licencias_arequipa_2026
+  ?'<div class="gg-ai-insight"><b>MPA 2026 · fuente adicional, distinta de 2025</b>'+
+    '<p>824 registros administrativos de enero a junio de 2026. Julio: 0 emisiones observadas aunque figura en el título. Estado documental: 815 ACTIVA, 9 INACTIVA CESE.</p>'+
+    '<p>712 LF RIESGO BAJO O MEDIO. También hay duplicados, cesionarios, cambios de denominación y transferencias: no son 824 negocios nuevos.</p>'+
+    '<div class="gg-brief-metrics">'+Object.entries(a.licencias_arequipa_2026.por_mes)
+      .filter(([mes])=>mes!=="2026-07")
+      .map(([mes,n])=>stat(fmt(n),"Emisiones "+mes)).join("")+'</div>'+
+    '<p class="gg-brief-fine">Sin direcciones ni coordenadas individuales: estas licencias no generan marcadores de negocios en Google Maps.</p></div>'
+  :"";
  const sectorHtml=a.licencias_adicionales
    ?'<div class="gg-brief-metrics">'+
      stat(fmt(a.licencias_adicionales.emitidas_q2_2026),"Licencias 2026-T2")+
@@ -280,7 +301,7 @@ function agentHtml(b){
     '<div class="gg-brief-metrics">'+stat(score,"IIT seleccionado")+stat(rank,"Posición departamental")+
     stat(dec(i.aporte_empresarial),"Aporte empresas E")+stat(dec(i.aporte_oficinas),"Aporte oficinas B")+'</div>')+
   sec("2. Evidencia territorial y segmentos observables",'<p>'+esc(sectorText)+'</p>'+sectorHtml+
-    '<div class="gg-ai-insight"><b>Foco comercial para contrastar</b><p>'+esc(b.agentes_demo?.hipotesis_territorial||a.foco_comercial)+'</p></div>'+
+    mpa26Html+'<div class="gg-ai-insight"><b>Foco comercial para contrastar</b><p>'+esc(b.agentes_demo?.hipotesis_territorial||a.foco_comercial)+'</p></div>'+
     '<p class="gg-brief-fine">PRODUCE 2015: '+esc(fmt(e.produce_2015.micro))+' microempresas. SBS 2025: '+esc(fmt(e.sbs_2025.oficinas))+
     ' oficinas y '+esc(fmt(e.sbs_2025.puntos))+' puntos. Licencias: '+esc(e.licencias)+'</p>'+examples)+
   sec("3. Hipótesis que el asesor debe investigar",'<div class="gg-brief-grid">'+b.hipotesis.map(h=>

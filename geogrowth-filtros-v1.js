@@ -73,6 +73,7 @@ function description(r){
   naturaleza:"Lente de investigación, no resultado de detección de clientes o demanda",
   fuente_municipal_externa:external&&external.estado==="FUENTE_EXTERNA_NO_INTEGRADA"?{url:external.referencia,estado:external.estado,periodo_referido:external.periodo_indicado}:null,
   fuente_municipal_agregada:window.GeoGrowthMunicipalAdditional?.forUbigeo(r?.ubigeo)?{estado:"INTEGRADA",registros_q2_2026:56,ubigeo_original:"070901",ubigeo_inei:"080901"}:null,
+  fuente_arequipa_2026:window.GeoGrowthMunicipalArequipa2026?.forUbigeo(r?.ubigeo)?{estado:"INTEGRADA",registros:824,periodo:"enero-junio 2026",julio_observado:0,ubigeo:"040101"}:null,
   limita_estacionalidad:focus.type==="estacionales"
     ?"No existe una serie de actividad estacional que permita clasificar territorios. No se presentan oportunidades priorizadas.":null
  };
@@ -86,11 +87,14 @@ function sources(department,province){
 function labelFor(r){
  const ref=refOf(r.ubigeo);
  const origin=r.licencias_municipales_ref!=null?" · licencia agregada integrada":
+   ref?.estado==="RESUMEN_MPA_2026_INTEGRADO"?" · licencias MPA ene-jun 2026 integradas":
    ref?.estado==="RESUMEN_MUNICIPAL_AGREGADO_INTEGRADO"?" · licencias municipales 2026-T2 integradas":
    ref?" · fuente municipal externa por incorporar":"";
  return (r.nombre_distrito||"UBIGEO "+r.ubigeo)+" · "+r.ubigeo+origin;
 }
 function sourceLabel(r){
+ const mpa26=window.GeoGrowthMunicipalArequipa2026?.forUbigeo(r.ubigeo);
+ if(mpa26)return "MPA 2026: "+fmt(mpa26.calidad.registros)+" trámites ene-jun (julio 0), además de la fuente 2025: "+fmt(r.licencias_municipales_ref)+" registros";
  const extra=window.GeoGrowthMunicipalAdditional?.forUbigeo(r.ubigeo);
  if(extra)return "Fuente municipal integrada: "+fmt(extra.calidad.registros_q2_2026)+" licencias Q2 2026 (agregado, no prospectos)";
  if(r.licencias_municipales_ref!=null)return "Licencias integradas: "+fmt(r.licencias_municipales_ref)+" registros agregados";
@@ -101,7 +105,7 @@ function filterSummary(department){
  const pool=candidates(department),withIit=pool.filter(x=>x.score!=null).length;
  const foundSources=sources(department,focus.province);
  const verifiedLinks=foundSources.filter(x=>x.estado==="FUENTE_EXTERNA_NO_INTEGRADA").length;
- const integrated=foundSources.filter(x=>x.estado==="RESUMEN_MUNICIPAL_AGREGADO_INTEGRADO").length;
+ const integrated=foundSources.filter(x=>["RESUMEN_MUNICIPAL_AGREGADO_INTEGRADO","RESUMEN_MPA_2026_INTEGRADO"].includes(x.estado)).length;
  return '<section class="gg-filter-box" id="gg-filter-results">'+
  '<div class="gg-filter-header"><div><h4>Territorios que cumplen los filtros de investigación</h4>'+
  '<p>Esta búsqueda utiliza el Data Pack territorial, no un padrón de clientes. Selecciona un resultado para generar su IIT y Opportunity Brief.</p></div>'+
@@ -118,9 +122,9 @@ function filterSummary(department){
   '<small>'+esc(sourceLabel(r))+'</small></div><button type="button" data-gg-filter-pick="'+esc(r.ubigeo)+'">Analizar</button></div>'
  ).join("")+'</div>':
  '<div class="gg-filter-empty">No hay distritos que cumplan este filtro dentro del ámbito seleccionado. Amplía provincia o cambia el tipo de oportunidad. No se generaron candidatos ficticios.</div>')+
- (foundSources.length?'<div class="gg-filter-sources"><p><b>Fuentes municipales por integrar al ETL</b> (referencias aportadas por CajaRadar AI; no se usan para calcular IIT ni como negocios detectados):</p>'+
+ (foundSources.length?'<div class="gg-filter-sources"><p><b>Fuentes municipales integradas y referencias pendientes</b> (no se usan para modificar el IIT ni como negocios detectados):</p>'+
   foundSources.slice(0,7).map(x=>'<p><b>'+esc(x.distrito||x.ubigeo)+'</b> · '+esc(x.periodo_indicado)+
-   ' · <a href="'+esc(x.referencia)+'" target="_blank" rel="noopener noreferrer">'+(x.estado==='PORTAL_GENERAL_SIN_DATASET_VERIFICADO'?'Buscar en portal':'Consultar dataset')+'</a> · '+(x.estado==='RESUMEN_MUNICIPAL_AGREGADO_INTEGRADO'?'Resumen agregado 2026-T2 integrado':x.estado==='FUENTE_EXTERNA_NO_INTEGRADA'?'No integrada':'Dataset concreto no identificado')+'</p>').join("")+'</div>':'')+
+   ' · <a href="'+esc(x.referencia)+'" target="_blank" rel="noopener noreferrer">'+(x.estado==='PORTAL_GENERAL_SIN_DATASET_VERIFICADO'?'Buscar en portal':'Consultar dataset')+'</a> · '+(x.estado==='RESUMEN_MPA_2026_INTEGRADO'?'Resumen MPA ene-jun 2026 integrado (julio: 0)':x.estado==='RESUMEN_MUNICIPAL_AGREGADO_INTEGRADO'?'Resumen agregado 2026-T2 integrado':x.estado==='FUENTE_EXTERNA_NO_INTEGRADA'?'No integrada':'Dataset concreto no identificado')+'</p>').join("")+'</div>':'')+
  '</section>';
 }
 function enhancePicker(){
@@ -174,7 +178,7 @@ function scopeBadge(){
  const ref=selected?refOf(selected.ubigeo):null;
  return '<div class="gg-filter-scope" id="gg-filter-scope">Ámbito: <b>'+esc(focus.department||selected?.departamento||"Nacional")+'</b> / '+
  esc(province)+' · Lente: <b>'+esc(TYPES.find(x=>x[0]===focus.type)?.[1]||"Todas")+'</b>'+
- (ref?' · <a href="'+esc(ref.referencia)+'" target="_blank" rel="noopener noreferrer">'+(ref.estado==="RESUMEN_MUNICIPAL_AGREGADO_INTEGRADO"?"Licencias 2026-T2 integradas":"Fuente externa por incorporar")+'</a>':'')+
+ (ref?' · <a href="'+esc(ref.referencia)+'" target="_blank" rel="noopener noreferrer">'+(ref.estado==="RESUMEN_MPA_2026_INTEGRADO"?"Licencias MPA 2026 integradas":ref.estado==="RESUMEN_MUNICIPAL_AGREGADO_INTEGRADO"?"Licencias 2026-T2 integradas":"Fuente externa por incorporar")+'</a>':'')+
  '<button type="button" data-gg-edit-filters>Editar filtros</button></div>';
 }
 function opportunityNote(){
@@ -184,9 +188,10 @@ function opportunityNote(){
  const ref=refOf(r.ubigeo);
  const type=focus.type;
  const added=window.GeoGrowthMunicipalAdditional?.forUbigeo(r.ubigeo);
+ const mpa26=window.GeoGrowthMunicipalArequipa2026?.forUbigeo(r.ubigeo);
  const details={
   todas:"Se muestra el panorama general, sin restringir el análisis a una hipótesis específica.",
-  nuevos:added?"La Convención reporta 56 licencias emitidas de abril a junio de 2026, más un registro de 2024. El resumen anonimizado está integrado; una licencia no acredita nacimiento ni actividad actual del negocio.":r.licencias_municipales_ref!=null
+  nuevos:mpa26?"MPA 2026 registra 824 trámites de emisión enero-junio (julio 0). Incluye duplicados, transferencias y cesionarios; no son 824 nuevos negocios. La fuente MPA 2025 (894) permanece independiente.":added?"La Convención reporta 56 licencias emitidas de abril a junio de 2026, más un registro de 2024. El resumen anonimizado está integrado; una licencia no acredita nacimiento ni actividad actual del negocio.":r.licencias_municipales_ref!=null
    ?"Existen expedientes municipales integrados en el Data Pack. Antes de usar el término «negocio nuevo» hay que verificar fecha de alta, operación actual, giro y procedencia."
    :ref?"Existe una referencia municipal externa para investigar; todavía no se han importado sus registros a GeoGrowth."
    :"No hay datos municipales suficientes para clasificar nuevos negocios en este distrito.",

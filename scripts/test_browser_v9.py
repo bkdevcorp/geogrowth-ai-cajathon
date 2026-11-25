@@ -33,6 +33,12 @@ async function test(){
  check(doc.querySelectorAll('#v9-safe-map #ggv5 svg path.gg-dept').length===25,'no hay 25 departamentos V5');
  check(doc.querySelector('.v9-stages button'),'faltan cinco etapas');
  check(doc.querySelectorAll('.v9-stages button').length===5,'flujo V9 alterado');
+ await until(()=>doc.querySelector('#gg-google-toolbar')&&doc.querySelector('.v9-extra-panel')?.textContent.includes('824 trámites'),'Fuente MPA 2026 y Google Maps');
+ check(doc.querySelector('#gg-google-api-key'),'El mapa Google debe permitir una API key de sesión');
+ check(doc.querySelector('#v9-safe-map #ggv5 svg'),'El mapa V5 de respaldo debe seguir disponible');
+ doc.querySelector('[data-gm-google]').click();
+ check(doc.querySelector('#gg-maps-status')?.textContent.includes('Introduce una API key'),'No cargar Google Maps de pago sin clave');
+ check(doc.querySelector('#gg-google-api-key'),'La clave se configura solo si el usuario activa Google Maps');
  const stages=['work','score','opportunity','plan','execution'];
  const nav=(id)=>[...doc.querySelectorAll(id+' [data-view]')].map(el=>el.dataset.view);
  const same=(a,b)=>a.length===b.length&&a.every((x,i)=>x===b[i]);
@@ -67,6 +73,9 @@ async function test(){
  check(doc.querySelector('#gg-opportunity-brief .gg-brief-callout')?.textContent.length>50,'No hay recomendación ejecutiva');
  check(doc.querySelectorAll('#gg-opportunity-brief .gg-brief-section').length===6,'El brief debe presentar seis apartados decisionales, no el bloque genérico');
  check(doc.querySelector('#gg-opportunity-brief').textContent.includes('422 expedientes'),'Falta señal municipal real de comercio para Arequipa');
+ check(doc.querySelector('#gg-opportunity-brief').textContent.includes('MPA 2026'),'Falta fuente independiente MPA 2026');
+ check(doc.querySelector('#gg-opportunity-brief').textContent.includes('824 registros'),'Faltan 824 trámites de MPA 2026');
+ check(doc.querySelector('#gg-opportunity-brief').textContent.includes('Julio: 0'),'El título julio no debe inventar emisiones');
  check(doc.querySelector('#gg-opportunity-brief').textContent.includes('197 expedientes'),'Falta señal real de gastronomía');
  check(doc.querySelector('#gg-opportunity-brief').textContent.includes('Preguntas que debe resolver el asesor'),'Falta guía operativa');
  check(doc.querySelector('#gg-opportunity-brief').textContent.includes('Alternativas del departamento'),'Falta comparación territorial');
@@ -77,6 +86,9 @@ async function test(){
  check(exported.data.iit.peso_empresas_pct===70,'Exportación no refleja peso IIT');
  check(exported.data.territorio.ubigeo==='040101','Exportación no refleja distrito seleccionado');
  check(exported.data.investigacion.sectores.some(x=>x.sector==='Comercio'&&x.registros===422),'El JSON pierde evidencia municipal');
+ check(exported.data.investigacion.licencias_arequipa_2026?.registros===824,'El JSON pierde trámites MPA 2026');
+ check(exported.data.investigacion.licencias_arequipa_2026?.emitidos_julio_2026===0,'El JSON inventa julio');
+ check(exported.data.evidencia.ids.includes('LIC-MPA-2026-ENE-JUN:040101'),'El JSON no tiene trazabilidad de MPA 2026');
  check(exported.data.agentes_demo?.especialista?.length===4,'JSON no contiene los cuatro agentes simulados');
  check(doc.querySelectorAll('#gg-agent-simulation .gg-team-card').length===4,'No aparecen los especialistas de la demo');
  check(doc.querySelector('#gg-agent-simulation').textContent.includes('DEMO · sin LLM conectado'),'Falta el estado de simulación');
@@ -189,7 +201,37 @@ async function test(){
  check(exported?.data?.territorio?.ubigeo==='080901','Santa Ana no seleccionado');
  check(exported.data.filtros_busqueda?.tipo_oportunidad==='nuevos','Filtro municipal no propagado');
  check(exported.data.investigacion?.licencias_adicionales?.emitidas_q2_2026===56,'Fuente de Santa Ana no propagada');
- status.textContent='RESULTADO_BROWSER_V9_OK: mapa, agentes, 5 etapas, 196 provincias, filtrado y campaña explicables';
+ // Mapas Google JS: mock sin clave real ni cargos, bibliotecas oficiales bajo demanda.
+ doc.querySelector('[data-go-section="work"]').click();
+ await until(()=>doc.querySelector('#gg-google-toolbar'),'Google Maps toolbar');
+ const invoked=[];
+ const FakeMap=class{
+  constructor(el,options){
+    check(options.mapId==='DEMO_MAP_ID','Google Maps avanzado necesita Map ID');
+    this.data={addGeoJson(){},setStyle(){},addListener(){}};
+  }
+  fitBounds(){}
+ };
+ const FakeInfoWindow=class{setContent(){}open(){}};
+ const FakeMarker=class{constructor(opts){this.map=opts.map;}addListener(){}};
+ const lib={
+   maps:{Map:FakeMap,InfoWindow:FakeInfoWindow},
+   core:{LatLng:class{constructor(o){Object.assign(this,o);}},LatLngBounds:class{extend(){}}},
+   marker:{AdvancedMarkerElement:FakeMarker},
+   geometry:{spherical:{computeDistanceBetween(){return 1000;}}}
+ };
+ frame.contentWindow.google={maps:{importLibrary:async name=>{
+   invoked.push(name);
+   if(!lib[name])throw Error('Biblioteca inesperada: '+name);
+   return lib[name];
+ }}};
+ frame.contentWindow.GeoGrowthGoogleMaps.activateForTest('FAKE_TEST_ONLY');
+ await until(()=>doc.querySelector('#gg-google-map-canvas')&&doc.querySelector('#gg-maps-status')?.textContent.includes('Google Maps activo'),'Google Maps con bibliotecas simuladas');
+ for(const x of ['maps','core','marker','geometry'])check(invoked.includes(x),'No se importó biblioteca Google '+x);
+ check(!invoked.includes('drawing'),'Drawing no debe cargarse');
+ doc.querySelector('[data-gm-v5]').click();
+ await until(()=>doc.querySelector('#v9-safe-map #ggv5 svg'),'restauración a mapa V5 tras Google');
+  status.textContent='RESULTADO_BROWSER_V9_OK: mapa, agentes, 5 etapas, 196 provincias, filtrado y campaña explicables';
 }
 window.addEventListener('load',()=>test().catch(e=>{status.textContent='RESULTADO_BROWSER_V9_FALLO: '+e.message}));
 </script></html>"""
