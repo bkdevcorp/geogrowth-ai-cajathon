@@ -1,68 +1,102 @@
-/* Independent expansion screen; does not change the existing map or campaign state. */
+/* Independent expansion screen; existing map and campaign state remain unchanged. */
 (function(){
 "use strict";
 const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-const fmt=n=>Number(n||0).toLocaleString("es-PE");
-const date=s=>s?String(s).split("-").reverse().join("/"):"—";
-let dataPromise=null, googleLoad=null, map=null, apiKey="";
-const ref={lat:-6.024149,lng:-76.984401};
-function data(){return dataPromise||(dataPromise=fetch("data/expansion_moyobamba.json?v=1").then(r=>{if(!r.ok)throw Error("HTTP "+r.status);return r.json()}).catch(e=>{dataPromise=null;throw e}));}
+const fmt=n=>n==null?"N/D":Number(n).toLocaleString("es-PE");
+const date=s=>/^\d{4}-\d{2}-\d{2}$/.test(s||"")?s.split("-").reverse().join("/"):s||"Sin fecha";
+const searchUrl=q=>"https://www.google.com/maps/search/?api=1&query="+encodeURIComponent(q);
+let promise=null,googleLoad=null,apiKey="",authFailed=false;
+function data(){return promise||(promise=fetch("data/licencias_san_martin.json?v=2").then(r=>{if(!r.ok)throw Error("HTTP "+r.status);return r.json()}).catch(e=>{promise=null;throw e}));}
 function loadGoogle(key){
  if(window.google?.maps?.importLibrary)return Promise.resolve(window.google.maps);
  if(googleLoad)return googleLoad;
  googleLoad=new Promise((resolve,reject)=>{
   const s=document.createElement("script"),cb="__ggExpansionMapsReady";
-  const fail=()=>{delete window[cb];s.remove();googleLoad=null;reject(Error("No se pudo cargar Google Maps. Revisa la clave, restricciones y facturación."))};
+  const fail=()=>{delete window[cb];s.remove();googleLoad=null;reject(Error("No se pudo cargar Google Maps."))};
   window[cb]=()=>{delete window[cb];resolve(window.google.maps)};
   s.src="https://maps.googleapis.com/maps/api/js?loading=async&v=weekly&key="+encodeURIComponent(key)+"&callback="+cb;
   s.async=true;s.onerror=fail;document.head.appendChild(s);
  });return googleLoad;
 }
-function shell(){return '<div class="page-head"><div><span class="eyebrow">Prospección · Señales de crecimiento</span><h1>Expansión comercial</h1><p class="subtitle">Identifica posibles nuevos locales por RUC, dirección y fecha de licencia. Verifica la actividad antes de contactar.</p></div><span class="badge">Piloto Moyobamba</span></div><section id="gg-expansion" aria-live="polite"><div class="card">Cargando evidencia municipal…</div></section>';}
-function mount(){
- const host=document.getElementById("gg-expansion");if(!host)return;
- data().then(d=>{if(!host.isConnected)return;show(host,d)}).catch(e=>{if(host.isConnected)host.innerHTML='<div class="card">No se pudo cargar la fuente de expansión: '+esc(e.message)+'</div>'});
-}
-function show(host,d){
- host.innerHTML=`<section class="card"><div class="card-header"><div><h2>Buscar expansiones</h2><p>Cobertura disponible: un distrito con evidencia individual procesada.</p></div></div>
+function shell(){return '<div class="page-head"><div><span class="eyebrow">Prospección · Señales de crecimiento</span><h1>Expansión comercial</h1><p class="subtitle">Consulta licencias reales e identifica posibles nuevos locales. Verifica la actividad antes de contactar.</p></div><span class="badge">Piloto San Martín</span></div><section id="gg-expansion" aria-live="polite"><div class="card">Cargando evidencia municipal…</div></section>';}
+function mount(){const host=document.getElementById("gg-expansion");if(!host)return;data().then(d=>{if(host.isConnected)show(host,d)}).catch(e=>{if(host.isConnected)host.innerHTML='<div class="card">No se pudo cargar la fuente: '+esc(e.message)+'</div>'});}
+function show(host,pack){
+ const districts=pack.distritos;let d=districts[0],filtered=[],page=0,mode="expansion",map=null,marker=null,info=null,seq=0,selected=null;
+ const $=id=>host.querySelector("#"+id);
+ const options=a=>a.map(v=>'<option value="'+esc(v)+'">'+esc(v)+'</option>').join("");
+ const kpi=(v,l)=>'<div class="kpi"><b>'+fmt(v)+'</b><small>'+esc(l)+'</small></div>';
+ host.innerHTML=`<section class="card"><div class="card-header"><div><h2>Buscar oportunidades y licencias</h2><p>Dos fuentes municipales reales de San Martín; cobertura y fechas según cada archivo.</p></div></div>
  <form id="gg-expansion-form"><div class="form-grid">
  <div class="field"><label for="ex-region">Región</label><select id="ex-region"><option>San Martín</option></select></div>
- <div class="field"><label for="ex-province">Provincia</label><select id="ex-province"><option>Moyobamba</option></select></div>
- <div class="field"><label for="ex-district">Distrito</label><select id="ex-district"><option value="220101">Moyobamba · 220101</option></select></div>
- <div class="field"><label for="ex-type">Tipo de expansión</label><select id="ex-type"><option>Posible nueva sucursal / dirección</option></select></div>
- <div class="field"><label for="ex-from">Desde</label><input id="ex-from" type="date" value="2026-01-01" min="2026-01-01" max="${esc(d.corte)}" required></div>
- <div class="field"><label for="ex-to">Hasta</label><input id="ex-to" type="date" value="${esc(d.corte)}" min="2026-01-01" max="${esc(d.corte)}" required></div>
- <div class="field"><label for="ex-sector">Sector</label><select id="ex-sector"><option value="">Todos</option>${[...new Set(d.candidatos.map(x=>x.sector))].sort().map(s=>'<option>'+esc(s)+'</option>').join("")}</select></div>
- </div><div class="actions-row"><button class="btn primary" type="submit">Buscar expansiones comerciales</button></div><p id="ex-error" class="muted" role="status"></p></form></section>
+ <div class="field"><label for="ex-province">Provincia</label><select id="ex-province">${options(districts.map(x=>x.provincia))}</select></div>
+ <div class="field"><label for="ex-district">Distrito</label><select id="ex-district"></select></div>
+ <div class="field"><label for="ex-type">Tipo de consulta</label><select id="ex-type"><option value="expansion">Posible expansión comercial</option><option value="licenses">Todas las licencias / registros</option></select></div>
+ <div class="field"><label for="ex-year">Año de licencia</label><select id="ex-year"></select></div>
+ <div class="field"><label for="ex-from">Desde (fecha exacta)</label><input id="ex-from" type="date"></div>
+ <div class="field"><label for="ex-to">Hasta (fecha exacta)</label><input id="ex-to" type="date"></div>
+ <div class="field"><label for="ex-sector">Sector</label><select id="ex-sector"></select></div>
+ <div class="field"><label for="ex-query">Buscar nombre o dirección comercial</label><input id="ex-query" type="search" placeholder="Nombre, dirección o código"></div>
+ </div><div class="actions-row"><button class="btn primary" type="submit">Buscar oportunidades</button></div><p id="ex-error" class="muted" role="status"></p></form></section>
  <div id="ex-kpi" class="kpi-grid"></div>
- <section class="card"><div class="card-header"><div><h2>Mapa de referencia territorial</h2><p>UBIGEO 220101 · coordenada promedio SBS 2025. No representa un local comercial.</p></div><span class="badge">Sin coordenadas individuales</span></div>
- <div id="ex-map" style="min-height:360px;border:1px solid #dce6ee;border-radius:12px;overflow:hidden"><iframe title="Mapa base de Moyobamba" width="100%" height="360" style="border:0;display:block" loading="lazy" src="https://www.openstreetmap.org/export/embed.html?bbox=-77.0244%2C-6.06415%2C-76.9444%2C-5.98415&amp;layer=mapnik"></iframe></div>
- <div class="actions-row"><a class="btn" href="https://www.google.com/maps/search/?api=1&amp;query=Moyobamba%2C%20San%20Mart%C3%ADn%2C%20Per%C3%BA" target="_blank" rel="noopener noreferrer">Ver en Google Maps</a><label class="field" style="flex:1"><span>Clave Google Maps (opcional, solo sesión)</span><input id="ex-key" type="password" autocomplete="off" placeholder="Maps Demo Key o clave restringida"></label><button id="ex-google" type="button" class="btn">Activar Google Maps</button></div><p class="muted" id="ex-map-status">Cartografía de respaldo: OpenStreetMap. No se generan ubicaciones ficticias ni se envían direcciones a Google.</p></section>
- <section class="card"><div class="card-header"><div><h2>Candidatos identificados</h2><p>Identificadores anónimos; los datos no acreditan una sucursal activa.</p></div><button class="btn small" type="button" id="ex-export">Exportar evidencia JSON</button></div><div id="ex-results"></div><div id="ex-detail" tabindex="-1"></div></section>
- <section class="card"><h2>Fuente y metodología</h2><p>${esc(d.metodo)}</p><p class="muted">Cobertura: ${date(d.inicio)} – ${date(d.corte)}. Normalizar direcciones no elimina todas las variantes; podría tratarse de una mudanza, renovación o error. Cruce SUNAT y validación de campo pendientes.</p><a class="btn" href="${esc(d.url)}" target="_blank" rel="noopener noreferrer">Consultar fuente oficial</a></section>`;
- const $=id=>host.querySelector("#"+id);
- let filtered=[];
- const kpi=(v,l)=>'<div class="kpi"><b>'+fmt(v)+'</b><small>'+esc(l)+'</small></div>';
- function run(e){e?.preventDefault();const from=$("ex-from").value,to=$("ex-to").value,sector=$("ex-sector").value;if(!from||!to||from>to||from<"2026-01-01"||to>d.corte){$("ex-error").textContent="Selecciona un rango válido dentro del corte disponible.";return;}
-  $("ex-error").textContent="";filtered=d.candidatos.filter(x=>x.fecha_nueva>=from&&x.fecha_nueva<=to&&(!sector||x.sector===sector));
-  $("ex-kpi").innerHTML=kpi(filtered.length,"Candidatos en el filtro")+kpi(d.ruc_multidireccion,"RUC multidirección · histórico")+kpi(d.ruc_analizados,"RUC analizados · histórico")+kpi(d.licencias,"Licencias · histórico");
-  $("ex-detail").innerHTML="";
-  $("ex-results").innerHTML='<div class="tablewrap"><table><thead><tr><th>Candidato</th><th>Sector</th><th>Fecha nueva observada</th><th>Direcciones anteriores + nuevas</th><th>Acción</th></tr></thead><tbody>'+filtered.map(x=>'<tr><td><strong>'+esc(x.id)+'</strong></td><td>'+esc(x.sector)+'</td><td>'+date(x.fecha_nueva)+'</td><td>'+fmt(x.direcciones_anteriores)+' + '+fmt(x.direcciones_nuevas)+'</td><td><button class="btn small" type="button" data-ex-detail="'+esc(x.id)+'">Ver evidencia</button></td></tr>').join("")+'</tbody></table></div>'+(!filtered.length?'<div class="blank">Sin candidatos para los filtros seleccionados.</div>':"");
-  $("ex-export").disabled=!filtered.length;
+ <section class="card" id="ex-map-card"><div class="card-header"><div><h2>Mapa comercial</h2><p id="ex-map-caption">Referencia territorial; selecciona Localizar en un registro.</p></div><span class="badge" id="ex-map-badge">Sin coordenadas precargadas</span></div>
+ <div id="ex-map" style="min-height:360px;border:1px solid #dce6ee;border-radius:12px;overflow:hidden"></div>
+ <div class="actions-row"><a class="btn" id="ex-open" target="_blank" rel="noopener noreferrer">Abrir en Google Maps</a><label class="field" style="flex:1;min-width:220px"><span>Clave Google Maps (opcional, solo sesión)</span><input id="ex-key" type="password" autocomplete="off" placeholder="Maps Demo Key o clave restringida"></label><button id="ex-google" type="button" class="btn">Activar Google Maps</button></div><p class="muted" id="ex-map-status"></p></section>
+ <section class="card"><div class="card-header"><div><h2 id="ex-title">Resultados</h2><p id="ex-count"></p></div><button class="btn small" type="button" id="ex-export">Exportar resultados JSON</button></div><div id="ex-results"></div><div class="actions-row"><button class="btn small" id="ex-prev" type="button">Anterior</button><span id="ex-page"></span><button class="btn small" id="ex-next" type="button">Siguiente</button></div><div id="ex-detail" tabindex="-1"></div></section>
+ <section class="card"><h2>Fuente y metodología</h2><p>${esc(pack.metodo)}</p><p class="muted" id="ex-source-info"></p><a id="ex-source" class="btn" target="_blank" rel="noopener noreferrer">Consultar fuente oficial</a></section>`;
+ function territoryQuery(){return d.distrito+", "+d.provincia+", San Martín, Perú";}
+ function iframe(src,title){const f=document.createElement("iframe");f.title=title;f.width="100%";f.height="360";f.style.cssText="border:0;display:block";f.src=src;$("ex-map").replaceChildren(f);}
+ function resetMap(){seq++;selected=null;marker?.setMap(null);marker=null;info?.close();info=null;
+  $("ex-open").href=searchUrl(territoryQuery());$("ex-map-caption").textContent=d.distrito+" · referencia territorial SBS; no es un domicilio comercial.";$("ex-map-badge").textContent="Sin coordenadas precargadas";
+  if(map&&!authFailed){map.setCenter(d.ref);map.setZoom(13);$("ex-map-status").textContent="Google Maps activo. Selecciona un negocio para buscar su dirección.";}
+  else{const {lat,lng}=d.ref;iframe("https://www.openstreetmap.org/export/embed.html?bbox="+encodeURIComponent([lng-.04,lat-.04,lng+.04,lat+.04].join(","))+"&layer=mapnik","Mapa territorial de "+d.distrito);$("ex-map-status").textContent="Mapa de respaldo OpenStreetMap. Localizar abre una búsqueda comercial en el mapa.";}
  }
- host.querySelector("form").addEventListener("submit",run);
- host.addEventListener("click",e=>{const b=e.target.closest("[data-ex-detail]");if(!b)return;const x=filtered.find(r=>r.id===b.dataset.exDetail);if(!x)return;
-  $("ex-detail").innerHTML='<div class="signal" style="margin-top:16px"><h3>'+esc(x.id)+' · Evidencia de expansión</h3><p>Última licencia anterior al 2026: '+date(x.fecha_anterior)+' · Primera dirección nueva observada: '+date(x.fecha_nueva)+'.</p><p>Direcciones anteriores: '+fmt(x.direcciones_anteriores)+' · Nuevas: '+fmt(x.direcciones_nuevas)+'.</p><p><b>Próxima acción:</b> verificar si las direcciones corresponden a locales distintos que siguen operando y confirmar interés con consentimiento. Sin inferencia de necesidad crediticia.</p></div>';$("ex-detail").focus();
+ function query(x){return [x.nombre,x.direccion,territoryQuery()].filter(Boolean).join(", ");}
+ function fallback(x,message){map=null;marker=null;info=null;const q=query(x);
+  iframe("https://maps.google.com/maps?q="+encodeURIComponent(q)+"&output=embed","Búsqueda en Google Maps: "+(x.nombre||x.id));
+  $("ex-map-badge").textContent="Búsqueda, no ubicación verificada";$("ex-map-status").textContent=message+" Si la vista integrada no carga, pulsa «Abrir en Google Maps».";
+ }
+ async function locate(x){const token=++seq;selected=x;const q=query(x);
+  $("ex-map-card").scrollIntoView({behavior:"smooth",block:"start"});$("ex-open").href=searchUrl(q);$("ex-map-caption").textContent=(x.nombre||x.id)+(x.direccion?" · "+x.direccion:"")+" · "+d.distrito;
+  if(!x.nombre&&!x.direccion){$("ex-map-status").textContent="No hay nombre o dirección comercial publicable para este registro.";return;}
+  if(!map||authFailed||!x.direccion){fallback(x,"Búsqueda por nombre o dirección comercial publicada. El resultado debe verificarse.");return;}
+  $("ex-map-status").textContent="Buscando dirección comercial en Google Maps…";marker?.setMap(null);marker=null;info?.close();
+  try{const {Geocoder}=await google.maps.importLibrary("geocoding");const g=new Geocoder();const response=await g.geocode({address:x.direccion+", "+territoryQuery(),region:"pe",componentRestrictions:{country:"PE"}});
+   if(token!==seq||!host.isConnected)return;const hit=response.results[0];const precise=hit&&!hit.partial_match&&["ROOFTOP","RANGE_INTERPOLATED"].includes(hit.geometry.location_type)&&/(street_address|premise|subpremise|establishment)/.test(hit.types.join("|"));
+   if(!precise){fallback(x,"Google no devolvió una dirección suficientemente precisa; se muestra la búsqueda sin confirmar.");return;}
+   const {Marker}=await google.maps.importLibrary("marker");const {InfoWindow}=await google.maps.importLibrary("maps");if(token!==seq||!host.isConnected)return;
+   map.setCenter(hit.geometry.location);map.setZoom(17);marker=new Marker({map,position:hit.geometry.location,title:x.nombre||x.id});info=new InfoWindow({content:"<b>"+esc(x.nombre||x.id)+"</b><p>"+esc(x.direccion)+"</p><small>Dirección geocodificada; negocio y vigencia por verificar.</small>"});info.open({map,anchor:marker});$("ex-map-badge").textContent="Dirección geocodificada";$("ex-map-status").textContent="Ubicación devuelta por Google: "+hit.formatted_address+". No confirma actividad ni presencia actual.";
+  }catch(e){if(token===seq&&host.isConnected)fallback(x,"No se pudo geocodificar la dirección con la clave disponible.");}
+ }
+ function fields(){const list=mode==="expansion"?d.candidatos:d.registros;const years=[...new Set(list.map(x=>x.anio||x.fecha_nueva?.slice(0,4)).filter(Boolean))].sort().reverse();
+  $("ex-year").innerHTML='<option value="">Todos los años</option>'+options(years);$("ex-sector").innerHTML='<option value="">Todos</option>'+options([...new Set(list.map(x=>x.sector))].sort());
+  const exact=d.expansion_disponible;$("ex-from").disabled=!exact;$("ex-to").disabled=!exact;$("ex-from").value=mode==="expansion"?"2026-01-01":"";$("ex-to").value=mode==="expansion"?d.corte:"";$("ex-query").value="";
+  $("ex-source").href=d.url;$("ex-source-info").textContent=d.fuente+" · "+d.inicio+" a "+d.corte+". "+(!exact?"Directorio de restaurantes y hospedajes; año de emisión sin fecha exacta, sin historial suficiente para medir expansión.":"Licencias de funcionamiento; una dirección nueva es señal, no prueba de apertura.");
+ }
+ function draw(){const start=page*25,rows=filtered.slice(start,start+25);
+  $("ex-title").textContent=mode==="expansion"?"Candidatos identificados":"Registros municipales";$("ex-count").textContent=fmt(filtered.length)+" resultados · "+d.distrito+" · nombres y direcciones sujetos a disponibilidad y minimización de datos.";
+  $("ex-results").innerHTML='<div class="tablewrap"><table><thead><tr><th>Negocio / registro</th><th>Sector</th><th>Fecha o año</th><th>'+ (mode==="expansion"?"Direcciones anteriores + nuevas":"Dirección comercial")+'</th><th>Acciones</th></tr></thead><tbody>'+rows.map(x=>'<tr><td><strong>'+esc(x.nombre||x.id)+'</strong><small style="display:block">'+esc(x.id)+'</small></td><td>'+esc(x.sector)+'</td><td>'+esc(date(x.fecha_nueva||x.fecha||x.anio))+'</td><td>'+esc(mode==="expansion"?x.direcciones_anteriores+" + "+x.direcciones_nuevas:x.direccion||"No disponible")+'</td><td><div class="actions-row" style="margin:0"><button class="btn small" type="button" data-ex-detail="'+esc(x.id)+'">Ver evidencia</button><button class="btn small" type="button" data-ex-locate="'+esc(x.id)+'" '+(x.nombre||x.direccion?'':'disabled title="Sin ubicación comercial publicable"')+'>Localizar</button></div></td></tr>').join("")+'</tbody></table></div>'+(!rows.length?'<div class="blank">Sin resultados para estos filtros.</div>':"");
+  $("ex-page").textContent=fmt(filtered.length?start+1:0)+"–"+fmt(Math.min(start+25,filtered.length))+" de "+fmt(filtered.length);$("ex-prev").disabled=!page;$("ex-next").disabled=start+25>=filtered.length;$("ex-export").disabled=!filtered.length;
+ }
+ function run(e){e?.preventDefault();const from=$("ex-from").value,to=$("ex-to").value,year=$("ex-year").value,sector=$("ex-sector").value,q=$("ex-query").value.trim().toLowerCase();if(from&&to&&from>to){$("ex-error").textContent="Selecciona un rango válido.";return;}
+  $("ex-error").textContent=(!d.expansion_disponible?"Fuente sectorial: sin historial para calcular expansión.":"");const list=mode==="expansion"?d.candidatos:d.registros;
+  filtered=list.filter(x=>{const f=x.fecha_nueva||x.fecha;return (!year||(x.anio||f?.slice(0,4))===year)&&(!from||f&&f>=from)&&(!to||f&&f<=to)&&(!sector||x.sector===sector)&&(!q||[x.nombre,x.direccion,x.id].filter(Boolean).join(" ").toLowerCase().includes(q));});
+  $("ex-kpi").innerHTML=kpi(filtered.length,mode==="expansion"?"Candidatos en el filtro":"Registros en el filtro")+kpi(d.expansion_disponible?d.ruc_multidireccion:null,"RUC multidirección · histórico")+kpi(d.expansion_disponible?d.ruc_analizados:null,"RUC analizados · histórico")+kpi(d.licencias,"Registros de la fuente");page=0;$("ex-detail").innerHTML="";draw();
+ }
+ function district(){d=districts.find(x=>x.provincia===$("ex-province").value)||districts[0];$("ex-district").innerHTML='<option value="'+esc(d.ubigeo)+'">'+esc(d.distrito)+" · "+esc(d.ubigeo)+'</option>';
+  $("ex-type").options[0].disabled=!d.expansion_disponible;if(!d.expansion_disponible)mode="licenses";$("ex-type").value=mode;fields();resetMap();run();}
+ $("ex-province").addEventListener("change",district);$("ex-type").addEventListener("change",()=>{mode=$("ex-type").value;fields();run()});
+ host.querySelector("form").addEventListener("submit",run);$("ex-prev").addEventListener("click",()=>{if(page){page--;draw()}});$("ex-next").addEventListener("click",()=>{if((page+1)*25<filtered.length){page++;draw()}});
+ host.addEventListener("click",e=>{const b=e.target.closest("[data-ex-detail],[data-ex-locate]");if(!b)return;const x=filtered.find(r=>r.id===(b.dataset.exDetail||b.dataset.exLocate));if(!x)return;if(b.dataset.exLocate){locate(x);return;}
+  $("ex-detail").innerHTML='<div class="signal" style="margin-top:16px"><h3>'+esc(x.nombre||x.id)+' · Evidencia municipal</h3><p>'+esc(x.direccion||"Dirección no disponible para publicación.")+'</p><p>'+esc(mode==="expansion"?"Última licencia anterior: "+date(x.fecha_anterior)+" · Nueva dirección observada: "+date(x.fecha_nueva)+". Direcciones anteriores: "+x.direcciones_anteriores+"; nuevas: "+x.direcciones_nuevas+".":"Fecha o año de emisión: "+date(x.fecha||x.anio)+" · "+x.tipo)+'</p><p><b>Fuente:</b> '+esc(d.fuente)+'</p><p><b>Próxima acción:</b> verificar actividad, vigencia y necesidad comercial; no constituye precalificación.</p></div>';$("ex-detail").focus();
  });
- $("ex-export").addEventListener("click",()=>{const blob=new Blob([JSON.stringify({schema:d.schema,ubigeo:d.ubigeo,fuente:d.url,corte:d.corte,metodo:d.metodo,candidatos:filtered},null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="expansion_moyobamba.json";a.click();setTimeout(()=>URL.revokeObjectURL(a.href),500)});
- $("ex-google").addEventListener("click",async()=>{
-  const key=$("ex-key").value.trim()||apiKey;if(!key){$("ex-map-status").textContent="Introduce una clave válida de Google Maps.";return;}
-  $("ex-key").value="";$("ex-google").disabled=true;
-  try{const maps=await loadGoogle(key);const {Map}=await maps.importLibrary("maps");if(!host.isConnected)return;apiKey=key;const canvas=document.createElement("div");canvas.style.height="360px";$("ex-map").replaceChildren(canvas);map=new Map(canvas,{center:ref,zoom:13,mapTypeId:"roadmap",mapTypeControl:true,streetViewControl:false});$("ex-map-status").textContent="Google Maps · referencia territorial. Sin marcadores de negocios: no hay coordenadas individuales."}
-  catch(e){$("ex-map-status").textContent="No se pudo activar Google Maps; utiliza el mapa de respaldo. Comprueba la clave y restricciones."}
+ $("ex-export").addEventListener("click",()=>{const blob=new Blob([JSON.stringify({schema:pack.schema,ubigeo:d.ubigeo,fuente:d.url,corte:d.corte,tipo:mode,registros:filtered},null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="licencias_"+d.ubigeo+".json";a.click();setTimeout(()=>URL.revokeObjectURL(a.href),500)});
+ $("ex-google").addEventListener("click",async()=>{const key=$("ex-key").value.trim()||apiKey;if(!key){$("ex-map-status").textContent="Introduce una clave válida de Google Maps.";return;}$("ex-key").value="";$("ex-google").disabled=true;authFailed=false;
+  window.gm_authFailure=()=>{authFailed=true;if(!host.isConnected)return;const prior=selected;map=null;apiKey="";if(prior)fallback(prior,"Google rechazó la clave o su autorización.");else{resetMap();$("ex-map-status").textContent="Google rechazó la clave o su autorización. Revisa la consola y recarga antes de probar otra clave.";}};
+  try{const maps=await loadGoogle(key);const {Map}=await maps.importLibrary("maps");if(!host.isConnected||authFailed)return;apiKey=key;const canvas=document.createElement("div");canvas.style.height="360px";$("ex-map").replaceChildren(canvas);map=new Map(canvas,{center:d.ref,zoom:13,mapTypeId:"roadmap",mapTypeControl:true,streetViewControl:false});$("ex-map-status").textContent="Solicitando Google Maps; si la autenticación falla se restaura el mapa de respaldo.";if(selected)locate(selected);}
+  catch(e){map=null;const prior=selected;if(prior)fallback(prior,"No se pudo activar Google Maps.");else{resetMap();$("ex-map-status").textContent="No se pudo activar Google Maps; comprueba la clave y restricciones.";}}
   finally{if(host.isConnected)$("ex-google").disabled=false;}
  });
- run();
+ district();
 }
 window.GeoGrowthExpansion={shell,mount};
 })();
