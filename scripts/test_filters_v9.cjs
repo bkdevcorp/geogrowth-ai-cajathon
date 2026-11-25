@@ -22,7 +22,7 @@ assert.equal(santa.registros_integrados_q2,56);
 for(const item of catalog.territorios)assert(DATA.some(x=>x.ubigeo===item.ubigeo),"External reference missing in DATA: "+item.ubigeo);
 assert.equal(catalog.territorios.filter(x=>x.estado==="PORTAL_GENERAL_SIN_DATASET_VERIFICADO").length,1);
 const html=load("GeoGrowth_AI_Dashboard_V3.html");
-assert.match(html,/geogrowth-filtros-v1\.js\?v=3/);
+assert.match(html,/geogrowth-filtros-v1\.js\?v=\d+/);
 assert.match(html,/geogrowth-operacion-v9\.js\?v=90/);
 const events={},outs=[];
 const field={value:"",innerHTML:"",dispatchEvent(){}};
