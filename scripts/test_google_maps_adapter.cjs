@@ -52,3 +52,17 @@ assert.equal(api.enabled,true,"Google Maps mode must be selectable with injected
 assert.equal(api.matchLicense([{nombre:"Tienda ABC",direccion:"Calle Lima 123",id:"L1"}],{displayName:"Tienda ABC",formattedAddress:"Calle Lima 123, Perú"}).id,"L1");
 assert.equal(api.matchLicense([{nombre:"Tienda ABC",direccion:"Calle Lima 123"}],{displayName:"Tienda ABC",formattedAddress:"Calle Lima 456"}),null);
 console.log("OK: Google-only map, session setup, and conservative license matching.");
+
+const source={registros:[{id:"A",nombre:"Tienda ABC",direccion:"AVENIDA LIMA NRO. 123",departamento:"Arequipa",ubigeo:"040101",sector:"Comercio"},{id:"B",nombre:"Otra tienda",direccion:"Calle Lima 456",departamento:"Lima",ubigeo:"150101"},{id:"C",nombre:"Sin dirección",departamento:"Arequipa",ubigeo:"040101"}]};
+const scope={dep:"Arequipa",provinceCode:"all",ubigeo:"040101",type:"nuevos"};
+const candidates=api.sourceCandidates(source,scope);
+assert.equal(candidates.length,1);
+assert.equal(candidates[0].id,"A");
+assert.equal(api.sourceCandidates(source,{...scope,type:"expansion"}).length,0);
+assert.match(api.lookupQuery(candidates[0]),/Tienda ABC/);
+const place={id:"P",location:{lat:-16,lng:-71},displayName:"Tienda ABC",formattedAddress:"Av. Lima 123, Arequipa"};
+assert.equal(api.selectMatch(candidates[0],[place]).id,"P");
+assert.equal(api.selectMatch(candidates[0],[{...place,formattedAddress:"Av. Lima 1234, Arequipa"}]),null);
+assert.equal(api.selectMatch(candidates[0],[{...place,displayName:"Otro negocio"}]),null);
+assert.equal(api.selectMatch(candidates[0],[place,{...place,id:"P2"}]),null);
+console.log("OK: dataset-first search rejects unrelated and ambiguous Places results.");
