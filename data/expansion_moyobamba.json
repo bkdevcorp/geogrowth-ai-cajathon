@@ -1,0 +1,423 @@
+{
+  "schema": "geogrowth-expansion-v1",
+  "region": "San Martín",
+  "provincia": "Moyobamba",
+  "distrito": "Moyobamba",
+  "ubigeo": "220101",
+  "fuente": "Municipalidad Provincial de Moyobamba / Plataforma Nacional de Datos Abiertos",
+  "url": "https://www.datosabiertos.gob.pe/dataset/lista-de-registros-de-licencia-de-funcionamiento-de-la-municipalidad-provincial-de-0",
+  "archivo_sha256": "8d96c5f65fac9dbd5c17f6114d41d81f3ee422709078a737489ce0d00b2ef707",
+  "corte": "2026-06-12",
+  "inicio": "2022-01-06",
+  "licencias": 1873,
+  "ruc_analizados": 1566,
+  "ruc_multidireccion": 179,
+  "candidatos": [
+    {
+      "id": "EXP-MOY-001",
+      "fecha_anterior": "2025-05-27",
+      "fecha_nueva": "2026-06-12",
+      "fecha_ultima": "2026-06-12",
+      "direcciones_anteriores": 1,
+      "direcciones_nuevas": 1,
+      "sector": "Servicios y otros"
+    },
+    {
+      "id": "EXP-MOY-002",
+      "fecha_anterior": "2025-05-30",
+      "fecha_nueva": "2026-06-12",
+      "fecha_ultima": "2026-06-12",
+      "direcciones_anteriores": 1,
+      "direcciones_nuevas": 1,
+      "sector": "Comercio"
+    },
+    {
+      "id": "EXP-MOY-003",
+      "fecha_anterior": "2025-04-01",
+      "fecha_nueva": "2026-06-05",
+      "fecha_ultima": "2026-06-05",
+      "direcciones_anteriores": 2,
+      "direcciones_nuevas": 1,
+      "sector": "Servicios y otros"
+    },
+    {
+      "id": "EXP-MOY-004",
+      "fecha_anterior": "2024-04-23",
+      "fecha_nueva": "2026-06-02",
+      "fecha_ultima": "2026-06-02",
+      "direcciones_anteriores": 1,
+      "direcciones_nuevas": 1,
+      "sector": "Servicios y otros"
+    },
+    {
+      "id": "EXP-MOY-005",
+      "fecha_anterior": "2022-06-13",
+      "fecha_nueva": "2026-05-22",
+      "fecha_ultima": "2026-05-22",
+      "direcciones_anteriores": 1,
+      "direcciones_nuevas": 1,
+      "sector": "Servicios y otros"
+    },
+    {
+      "id": "EXP-MOY-006",
+      "fecha_anterior": "2024-03-12",
+      "fecha_nueva": "2026-05-18",
+      "fecha_ultima": "2026-05-18",
+      "direcciones_anteriores": 5,
+      "direcciones_nuevas": 1,
+      "sector": "Servicios y otros"
+    },
+    {
+      "id": "EXP-MOY-007",
+      "fecha_anterior": "2024-01-22",
+      "fecha_nueva": "2026-05-18",
+      "fecha_ultima": "2026-05-18",
+      "direcciones_anteriores": 1,
+      "direcciones_nuevas": 1,
+      "sector": "Comercio"
+    },
+    {
+      "id": "EXP-MOY-008",
+      "fecha_anterior": "2023-01-10",
+      "fecha_nueva": "2026-05-14",
+      "fecha_ultima": "2026-05-14",
+      "direcciones_anteriores": 1,
+      "direcciones_nuevas": 1,
+      "sector": "Servicios y otros"
+    },
+    {
+      "id": "EXP-MOY-009",
+      "fecha_anterior": "2023-05-09",
+      "fecha_nueva": "2026-05-13",
+      "fecha_ultima": "2026-05-13",
+      "direcciones_anteriores": 1,
+      "direcciones_nuevas": 1,
+      "sector": "Alimentación y alojamiento"
+    },
+    {
+      "id": "EXP-MOY-010",
+      "fecha_anterior": "2025-09-24",
+      "fecha_nueva": "2026-05-13",
+      "fecha_ultima": "2026-05-13",
+      "direcciones_anteriores": 1,
+      "direcciones_nuevas": 1,
+      "sector": "Servicios y otros"
+    },
+    {
+      "id": "EXP-MOY-011",
+      "fecha_anterior": "2024-02-27",
+      "fecha_nueva": "2026-05-07",
+      "fecha_ultima": "2026-05-07",
+      "direcciones_anteriores": 2,
+      "direcciones_nuevas": 1,
+      "sector": "Servicios y otros"
+    },
+    {
+      "id": "EXP-MOY-012",
+      "fecha_anterior": "2025-10-31",
+      "fecha_nueva": "2026-05-07",
+      "fecha_ultima": "2026-05-07",
+      "direcciones_anteriores": 2,
+      "direcciones_nuevas": 1,
+      "sector": "Comercio"
+    },
+    {
+      "id": "EXP-MOY-013",
+      "fecha_anterior": "2025-04-22",
+      "fecha_nueva": "2026-05-04",
+      "fecha_ultima": "2026-05-04",
+      "direcciones_anteriores": 2,
+      "direcciones_nuevas": 1,
+      "sector": "Comercio"
+    },
+    {
+      "id": "EXP-MOY-014",
+      "fecha_anterior": "2025-04-01",
+      "fecha_nueva": "2026-04-22",
+      "fecha_ultima": "2026-04-22",
+      "direcciones_anteriores": 3,
+      "direcciones_nuevas": 1,
+      "sector": "Servicios y otros"
+    },
+    {
+      "id": "EXP-MOY-015",
+      "fecha_anterior": "2024-09-02",
+      "fecha_nueva": "2026-04-22",
+      "fecha_ultima": "2026-04-22",
+      "direcciones_anteriores": 2,
+      "direcciones_nuevas": 1,
+      "sector": "Comercio"
+    },
+    {
+      "id": "EXP-MOY-016",
+      "fecha_anterior": "2024-11-21",
+      "fecha_nueva": "2026-04-22",
+      "fecha_ultima": "2026-04-22",
+      "direcciones_anteriores": 1,
+      "direcciones_nuevas": 1,
+      "sector": "Comercio"
+    },
+    {
+      "id": "EXP-MOY-017",
+      "fecha_anterior": "2024-07-10",
+      "fecha_nueva": "2026-04-15",
+      "fecha_ultima": "2026-04-15",
+      "direcciones_anteriores": 1,
+      "direcciones_nuevas": 1,
+      "sector": "Comercio"
+    },
+    {
+      "id": "EXP-MOY-018",
+      "fecha_anterior": "2024-08-21",
+      "fecha_nueva": "2026-04-15",
+      "fecha_ultima": "2026-04-15",
+      "direcciones_anteriores": 1,
+      "direcciones_nuevas": 1,
+      "sector": "Servicios y otros"
+    },
+    {
+      "id": "EXP-MOY-019",
+      "fecha_anterior": "2023-08-11",
+      "fecha_nueva": "2026-04-13",
+      "fecha_ultima": "2026-04-13",
+      "direcciones_anteriores": 2,
+      "direcciones_nuevas": 1,
+      "sector": "Servicios y otros"
+    },
+    {
+      "id": "EXP-MOY-020",
+      "fecha_anterior": "2024-02-16",
+      "fecha_nueva": "2026-03-27",
+      "fecha_ultima": "2026-03-27",
+      "direcciones_anteriores": 1,
+      "direcciones_nuevas": 1,
+      "sector": "Comercio"
+    },
+    {
+      "id": "EXP-MOY-021",
+      "fecha_anterior": "2025-01-28",
+      "fecha_nueva": "2026-03-26",
+      "fecha_ultima": "2026-03-26",
+      "direcciones_anteriores": 2,
+      "direcciones_nuevas": 1,
+      "sector": "Servicios y otros"
+    },
+    {
+      "id": "EXP-MOY-022",
+      "fecha_anterior": "2024-10-04",
+      "fecha_nueva": "2026-03-24",
+      "fecha_ultima": "2026-03-24",
+      "direcciones_anteriores": 1,
+      "direcciones_nuevas": 1,
+      "sector": "Servicios y otros"
+    },
+    {
+      "id": "EXP-MOY-023",
+      "fecha_anterior": "2024-03-18",
+      "fecha_nueva": "2026-03-16",
+      "fecha_ultima": "2026-03-16",
+      "direcciones_anteriores": 1,
+      "direcciones_nuevas": 1,
+      "sector": "Comercio"
+    },
+    {
+      "id": "EXP-MOY-024",
+      "fecha_anterior": "2025-02-04",
+      "fecha_nueva": "2026-03-16",
+      "fecha_ultima": "2026-03-16",
+      "direcciones_anteriores": 1,
+      "direcciones_nuevas": 1,
+      "sector": "Comercio"
+    },
+    {
+      "id": "EXP-MOY-025",
+      "fecha_anterior": "2025-04-08",
+      "fecha_nueva": "2026-03-16",
+      "fecha_ultima": "2026-03-16",
+      "direcciones_anteriores": 1,
+      "direcciones_nuevas": 1,
+      "sector": "Servicios y otros"
+    },
+    {
+      "id": "EXP-MOY-026",
+      "fecha_anterior": "2022-05-18",
+      "fecha_nueva": "2026-03-13",
+      "fecha_ultima": "2026-03-13",
+      "direcciones_anteriores": 1,
+      "direcciones_nuevas": 1,
+      "sector": "Comercio"
+    },
+    {
+      "id": "EXP-MOY-027",
+      "fecha_anterior": "2023-10-11",
+      "fecha_nueva": "2026-03-13",
+      "fecha_ultima": "2026-03-13",
+      "direcciones_anteriores": 1,
+      "direcciones_nuevas": 1,
+      "sector": "Agropecuario"
+    },
+    {
+      "id": "EXP-MOY-028",
+      "fecha_anterior": "2025-02-25",
+      "fecha_nueva": "2026-03-13",
+      "fecha_ultima": "2026-03-13",
+      "direcciones_anteriores": 1,
+      "direcciones_nuevas": 1,
+      "sector": "Alimentación y alojamiento"
+    },
+    {
+      "id": "EXP-MOY-029",
+      "fecha_anterior": "2025-03-19",
+      "fecha_nueva": "2026-03-13",
+      "fecha_ultima": "2026-03-13",
+      "direcciones_anteriores": 1,
+      "direcciones_nuevas": 1,
+      "sector": "Comercio"
+    },
+    {
+      "id": "EXP-MOY-030",
+      "fecha_anterior": "2025-09-04",
+      "fecha_nueva": "2026-03-13",
+      "fecha_ultima": "2026-03-13",
+      "direcciones_anteriores": 1,
+      "direcciones_nuevas": 1,
+      "sector": "Alimentación y alojamiento"
+    },
+    {
+      "id": "EXP-MOY-031",
+      "fecha_anterior": "2024-11-21",
+      "fecha_nueva": "2026-03-06",
+      "fecha_ultima": "2026-03-06",
+      "direcciones_anteriores": 1,
+      "direcciones_nuevas": 1,
+      "sector": "Comercio"
+    },
+    {
+      "id": "EXP-MOY-032",
+      "fecha_anterior": "2023-11-10",
+      "fecha_nueva": "2026-03-06",
+      "fecha_ultima": "2026-03-06",
+      "direcciones_anteriores": 1,
+      "direcciones_nuevas": 1,
+      "sector": "Comercio"
+    },
+    {
+      "id": "EXP-MOY-033",
+      "fecha_anterior": "2024-12-20",
+      "fecha_nueva": "2026-03-02",
+      "fecha_ultima": "2026-03-02",
+      "direcciones_anteriores": 2,
+      "direcciones_nuevas": 1,
+      "sector": "Comercio"
+    },
+    {
+      "id": "EXP-MOY-034",
+      "fecha_anterior": "2025-07-02",
+      "fecha_nueva": "2026-03-02",
+      "fecha_ultima": "2026-03-02",
+      "direcciones_anteriores": 1,
+      "direcciones_nuevas": 1,
+      "sector": "Servicios y otros"
+    },
+    {
+      "id": "EXP-MOY-035",
+      "fecha_anterior": "2023-10-27",
+      "fecha_nueva": "2026-02-24",
+      "fecha_ultima": "2026-02-24",
+      "direcciones_anteriores": 2,
+      "direcciones_nuevas": 1,
+      "sector": "Servicios y otros"
+    },
+    {
+      "id": "EXP-MOY-036",
+      "fecha_anterior": "2025-04-14",
+      "fecha_nueva": "2026-02-24",
+      "fecha_ultima": "2026-02-24",
+      "direcciones_anteriores": 1,
+      "direcciones_nuevas": 1,
+      "sector": "Servicios y otros"
+    },
+    {
+      "id": "EXP-MOY-037",
+      "fecha_anterior": "2022-11-03",
+      "fecha_nueva": "2026-02-16",
+      "fecha_ultima": "2026-02-16",
+      "direcciones_anteriores": 1,
+      "direcciones_nuevas": 1,
+      "sector": "Comercio"
+    },
+    {
+      "id": "EXP-MOY-038",
+      "fecha_anterior": "2022-02-04",
+      "fecha_nueva": "2026-02-12",
+      "fecha_ultima": "2026-02-12",
+      "direcciones_anteriores": 1,
+      "direcciones_nuevas": 1,
+      "sector": "Comercio"
+    },
+    {
+      "id": "EXP-MOY-039",
+      "fecha_anterior": "2024-12-26",
+      "fecha_nueva": "2026-02-12",
+      "fecha_ultima": "2026-02-12",
+      "direcciones_anteriores": 1,
+      "direcciones_nuevas": 1,
+      "sector": "Comercio"
+    },
+    {
+      "id": "EXP-MOY-040",
+      "fecha_anterior": "2024-06-27",
+      "fecha_nueva": "2026-02-10",
+      "fecha_ultima": "2026-02-10",
+      "direcciones_anteriores": 2,
+      "direcciones_nuevas": 1,
+      "sector": "Servicios y otros"
+    },
+    {
+      "id": "EXP-MOY-041",
+      "fecha_anterior": "2024-01-12",
+      "fecha_nueva": "2026-02-10",
+      "fecha_ultima": "2026-02-10",
+      "direcciones_anteriores": 1,
+      "direcciones_nuevas": 1,
+      "sector": "Comercio"
+    },
+    {
+      "id": "EXP-MOY-042",
+      "fecha_anterior": "2025-03-26",
+      "fecha_nueva": "2026-02-10",
+      "fecha_ultima": "2026-02-10",
+      "direcciones_anteriores": 2,
+      "direcciones_nuevas": 1,
+      "sector": "Comercio"
+    },
+    {
+      "id": "EXP-MOY-043",
+      "fecha_anterior": "2024-12-20",
+      "fecha_nueva": "2026-01-14",
+      "fecha_ultima": "2026-01-14",
+      "direcciones_anteriores": 6,
+      "direcciones_nuevas": 1,
+      "sector": "Comercio"
+    },
+    {
+      "id": "EXP-MOY-044",
+      "fecha_anterior": "2024-10-22",
+      "fecha_nueva": "2026-01-09",
+      "fecha_ultima": "2026-01-09",
+      "direcciones_anteriores": 1,
+      "direcciones_nuevas": 1,
+      "sector": "Servicios y otros"
+    },
+    {
+      "id": "EXP-MOY-045",
+      "fecha_anterior": "2025-11-07",
+      "fecha_nueva": "2026-01-06",
+      "fecha_ultima": "2026-01-06",
+      "direcciones_anteriores": 1,
+      "direcciones_nuevas": 1,
+      "sector": "Servicios y otros"
+    }
+  ],
+  "metodo": "RUC de 11 dígitos; dirección normalizada; una o más direcciones nuevas en 2026 frente a las observadas antes de 2026. No confirma sucursal, apertura ni vigencia. Sin RUC, nombres, direcciones ni coordenadas individuales publicados."
+}
