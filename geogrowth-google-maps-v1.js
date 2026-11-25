@@ -90,6 +90,7 @@ function loader(apiKey){
 const demoStorage="geogrowth.demo.placeids.v1";
 function readDemo(){try{const x=JSON.parse(localStorage.getItem(demoStorage)||"[]");return Array.isArray(x)?x.filter(v=>v&&typeof v.recordId==="string"&&typeof v.placeId==="string"&&/^\d{6}$/.test(v.ubigeo)):[];}catch(_){return [];}}
 let demoIndex=readDemo();
+const demoAttempted=new Set();
 const validatedDistricts=new Set(demoIndex.map(x=>x.ubigeo));
 function rememberValidated(results){
  for(const p of results)if(p.id&&p.location&&p.officialLicense?.ubigeo){
@@ -318,24 +319,28 @@ async function prepareDemo(){
  try{
  const {Place}=await google.maps.importLibrary("places");
  const refs=new Set(demoIndex.map(x=>x.recordId));
- const queue=candidates.filter(l=>!refs.has(l.id));
+ let queue=candidates.filter(l=>!refs.has(l.id)&&!demoAttempted.has(l.id));
+ if(!queue.length){demoAttempted.clear();queue=candidates.filter(l=>!refs.has(l.id));}
  const limit=Number(document.getElementById("gg-demo-limit")?.value||30);
  for(const l of queue.slice(0,limit)){
  if(token!==searchEpoch||my!==seq||!same(sc,scope()))break;
  if(results.size>=5||errors>=3)break;
  processed++;
+ demoAttempted.add(l.id);
  status("Preparando demo: "+processed+" consultas · "+results.size+" coincidencias.");
  try{
  const response=await Place.searchByText({textQuery:lookupQuery(l),fields:["id","displayName","location","formattedAddress","googleMapsURI","businessStatus","rating","userRatingCount"],maxResultCount:5,region:"pe",language:"es"});
  if(token!==searchEpoch||my!==seq||!same(sc,scope()))break;
  const p=selectMatch(l,response.places);
  if(p){const item=placeResult(p,l);results.set(p.id,item);rememberValidated([item]);}
- }catch(_){errors++;}
+ }catch(_){errors++;demoAttempted.delete(l.id);}
  }
  if(token!==searchEpoch||my!==seq)return;
  const list=[...results.values()];
- if(list.length)display(list,{missing:"Coincidencias de la fuente verificadas por nombre y dirección; sin inferencia de crédito."});
- status("Preparación: "+list.length+" nuevos lugares validados, "+processed+" registros consultados, "+errors+" errores. "+(list.length?"Referencias guardadas en este navegador.":"No se encontraron coincidencias nuevas; no se inventarán ubicaciones."));
+ const restored=await restoreDemo(sc,candidates);
+ if(token!==searchEpoch||my!==seq)return;
+ if(restored.length||list.length)display([...new Map([...restored,...list].map(p=>[p.id,p])).values()],{missing:"Coincidencias de la fuente verificadas por nombre y dirección; sin inferencia de crédito."});
+ status("Preparación: "+list.length+" nuevos lugares validados, "+processed+" registros consultados, "+errors+" errores. "+(list.length?"Referencias guardadas en este navegador.":"No se encontraron coincidencias nuevas. Puedes preparar el siguiente lote sin repetir los registros ya consultados."));
  }catch(e){status("No se pudo preparar la demo: "+e.message);}
  finally{preparing=false;if(button?.isConnected)button.disabled=false;}
 }
