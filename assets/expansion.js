@@ -36,7 +36,7 @@ function show(host,pack){
  <div class="field"><label for="ex-to">Hasta (fecha exacta)</label><input id="ex-to" type="date"></div>
  <div class="field"><label for="ex-sector">Sector</label><select id="ex-sector"></select></div>
  <div class="field"><label for="ex-query">Buscar nombre o dirección comercial</label><input id="ex-query" type="search" placeholder="Nombre, dirección o código"></div>
- </div><div class="actions-row"><button class="btn primary" id="ex-search" type="submit">Buscar oportunidades</button></div><p class="muted">Con Google Maps activo, Buscar realiza hasta 10 consultas de Geocoding / Places por solicitud (pueden consumir cuota). Los registros sin ubicación siguen en la tabla.</p><p id="ex-error" class="muted" role="status"></p><div id="ex-search-feedback" role="status" aria-live="polite" style="display:none;margin-top:12px;padding:12px 14px;background:#edf8f4;border:1px solid #cdece2;border-radius:10px;color:#225b50"></div></form></section>
+ </div><div class="actions-row"><button class="btn primary" id="ex-search" type="submit">Buscar oportunidades</button></div><p class="muted">Con Google Maps activo, Buscar realiza hasta 10 consultas de Google Places por solicitud (pueden consumir cuota). Los registros sin ubicación siguen en la tabla.</p><p id="ex-error" class="muted" role="status"></p><div id="ex-search-feedback" role="status" aria-live="polite" style="display:none;margin-top:12px;padding:12px 14px;background:#edf8f4;border:1px solid #cdece2;border-radius:10px;color:#225b50"></div></form></section>
  <div id="ex-kpi" class="kpi-grid"></div>
  <section class="card" id="ex-map-card"><div class="card-header"><div><h2>Mapa comercial</h2><p id="ex-map-caption">Referencia territorial; selecciona Localizar en un registro.</p></div><span class="badge" id="ex-map-badge">Sin coordenadas precargadas</span></div>
  <div id="ex-map" style="min-height:360px;border:1px solid #dce6ee;border-radius:12px;overflow:hidden"></div>
@@ -47,11 +47,27 @@ function show(host,pack){
  function iframe(src,title){const f=document.createElement("iframe");f.title=title;f.width="100%";f.height="360";f.style.cssText="border:0;display:block";f.src=src;$("ex-map").replaceChildren(f);}
  function resetMap(){seq++;selected=null;clearSearchPins();marker?.setMap(null);marker=null;info?.close();info=null;
   $("ex-open").href=searchUrl(territoryQuery());$("ex-map-caption").textContent=d.distrito+" · referencia territorial SBS; no es un domicilio comercial.";$("ex-map-badge").textContent="Sin coordenadas precargadas";
-  if(map&&!authFailed){map.setCenter(d.ref);map.setZoom(13);$("ex-map-status").textContent="Google Maps activo. Selecciona un negocio para buscar su dirección.";}
+  if(map&&!authFailed){map.setCenter(d.ref);map.setZoom(13);$("ex-map-status").textContent="Google Maps activo. Pulsa Buscar para consultar Google Places.";}
   else{const {lat,lng}=d.ref;iframe("https://www.openstreetmap.org/export/embed.html?bbox="+encodeURIComponent([lng-.04,lat-.04,lng+.04,lat+.04].join(","))+"&layer=mapnik","Mapa territorial de "+d.distrito);$("ex-map-status").textContent="Mapa de respaldo OpenStreetMap. Localizar abre una búsqueda comercial en el mapa.";}
  }
  function clearSearchPins(){for(const p of searchPins)p.setMap(null);searchPins=[];}
  function normalizeName(s){return String(s||"").normalize("NFD").replace(/\p{M}/gu,"").toUpperCase().replace(/[^A-Z0-9]+/g," ").trim();}
+ function nameKey(s){return normalizeName(s).replace(/\b(S A C|S A|S R L|E I R L|SAC|SA|SRL|EIRL)\b/g,"").replace(/\s+/g," ").trim();}
+ function streetKey(s){return normalizeName(s).replace(/\b(AVENIDA|AV)\b/g,"AV").replace(/\b(JIRON|JR)\b/g,"JR").replace(/\b(CALLE|CL)\b/g,"CL").replace(/\b(NUMERO|NRO|NO|N)\b/g,"").replace(/\s+/g," ").trim();}
+ function addressMatch(a,b){const x=streetKey(String(a||"").split(" - ")[0]),y=streetKey(b);return x.length>5&&(" "+y+" ").includes(" "+x+" ");}
+ function safeError(e){const raw=String(e?.code||e?.status||e?.message||e?.name||"UNKNOWN");const code=raw.match(/\b(PERMISSION_DENIED|REQUEST_DENIED|RESOURCE_EXHAUSTED|OVER_QUERY_LIMIT|INVALID_ARGUMENT|API_KEY_SERVICE_BLOCKED|API_KEY_INVALID|SERVICE_DISABLED|UNAUTHENTICATED|ZERO_RESULTS|NOT_FOUND|DEADLINE_EXCEEDED|UNKNOWN_ERROR|INTERNAL|UNAVAILABLE|429|403|400)\b/i);return code?code[0].toUpperCase():(e?.name==="TypeError"?"TYPE_ERROR":"ERROR_API");}
+ async function resolveBusiness(x,territory,districtName,ref){
+  // Demo Key supports Place class; the legacy JS Geocoder uses v3 and is not included.
+  const {Place}=await google.maps.importLibrary("places");
+  const response=await Place.searchByText({textQuery:[x.nombre,x.direccion,territory].filter(Boolean).join(", "),fields:["id","displayName","formattedAddress","location"],maxResultCount:5,language:"es",region:"pe"});
+  const local=(response.places||[]).filter(p=>p.id&&p.location&&normalizeName(p.formattedAddress).includes(districtName));
+  const named=x.nombre?local.filter(p=>nameKey(p.displayName)===nameKey(x.nombre)):[];
+  const exact=named.filter(p=>addressMatch(x.direccion,p.formattedAddress));
+  if(exact.length===1)return {position:exact[0].location,address:exact[0].formattedAddress,label:"Coincidencia de nombre y dirección en Google Places",matched:true};
+  if(!x.nombre){const matches=local.filter(p=>addressMatch(x.direccion,p.formattedAddress));if(matches.length===1)return {position:matches[0].location,address:matches[0].formattedAddress,label:"Coincidencia de dirección; identidad del local por verificar",matched:false};return null;}
+  if(named.length===1)return {position:named[0].location,address:named[0].formattedAddress,label:x.direccion?"Coincidencia por nombre; dirección de la licencia NO confirmada":"Coincidencia por nombre; sin dirección municipal publicable",matched:false};
+  return null;
+ }
  async function mapResults(rows){
   const token=++seq;selected=null;clearSearchPins();marker?.setMap(null);marker=null;info?.close();info=null;
   const current=map,territory=territoryQuery(),districtName=normalizeName(d.distrito),ref=d.ref;
@@ -63,33 +79,25 @@ function show(host,pack){
   $("ex-map-badge").textContent="Buscando ubicaciones…";
   $("ex-map-status").textContent="Consultando Google: "+batch.length+" búsquedas como máximo. "+(rows.length-available.length)+" registros sin datos comerciales publicables.";
   if(!batch.length){$("ex-map-badge").textContent="0 ubicaciones";$("ex-map-status").textContent="No hay nombre ni dirección comercial publicable en los resultados. No se pueden dibujar marcadores.";return;}
-  let found=0,failed=0,apiErrors=0;
+  let found=0,failed=0,apiErrors=0,attempted=0,confirmed=0;const errors=new Set();
   try{
    const {Marker}=await google.maps.importLibrary("marker"),{InfoWindow}=await google.maps.importLibrary("maps"),{LatLngBounds}=await google.maps.importLibrary("core");const bounds=new LatLngBounds();
    for(const x of batch){
     if(token!==seq||!host.isConnected||authFailed)return;
-    let position=null,label="",address="";
-    try{
-     if(x.direccion){
-      const {Geocoder}=await google.maps.importLibrary("geocoding"),response=await new Geocoder().geocode({address:x.direccion+", "+territory,region:"pe",componentRestrictions:{country:"PE"}});
-      const hit=response.results[0];if(hit&&!hit.partial_match&&["ROOFTOP","RANGE_INTERPOLATED"].includes(hit.geometry.location_type)&&/(street_address|premise|subpremise|establishment)/.test(hit.types.join("|"))&&normalizeName(hit.formatted_address).includes(districtName)){position=hit.geometry.location;address=hit.formatted_address;label="Dirección geocodificada";}
-     }else{
-      const {Place}=await google.maps.importLibrary("places");const r=await Place.searchByText({textQuery:x.nombre+", "+territory,fields:["displayName","formattedAddress","location"],locationBias:{center:ref,radius:10000},maxResultCount:3,language:"es",region:"pe"});
-      const expected=normalizeName(x.nombre);
-      const matches=(r.places||[]).filter(p=>p.location&&normalizeName(p.displayName)===expected&&normalizeName(p.formattedAddress).includes(districtName));
-      if(matches.length===1){position=matches[0].location;address=matches[0].formattedAddress;label="Coincidencia por nombre en Google Places";}
-     }
-    }catch(err){apiErrors++;}
+    let result=null;attempted++;
+    try{result=await resolveBusiness(x,territory,districtName,ref);}
+    catch(err){apiErrors++;const code=safeError(err);errors.add(code);if(/PERMISSION_DENIED|REQUEST_DENIED|SERVICE_DISABLED|API_KEY|RESOURCE_EXHAUSTED|OVER_QUERY_LIMIT|UNAUTHENTICATED|403|429/.test(code))break;}
+    const {position,address,label,matched}=result||{};
     if(token!==seq||!host.isConnected||authFailed)return;
     if(!position){failed++;continue;}
-    const pin=new Marker({map:current,position,title:x.nombre||x.id});searchPins.push(pin);bounds.extend(position);found++;
+    const pin=new Marker({map:current,position,title:(x.nombre||x.id)+(matched?"":" · por verificar"),label:matched?undefined:"?"});searchPins.push(pin);bounds.extend(position);found++;if(matched)confirmed++;
     pin.addListener("click",()=>{info?.close();info=new InfoWindow({content:"<b>"+esc(x.nombre||x.id)+"</b><p>"+esc(address)+"</p><small>"+esc(label)+"; vigencia y actividad por verificar.</small>"});info.open({map:current,anchor:pin});});
    }
    if(found===1){current.setCenter(searchPins[0].getPosition());current.setZoom(16);}else if(found>1)current.fitBounds(bounds,60);
-  }catch(err){apiErrors++;}
+  }catch(err){apiErrors++;errors.add(safeError(err));}
   if(token!==seq||!host.isConnected||authFailed)return;
   $("ex-map-badge").textContent=found+" ubicaciones encontradas";
-  $("ex-map-status").textContent=found+" marcadores de "+batch.length+" consultas; "+failed+" sin coincidencia suficientemente precisa. "+(apiErrors?"Google rechazó "+apiErrors+" consultas o no están habilitadas Geocoding / Places API (New). ":"")+(unique.length>10?"Límite de 10 por búsqueda; usa Localizar para los demás. ":"")+(rows.length-available.length)+" registros sin datos comerciales publicables. Los marcadores no confirman actividad.";
+  $("ex-map-status").textContent=found+" marcadores ("+confirmed+" con nombre y dirección coincidentes; "+(found-confirmed)+" por verificar) de "+attempted+" consultas Places; "+failed+" sin coincidencia. "+(apiErrors?"Errores: "+[...errors].join(", ")+". Revisa Places API (New), autorización y cuota. ":"")+(unique.length>10?"Límite de 10 por búsqueda; usa Localizar para los demás. ":"")+(rows.length-available.length)+" registros sin datos comerciales publicables. Los marcadores no confirman actividad ni apertura.";
  }
  function query(x){return [x.nombre,x.direccion,territoryQuery()].filter(Boolean).join(", ");}
  function fallback(x,message){clearSearchPins();map=null;marker=null;info=null;const q=query(x);
@@ -99,14 +107,14 @@ function show(host,pack){
  async function locate(x){clearSearchPins();const token=++seq;selected=x;const q=query(x);
   $("ex-map-card").scrollIntoView({behavior:"smooth",block:"start"});$("ex-open").href=searchUrl(q);$("ex-map-caption").textContent=(x.nombre||x.id)+(x.direccion?" · "+x.direccion:"")+" · "+d.distrito;
   if(!x.nombre&&!x.direccion){$("ex-map-status").textContent="No hay nombre o dirección comercial publicable para este registro.";return;}
-  if(!map||authFailed||!x.direccion){fallback(x,"Búsqueda por nombre o dirección comercial publicada. El resultado debe verificarse.");return;}
-  $("ex-map-status").textContent="Buscando dirección comercial en Google Maps…";marker?.setMap(null);marker=null;info?.close();
-  try{const {Geocoder}=await google.maps.importLibrary("geocoding");const g=new Geocoder();const response=await g.geocode({address:x.direccion+", "+territoryQuery(),region:"pe",componentRestrictions:{country:"PE"}});
-   if(token!==seq||!host.isConnected)return;const hit=response.results[0];const precise=hit&&!hit.partial_match&&["ROOFTOP","RANGE_INTERPOLATED"].includes(hit.geometry.location_type)&&/(street_address|premise|subpremise|establishment)/.test(hit.types.join("|"));
-   if(!precise){fallback(x,"Google no devolvió una dirección suficientemente precisa; se muestra la búsqueda sin confirmar.");return;}
+  if(!map||authFailed){fallback(x,"Búsqueda por nombre o dirección comercial publicada. El resultado debe verificarse.");return;}
+  $("ex-map-status").textContent="Buscando negocio en Google Places…";marker?.setMap(null);marker=null;info?.close();
+  try{const hit=await resolveBusiness(x,territoryQuery(),normalizeName(d.distrito),d.ref);
+   if(token!==seq||!host.isConnected)return;
+   if(!hit){$("ex-map-badge").textContent="Sin coincidencia";$("ex-map-status").textContent="Google Places no devolvió una coincidencia suficientemente identificable. Usa Abrir en Google Maps para verificar manualmente.";return;}
    const {Marker}=await google.maps.importLibrary("marker");const {InfoWindow}=await google.maps.importLibrary("maps");if(token!==seq||!host.isConnected)return;
-   map.setCenter(hit.geometry.location);map.setZoom(17);marker=new Marker({map,position:hit.geometry.location,title:x.nombre||x.id});info=new InfoWindow({content:"<b>"+esc(x.nombre||x.id)+"</b><p>"+esc(x.direccion)+"</p><small>Dirección geocodificada; negocio y vigencia por verificar.</small>"});info.open({map,anchor:marker});$("ex-map-badge").textContent="Dirección geocodificada";$("ex-map-status").textContent="Ubicación devuelta por Google: "+hit.formatted_address+". No confirma actividad ni presencia actual.";
-  }catch(e){if(token===seq&&host.isConnected)fallback(x,"No se pudo geocodificar la dirección con la clave disponible.");}
+   map.setCenter(hit.position);map.setZoom(17);marker=new Marker({map,position:hit.position,title:x.nombre||x.id,label:hit.matched?undefined:"?"});info=new InfoWindow({content:"<b>"+esc(x.nombre||x.id)+"</b><p>"+esc(hit.address)+"</p><small>"+esc(hit.label)+"; negocio y vigencia por verificar.</small>"});info.open({map,anchor:marker});$("ex-map-badge").textContent=hit.matched?"Nombre y dirección coincidentes":"Ubicación por verificar";$("ex-map-status").textContent=hit.label+": "+hit.address+". No confirma actividad ni presencia actual.";
+  }catch(e){if(token===seq&&host.isConnected){$("ex-map-badge").textContent="Error de consulta";$("ex-map-status").textContent="Google Places: "+safeError(e)+". Revisa autorización y cuota, o pulsa Abrir en Google Maps.";}}
  }
  function fields(){const list=mode==="expansion"?d.candidatos:d.registros;const years=[...new Set(list.map(x=>x.anio||x.fecha_nueva?.slice(0,4)).filter(Boolean))].sort().reverse();
   $("ex-year").innerHTML='<option value="">Todos los años</option>'+options(years);$("ex-sector").innerHTML='<option value="">Todos</option>'+options([...new Set(list.map(x=>x.sector))].sort());
