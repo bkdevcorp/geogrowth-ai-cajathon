@@ -41,10 +41,16 @@ jobs:
           node --check geogrowth-agent-demo-v1.js
           node --check geogrowth-filtros-v1.js
           node --check geogrowth-licencias-convencion-v1.js
+          node --check geogrowth-licencias-arequipa-v1.js
+          node --check geogrowth-google-maps-v1.js
       - name: Validar licencias Santa Ana 2026-T2 y minimización de datos
         run: |
           python -m unittest scripts/test_aggregate_convencion.py
           node scripts/test_licencias_convencion.cjs
+      - name: Fuente Arequipa 2026 y Google Maps JavaScript API
+        run: |
+          node scripts/test_arequipa_2026.cjs
+          node scripts/test_google_maps_adapter.cjs
       - name: Validar Opportunity Brief por territorio e IIT
         run: node scripts/test_opportunity_brief.cjs
       - name: Simulación de agentes en cinco casos y 25 departamentos
