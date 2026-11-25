@@ -188,7 +188,8 @@ const PAGE_SIZE=10;
 let lookupPage=0,lookupScope=null;
 function sourceCandidates(data,sc){
  if(!["todas","nuevos","otros"].includes(sc.type))return [];
- const terms=sc.type==="otros"?norm(sc.custom).split(" ").filter(t=>t.length>=4):[];
+ const terms=sc.type==="otros"?norm(sc.custom).split(" ").filter(t=>t.length>=4&&!["PARA","BUSCAR","IDENTIFICAR","NEGOCIOS","COMERCIALES","OPORTUNIDADES"].includes(t)):[];
+ if(sc.type==="otros"&&!terms.length)return [];
  return (data?.registros||[]).filter(l=>inScope(l,sc)&&l.nombre&&l.direccion&&norm(l.nombre).length>=4&&norm(l.direccion).length>=8&&(!terms.length||terms.some(t=>norm([l.nombre,l.giro,l.sector,l.direccion].join(" ")).includes(t))));
 }
 function lookupQuery(l){return [l.nombre,l.direccion,l.departamento,"Perú"].filter(Boolean).join(", ");}
@@ -197,9 +198,9 @@ function exactAddress(l,p){
  if(!a||!b)return false;
  if((" "+b+" ").includes(" "+a+" "))return true;
  // Standardize only documented street abbreviations and require matching street number.
- const simplify=v=>norm(v).replace(/\\b(AVENIDA|AV)\\b/g,"AV").replace(/\\b(CALLE|CL)\\b/g,"CL").replace(/\\b(JIRON|JR)\\b/g,"JR").replace(/\\b(NRO|NUMERO|NO|N)\\b/g,"").replace(/\\s+/g," ").trim();
+ const simplify=v=>norm(v).replace(/\b(AVENIDA|AV)\b/g,"AV").replace(/\b(CALLE|CL)\b/g,"CL").replace(/\b(JIRON|JR)\b/g,"JR").replace(/\b(NRO|NUMERO|NO|N)\b/g,"").replace(/\s+/g," ").trim();
  const x=simplify(a),y=simplify(b);
- return /\\b\\d+\\b/.test(x)&&(" "+y+" ").includes(" "+x+" ");
+ return /\b\d+\b/.test(x)&&(" "+y+" ").includes(" "+x+" ");
 }
 function selectMatch(l,places){
  const matches=(places||[]).filter(p=>p.id&&p.location&&norm(p.displayName)===norm(l.nombre)&&exactAddress(l,p));
