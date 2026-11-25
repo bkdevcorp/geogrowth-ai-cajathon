@@ -25,7 +25,7 @@ const refOf=u=>catalog.find(x=>String(x.ubigeo)===String(u))||null;
 const provs=department=>[...new Set(DATA.filter(x=>x.departamento===department).map(key))].sort((a,b)=>sortText(provinceName(a),provinceName(b)));
 const lensEligible=r=>{
  if(focus.type==="estacionales")return false; // Ningun dataset demuestra estacionalidad.
- if(focus.type==="nuevos")return (r.licencias_municipales_ref!=null&&Number(r.licencias_municipales_ref)>0)||!!refOf(r.ubigeo);
+ if(focus.type==="nuevos")return (r.licencias_municipales_ref!=null&&Number(r.licencias_municipales_ref)>0)||refOf(r.ubigeo)?.estado==="FUENTE_EXTERNA_NO_INTEGRADA";
  if(focus.type==="expansion")return r.ambas_fuentes===true&&Number(r.micro_2015||0)>0;
  if(focus.type==="desatendidos")return r.ambas_fuentes===true&&Number(r.micro_2015||0)>0;
  return true;
@@ -71,7 +71,7 @@ function description(r){
   tipo_oportunidad:focus.type,
   tipo_descripcion:TYPES.find(x=>x[0]===focus.type)?.[1]||"Todas",
   naturaleza:"Lente de investigación, no resultado de detección de clientes o demanda",
-  fuente_municipal_externa:external?{url:external.referencia,estado:"NO_INTEGRADA",periodo_referido:external.periodo_indicado}:null,
+  fuente_municipal_externa:external?{url:external.referencia,estado:external.estado,periodo_referido:external.periodo_indicado}:null,
   limita_estacionalidad:focus.type==="estacionales"
     ?"No existe una serie de actividad estacional que permita clasificar territorios. No se presentan oportunidades priorizadas.":null
  };
@@ -96,12 +96,13 @@ function sourceLabel(r){
 function filterSummary(department){
  const pool=candidates(department),withIit=pool.filter(x=>x.score!=null).length;
  const foundSources=sources(department,focus.province);
+ const verifiedLinks=foundSources.filter(x=>x.estado==="FUENTE_EXTERNA_NO_INTEGRADA").length;
  return '<section class="gg-filter-box" id="gg-filter-results">'+
  '<div class="gg-filter-header"><div><h4>Territorios que cumplen los filtros de investigación</h4>'+
  '<p>Esta búsqueda utiliza el Data Pack territorial, no un padrón de clientes. Selecciona un resultado para generar su IIT y Opportunity Brief.</p></div>'+
  '<span style="font-size:12px;color:#285c8d;font-weight:800">'+pool.length+' distritos</span></div>'+
  '<div class="gg-filter-tags"><span>'+pool.length+' distritos en la selección</span><span>'+withIit+' con IIT comparable</span>'+
- '<span>'+foundSources.length+' fuentes externas localizadas</span><span>'+esc(TYPES.find(x=>x[0]===focus.type)?.[1])+'</span></div>'+
+ '<span>'+verifiedLinks+' fuentes externas identificadas</span><span>'+esc(TYPES.find(x=>x[0]===focus.type)?.[1])+'</span></div>'+
  (focus.type==="estacionales"?'<div class="gg-filter-empty">No hay series de estacionalidad en el Data Pack. El filtro funciona como necesidad de investigación, pero no puede clasificar campañas estacionales sin inventar evidencia.</div>':
  focus.type==="nuevos"?'<p class="gg-filter-note">«Nuevos negocios» muestra territorios con licencias municipales integradas o una fuente externa identificada. Una fecha de licencia no demuestra creación reciente, operación vigente ni contacto válido.</p>':
  focus.type==="desatendidos"?'<p class="gg-filter-note">«Mercados por investigar» ordena una razón exploratoria entre empresas históricas y oficinas SBS. No identifica población no bancarizada ni demuestra una brecha de acceso.</p>':
@@ -114,7 +115,7 @@ function filterSummary(department){
  '<div class="gg-filter-empty">No hay distritos que cumplan este filtro dentro del ámbito seleccionado. Amplía provincia o cambia el tipo de oportunidad. No se generaron candidatos ficticios.</div>')+
  (foundSources.length?'<div class="gg-filter-sources"><p><b>Fuentes municipales por integrar al ETL</b> (referencias aportadas por CajaRadar AI; no se usan para calcular IIT ni como negocios detectados):</p>'+
   foundSources.slice(0,7).map(x=>'<p><b>'+esc(x.distrito||x.ubigeo)+'</b> · '+esc(x.periodo_indicado)+
-   ' · <a href="'+esc(x.referencia)+'" target="_blank" rel="noopener noreferrer">Consultar fuente externa</a> · No integrada</p>').join("")+'</div>':'')+
+   ' · <a href="'+esc(x.referencia)+'" target="_blank" rel="noopener noreferrer">'+(x.estado==='FUENTE_EXTERNA_NO_INTEGRADA'?'Consultar dataset':'Buscar en portal')+'</a> · '+(x.estado==='FUENTE_EXTERNA_NO_INTEGRADA'?'No integrada':'Dataset concreto no identificado')+'</p>').join("")+'</div>':'')+
  '</section>';
 }
 function enhancePicker(){
