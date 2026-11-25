@@ -52,11 +52,15 @@
       "departamento": "Cusco",
       "provincia": "La Convención",
       "distrito": "Santa Ana (Quillabamba)",
-      "periodo_indicado": "Primer y segundo trimestre de 2026",
+      "periodo_indicado": "Segundo trimestre 2026 (56 licencias); un registro adicional de febrero de 2024",
       "foco_sugerido": "Agricultura y comercio",
-      "referencia": "https://www.datosabiertos.gob.pe/dataset/licencias-de-funcionamiento-de-municipalidad-provincial-la-convenci%C3%B3n",
-      "estado": "FUENTE_EXTERNA_NO_INTEGRADA",
-      "aviso": "Referencia de búsqueda aportada por el prototipo CajaRadar AI. No se han incorporado expedientes de esta fuente al Data Pack ni validado el foco sectorial."
+      "referencia": "https://www.datosabiertos.gob.pe/dataset/licencias-de-funcionamiento-de-municipalidad-provincial-la-convenci%C3%B3n/resource/bce103e8-e3ae",
+      "estado": "RESUMEN_MUNICIPAL_AGREGADO_INTEGRADO",
+      "aviso": "Fuente original publicada y enviada en CSV. Solo se integraron conteos por mes y código de giro, sin nombres, RUC ni domicilios; no acredita negocios actuales.",
+      "dataset_integrado": "data/licencias_convencion_2026q2_resumen.json",
+      "codigo_ubigeo_csv": "070901",
+      "codigo_ubigeo_inei": "080901",
+      "registros_integrados_q2": 56
     },
     {
       "ubigeo": "150201",

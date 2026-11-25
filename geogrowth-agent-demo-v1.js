@@ -9,7 +9,7 @@ const safe=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"
 const number=v=>v==null?"N/D":Number(v).toLocaleString("es-PE");
 const dec=v=>v==null?"N/D":Number(v).toLocaleString("es-PE",{minimumFractionDigits:1,maximumFractionDigits:1});
 const samples=[
- ["130101","Trujillo"],["150101","Lima Cercado"],["040101","Arequipa Cercado"],["060101","Cajamarca"]
+ ["130101","Trujillo"],["150101","Lima Cercado"],["040101","Arequipa Cercado"],["060101","Cajamarca"],["080901","Santa Ana · Cusco"]
 ];
 function create(r,context){
  const meta=context.investigacion||{};
@@ -21,11 +21,13 @@ function create(r,context){
  const officePct=Math.round(100*cohort.filter(x=>Number(x.sbs_oficinas_2025||0)<=offices).length/total);
  const hasMicro=r.micro_2015!=null;
  const hasOffices=r.sbs_oficinas_2025!=null;
- const municipality=meta.licencias_con_sector_y_nombre>0?"individualizada":
+ const municipality=meta.licencias_adicionales?.emitidas_q2_2026>0?"agregada_2026q2":meta.licencias_con_sector_y_nombre>0?"individualizada":
    meta.licencias_individuales>0?"expedientes_sin_identificacion":
    r.licencias_municipales_ref!=null?"agregada":"sin_cobertura";
  const top=meta.sectores?.[0]||null;
- const sourceNote=municipality==="individualizada"
+ const sourceNote=municipality==="agregada_2026q2"
+  ?"La Convención reporta "+number(meta.licencias_adicionales.emitidas_q2_2026)+" licencias de abril a junio 2026 y "+number(meta.licencias_adicionales.fuera_de_periodo)+" licencia anterior (2024). Los códigos de giro son agregados; no se publican nombres ni RUC en la demo."
+  :municipality==="individualizada"
   ?"Hay "+number(meta.licencias_individuales)+" licencias municipales individualizadas con cobertura parcial; los registros no confirman operación actual."
   :municipality==="expedientes_sin_identificacion"
   ?"Se publican "+number(meta.licencias_individuales)+" expedientes en la bandeja del distrito, pero sin nombre comercial, giro ni dirección pública individual. El total histórico municipal de "+number(r.licencias_municipales_ref)+" no constituye una lista de prospectos."
@@ -48,12 +50,18 @@ function create(r,context){
    angle:"Arequipa Cercado: usar los giros municipales publicados como pista para validar comercios y servicios concretos, nunca como clientes identificados automáticamente.",
    interview:"¿La actividad declarada en la licencia sigue vigente y cuál es su necesidad comercial hoy?"
   },
+  "080901":{
+   angle:"Santa Ana (Quillabamba): se registran 56 licencias de funcionamiento emitidas entre abril y junio de 2026. La frecuencia por giro permite formular una hipótesis de investigación local, pero no acredita empresas recién creadas ni vigentes.",
+   interview:"¿La actividad consignada en el giro 5610 o 5630 sigue operando y qué necesidad real expresa su responsable?"
+  },
   "060101":{
    angle:"Cajamarca: al faltar licencias municipales individuales en este paquete, abrir una investigación transversal de negocios operativos antes de focalizar por sector.",
    interview:"¿Qué tipo de establecimiento está activo y qué necesidad financiera manifiesta, si alguna?"
   }
  }[String(r.ubigeo)];
- const sectorFocus=top
+ const sectorFocus=municipality==="agregada_2026q2"
+  ?"Priorizar verificación del código de giro 5610 ("+number(meta.licencias_adicionales.por_codigo_giro?.["5610"]||0)+") y 5630 ("+number(meta.licencias_adicionales.por_codigo_giro?.["5630"]||0)+") en las licencias 2026-T2. Confirmar el significado del catálogo municipal y operación actual antes de segmentar oferta."
+  :top
   ?"La señal municipal más frecuente publicada es "+top.sector+" ("+number(top.registros)+" expedientes de "+number(meta.licencias_individuales)+"). Evaluar primero vigencia y necesidades de ese giro, sin extrapolarlo a todo el distrito."
   :municipality==="agregada"||municipality==="expedientes_sin_identificacion"
   ?"La información municipal es documental, no un padrón comercial por actividad. La siguiente etapa debe recuperar clasificación sectorial vigente antes de elegir rubros."
@@ -80,10 +88,10 @@ function create(r,context){
    conclusion:(hasMicro?number(micro)+" microempresas PRODUCE (2015). ":"Sin cifra microempresarial comparable. ")+
     (hasOffices?number(offices)+" oficinas SBS (2025). ":"Sin oficinas SBS comparables. ")+sourceNote,
    next:"Contrastar ambas series con registros más recientes y conservar su periodo de origen.",
-   sources:[hasMicro?"PRODUCE-2015:"+r.ubigeo:null,hasOffices?"SBS-2025:"+r.ubigeo:null].filter(Boolean)},
+   sources:[hasMicro?"PRODUCE-2015:"+r.ubigeo:null,hasOffices?"SBS-2025:"+r.ubigeo:null,municipality==="agregada_2026q2"?"LIC-MPLC-2026Q2:"+r.ubigeo:null].filter(Boolean)},
   {id:"mercado",name:"Agente de oportunidades",type:"Hipótesis",
    conclusion:special?.angle||sectorFocus,
-   next:sectorQuestion,sources:municipality==="individualizada"?["LIC-MPA:"+r.ubigeo]:[]},
+   next:sectorQuestion,sources:municipality==="individualizada"?["LIC-MPA:"+r.ubigeo]:municipality==="agregada_2026q2"?["LIC-MPLC-2026Q2:"+r.ubigeo]:[]},
   {id:"campo",name:"Agente de campo",type:"Propuesta simulada",
    conclusion:pilot.texto,
    next:"Registrar negocio vigente, interés voluntario, necesidad expresada, evidencia y siguiente acción en GeoGrowth Campo.",sources:[]},
@@ -157,8 +165,27 @@ document.addEventListener("click",event=>{
  event.preventDefault();event.stopImmediatePropagation();
  // Reutiliza los selectores y eventos existentes. No toca el mapa V5.
  state.view="work";render();
+ const r=DATA.find(x=>String(x.ubigeo)===ubigeo);
+ if(!r)return;
  const button=document.querySelector('[data-go-example="'+ubigeo+'"]');
- if(button){button.click();state.view="opportunity";render();}
+ if(button){button.click();}
+ else{
+   const dept=document.getElementById("go-dep");
+   if(dept && dept.value!==r.departamento){
+     dept.value=r.departamento;
+     dept.dispatchEvent(new Event("change",{bubbles:true}));
+   }
+   const district=document.getElementById("go-ubigeo");
+   if(district){
+     if(!Array.from(district.options).some(x=>x.value===ubigeo)){
+       const option=document.createElement("option");option.value=ubigeo;
+       option.textContent=(r.nombre_distrito||ubigeo)+" · "+ubigeo;district.appendChild(option);
+     }
+     district.value=ubigeo;
+     district.dispatchEvent(new Event("change",{bubbles:true}));
+   }
+ }
+ state.view="opportunity";render();
 },true);
 render();
 })();

@@ -69,3 +69,7 @@ por SBS 2025; no corresponden a ubicaciones empresariales individuales.
 ## Filtros por provincia y respaldo V9
 
 En el modo ampliado del Analista, la búsqueda territorial incluye Departamento, Provincia (UBIGEO), Distrito y tipo de oportunidad para investigar. Los resultados y campañas solo usan datos realmente disponibles; las referencias municipales externas no se presentan como negocios captados. Consultar [metodología, fuentes, pruebas y respaldo](FILTROS_TERRITORIALES_Y_RESPALDO.md).
+
+## Licencias de Santa Ana (La Convención), 2026-T2
+
+Se integró un resumen **sin RUC ni nombres** de las licencias municipales de Santa Ana (Cusco): 56 emisiones en abril–junio 2026 y un registro adicional de 2024. El CSV declara `070901`, homologado a UBIGEO INEI `080901` para el enlace territorial. Consultar [fuente, metodología, limitaciones y respaldo](FUENTE_CONVENCION_2026Q2.md).

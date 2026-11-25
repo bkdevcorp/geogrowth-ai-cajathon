@@ -85,6 +85,7 @@ async function test(){
    ['130101','La Libertad','sin_cobertura'],
    ['150101','Lima','expedientes_sin_identificacion'],
    ['060101','Cajamarca','sin_cobertura'],
+   ['080901','Cusco','agregada_2026q2'],
    ['040101','Arequipa','individualizada']
  ]){
    const btn=doc.querySelector('#gg-agent-simulation [data-gg-case="'+ubigeo+'"]');
@@ -96,6 +97,15 @@ async function test(){
    check(exported?.data?.territorio?.ubigeo===ubigeo,'La exportación del brief no coincide con '+ubigeo);
    check(exported.data.agentes_demo?.fuentes?.licencias===sourceState,'Atribución incorrecta de licencias '+ubigeo);
    check(exported.data.agentes_demo?.especialista?.length===4,'No hay análisis de agentes para '+ubigeo);
+   if(ubigeo==='080901'){
+     const extra=exported.data.investigacion?.licencias_adicionales;
+     check(extra?.emitidas_q2_2026===56,'Santa Ana: faltan 56 licencias de abril a junio 2026');
+     check(extra?.fuera_de_periodo===1,'Santa Ana: no se separó el registro 2024');
+     check(extra?.por_codigo_giro?.['5610']===12,'Santa Ana: agrupación GIRO 5610 incorrecta');
+     check(extra?.ubigeo_csv==='070901'&&extra?.ubigeo_inei==='080901','Homologación RENIEC→INEI incorrecta');
+     check(doc.querySelector('#gg-opportunity-brief').textContent.includes('licencias emitidas'),'Brief sin evidencia reciente 2026');
+     check(!Object.keys(extra).some(k=>/ruc|nombre_comercial|razon_social/i.test(k)),'No exponer RUC ni nombres');
+   }
  }
  check(doc.querySelector('#gg-agent-simulation [data-gg-case="040101"][data-gg-case-active="true"]'),'No regresó a Arequipa');
  check(!doc.querySelector('#v9-safe-map'),'El mapa no debe aparecer en Opportunity Brief');
@@ -161,6 +171,24 @@ async function test(){
  await until(()=>doc.querySelector('#gg-campaign-lens'),'campaña estacional bloqueada');
  check(doc.querySelector('#gg-campaign-lens').textContent.includes('No se generan distritos elegibles'),'No hay datos temporales para priorizar');
  check(!doc.querySelector('#gg-campaign-guide .gc-current tbody tr'),'No inventar distritos de una campaña estacional');
+ doc.querySelector('[data-go-section="work"]').click();
+ await until(()=>doc.querySelector('#go-dep'),'regresar a búsqueda');
+ const depCusco=doc.querySelector('#go-dep');depCusco.value='Cusco';
+ depCusco.dispatchEvent(new frame.contentWindow.Event('change',{bubbles:true}));
+ await until(()=>doc.querySelector('#gg-filter-province option[value="0809"]'),'provincia La Convención');
+ const provCusco=doc.querySelector('#gg-filter-province');provCusco.value='0809';
+ provCusco.dispatchEvent(new frame.contentWindow.Event('change',{bubbles:true}));
+ await until(()=>doc.querySelector('#go-ubigeo')?.value==='080901','selección Santa Ana por provincia');
+ const typeCusco=doc.querySelector('#gg-filter-type');typeCusco.value='nuevos';
+ typeCusco.dispatchEvent(new frame.contentWindow.Event('change',{bubbles:true}));
+ await until(()=>doc.querySelector('#gg-filter-results [data-gg-filter-pick="080901"]'),'Santa Ana en filtro Nuevos negocios');
+ check(doc.querySelector('#gg-filter-results').textContent.includes('56 licencias Q2 2026'),'La fuente integrada aparece como no disponible');
+ doc.querySelector('[data-go-section="opportunity"]').click();
+ await until(()=>doc.querySelector('#gg-opportunity-brief'),'brief Santa Ana');
+ doc.querySelector('[data-gg-export-brief]').click();
+ check(exported?.data?.territorio?.ubigeo==='080901','Santa Ana no seleccionado');
+ check(exported.data.filtros_busqueda?.tipo_oportunidad==='nuevos','Filtro municipal no propagado');
+ check(exported.data.investigacion?.licencias_adicionales?.emitidas_q2_2026===56,'Fuente de Santa Ana no propagada');
  status.textContent='RESULTADO_BROWSER_V9_OK: mapa, agentes, 5 etapas, 196 provincias, filtrado y campaña explicables';
 }
 window.addEventListener('load',()=>test().catch(e=>{status.textContent='RESULTADO_BROWSER_V9_FALLO: '+e.message}));
