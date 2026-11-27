@@ -18,7 +18,7 @@ Opportunity Brief, Mi campaña, Seguimiento y registro de campo son herramientas
 
 Desde la raíz: python -m http.server 8000, luego abrir http://localhost:8000/. Publicación estática en GitHub Pages.
 
-En Configuración introduce una **clave de navegador restringida por HTTP referrer** (dominio GitHub Pages y localhost solo si corresponde), Map ID opcional, límites de cuota y facturación. La clave se conserva en sessionStorage de la pestaña y no se publica en Git. Maps y Geocoding pueden probarse desde la configuración. No se ha comprobado una clave real en CI. El módulo estacional y el buscador usan direcciones de los registros; no inventan ubicaciones.
+En Configuración introduce una **clave de navegador restringida por HTTP referrer** (dominio GitHub Pages y localhost solo si corresponde), Map ID de demostración automático, límites de cuota y facturación. La clave se conserva en localStorage de este navegador hasta eliminarla o borrar los datos del sitio. No se publica en Git. Usa únicamente una clave de navegador y un dispositivo de confianza. Maps y Geocoding pueden probarse desde la configuración. No se ha comprobado una clave real en CI. El módulo estacional y el buscador usan direcciones de los registros; no inventan ubicaciones.
 
 Para evaluadores: [obtener Maps Demo Key sin facturación](https://developers.google.com/maps/documentation/javascript/demo-key). La pantalla Configuración incluye este acceso y las instrucciones. La clave demo tiene restricciones y no se ha verificado con el Geocoder JavaScript del prototipo.
 

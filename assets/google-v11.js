@@ -4,8 +4,21 @@
 const KEY="geogrowth.maps.config.v1",INDEX="geogrowth.v11.located.v1";
 const read=(storage,k,f)=>{try{return JSON.parse(storage.getItem(k)||"null")??f}catch(_){return f}};
 const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-function config(){return read(sessionStorage,KEY,{})}
-function save(key,id){sessionStorage.setItem(KEY,JSON.stringify({GOOGLE_MAPS_API_KEY:key,GOOGLE_MAPS_MAP_ID:id||"DEMO_MAP_ID"}))}
+function config(){
+ const stored=read(localStorage,KEY,null);
+ if(stored?.GOOGLE_MAPS_API_KEY)return stored;
+ const previous=read(sessionStorage,KEY,{});
+ if(previous.GOOGLE_MAPS_API_KEY){try{save(previous.GOOGLE_MAPS_API_KEY,previous.GOOGLE_MAPS_MAP_ID)}catch(_){}}
+ return previous;
+}
+function save(key,id){
+ const value={GOOGLE_MAPS_API_KEY:key,GOOGLE_MAPS_MAP_ID:id||"DEMO_MAP_ID"};
+ localStorage.setItem(KEY,JSON.stringify(value));
+ try{sessionStorage.removeItem(KEY)}catch(_){}
+ return value;
+}
+function clear(){localStorage.removeItem(KEY);sessionStorage.removeItem(KEY);}
+
 let pending=null;
 function load(){
  if(window.google?.maps?.importLibrary)return Promise.resolve(window.google.maps);
@@ -65,5 +78,5 @@ async function mount(app,actions){
  }
  $("ggV11Search").onclick=()=>search(10);$("ggV11Prepare").onclick=()=>search(30);
 }
-window.GeoGrowthGoogleV11={config,save,load,openConfig,header,panel,mount,geocodeRecord,located};
+window.GeoGrowthGoogleV11={config,save,clear,load,openConfig,header,panel,mount,geocodeRecord,located};
 })();
