@@ -77,12 +77,9 @@ function roleNav(){
  : '<button class="btn small" data-nav="'+esc(HOME)+'">Volver al módulo</button><button class="btn small" data-nav="micanpana">Mi campaña</button><button class="btn small" data-nav="seguimiento">Seguimiento</button>';
 }
 function render(){roleNav();
- const pages={bandeja:analystInbox,expansion:()=>window.GeoGrowthExpansion.shell(),desatendidos:()=>window.GeoGrowthDesatendidos.shell(),estacionales:()=>window.GeoGrowthSeasonal.shell(),brief:analystBrief,micanpana:analystCampaign,seguimiento:analystFollowup,campo:()=>pagehead('Validación','Registro de campo','Observaciones locales de demostración. No incluye datos personales.')+'<div id="fieldApp"></div>'};
- $('content').innerHTML=(pages[app.nav]||pages[HOME])();
- if(app.nav==='bandeja')void window.GeoGrowthGoogleV11.mount(app,{expansion:()=>location.assign('expansion-comercial.html'),scope:(dep,u,prov)=>{app.dept=dep;app.province=prov||null;app.licenseUbigeo=u||null;app.page=0;render();document.getElementById('leadDept')?.scrollIntoView({block:'center'})}});
- if(app.nav==='expansion')window.GeoGrowthExpansion.mount();
- if(app.nav==='desatendidos')window.GeoGrowthDesatendidos.mount(app,{goExpansion:()=>location.assign('expansion-comercial.html'),toast});
- if(app.nav==='estacionales')window.GeoGrowthSeasonal.mount(app);
+ if(['bandeja','expansion','desatendidos','estacionales'].includes(app.nav)){window.GeoGrowthUnified.mount(app,app.nav);return;}
+ const pages={brief:analystBrief,micanpana:analystCampaign,seguimiento:analystFollowup,campo:()=>pagehead('Validación','Registro de campo','Observaciones locales de demostración. No incluye datos personales.')+'<div id="fieldApp"></div>'};
+ $('content').innerHTML=(pages[app.nav]||analystBrief)();
  if(app.nav==='campo')window.GeoGrowthCampo.mount();
 }
 function adminHome(){const st=resultStats();const hot=topLeads('Arequipa',4);const national=app.territories.length;
@@ -296,7 +293,7 @@ async function boot(){try{
  ]);
  app.territories=terr;app.summary=lead.metadata||{};app.sources=source;
  app.licencias=[...lead.registros,...app.imported].sort((a,b)=>b.puntaje-a.puntaje);
- if(ROLE==='analista'){try{const pack=await fetch('data/licencias_san_martin.json').then(r=>{if(!r.ok)throw Error('San Martín');return r.json()});for(const d of pack.distritos){for(const x of d.registros){if(app.licencias.some(l=>l.id===x.id))continue;app.licencias.push({...x,nombre:x.nombre||x.id,departamento:'San Martín',ubigeo:d.ubigeo,fecha:x.fecha||x.anio||'',giro:x.tipo||'',estado:'No verificado',fuente:d.fuente,ref:x.id,puntaje:0,aportes:{recencia:0,completitud:0,actividad:0},producto:'Necesidad comercial por verificar',sinIplv:true});}}}catch(e){console.warn('Fuente San Martín no disponible',e);}}
+ if(ROLE==='analista'){try{const pack=await fetch('data/licencias_san_martin.json').then(r=>{if(!r.ok)throw Error('San Martín');return r.json()});app.expansionPack=pack;for(const d of pack.distritos){for(const x of d.registros){if(app.licencias.some(l=>l.id===x.id))continue;app.licencias.push({...x,nombre:x.nombre||x.id,departamento:'San Martín',ubigeo:d.ubigeo,fecha:x.fecha||x.anio||'',giro:x.tipo||'',estado:'No verificado',fuente:d.fuente,ref:x.id,puntaje:0,aportes:{recencia:0,completitud:0,actividad:0},producto:'Necesidad comercial por verificar',sinIplv:true});}}}catch(e){console.warn('Fuente San Martín no disponible',e);}}
  const qs=new URLSearchParams(location.search);
  if(qs.has('lead')&&leadById(qs.get('lead'))){app.leadId=qs.get('lead');app.nav='brief';app.dept=leadById(app.leadId).departamento;app.mapDep=app.dept;}
  if(qs.has('section')&&ROLE==='admin')app.nav=qs.get('section');

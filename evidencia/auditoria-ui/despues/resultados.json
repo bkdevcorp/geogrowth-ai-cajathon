@@ -1,0 +1,94 @@
+{
+  "mode": "Navegador real Chromium sin API key. No se usaron datos de Google simulados en capturas.",
+  "pages": [
+    {
+      "title": "Nuevos negocios",
+      "summary": "894 coincidencias · Posible apertura. Selecciona una ficha para investigar.",
+      "kpis": [
+        "894\nCoincidencias",
+        "894\nCon dirección publicada",
+        "1\nDistritos",
+        "1\nFuentes"
+      ],
+      "tableHeaders": [
+        "Negocio / territorio",
+        "Ubicación",
+        "Señal comercial",
+        "Periodo",
+        "Estado",
+        "Acciones"
+      ],
+      "detail": "FICHA DE EVIDENCIA · 01\nTODO BARATO\n\nPosible apertura\n\nCerrar\nFuente\nMunicipalidad Provincial de Arequipa\nFecha / periodo\n2025-12-31\nTerritorio\nArequipa (Cercado) · Arequipa · 040101\nMotivo de detección\nRegistro municipal fechado\nUbicación\nAVENIDA MARISCAL CASTILLA NRO. 100-B AREQUIPA\nEstado de contraste\nPendiente de verificación\nActividad publicada\n448003-Venta al por menor en almacenes especializados en muebles y artefactos para el hogar usados\n\nAcción ADN: Confirmar operación, relación con Caja y necesidad real. Licencias municipales fechadas; no prueban una apertura.\n\nLocalizar\nContrastar en Google Maps\nPreparar Opportunity Brief\nContrastar con Places\nExportar ficha",
+      "map": "Sin API key",
+      "overflow": false
+    },
+    {
+      "title": "Expansión comercial",
+      "summary": "45 coincidencias · Posible local adicional. Selecciona una ficha para investigar.",
+      "kpis": [
+        "45\nCoincidencias",
+        "25\nCon dirección publicada",
+        "1\nDistritos",
+        "1\nFuentes"
+      ],
+      "tableHeaders": [
+        "Negocio / territorio",
+        "Ubicación",
+        "Señal comercial",
+        "Periodo",
+        "Estado",
+        "Acciones"
+      ],
+      "detail": "FICHA DE EVIDENCIA · 02\nHuellitas de amor\n\nPosible local adicional\n\nCerrar\nFuente\nMunicipalidad Provincial de Moyobamba\nFecha / periodo\n2026-05-18\nTerritorio\nMoyobamba · San Martín · 220101\nMotivo de detección\nDirección adicional observada\nUbicación\nJr. Alonso de Alvarado Nº 1335 - Barrio de Lluyllucucha\nEstado de contraste\nPendiente de verificación\nÚltima fecha anterior\n2024-03-12\nDirecciones anteriores publicables\n2023-08-08 · Santa clotilde MZ E-LTE 06\nNueva dirección\nJr. Alonso de Alvarado Nº 1335 - Barrio de Lluyllucucha\nConteos de ubicaciones\n5 anteriores · 1 nuevas\nActividad publicada\nServicios y otros\n\nAcción ADN: Verificar si es una sucursal, traslado o duplicado. Historial municipal de direcciones; no confirma sucursales.\n\nLocalizar\nContrastar en Google Maps\nFuente oficial\nPreparar Opportunity Brief\nContrastar con Places\nExportar ficha",
+      "map": "Sin API key",
+      "overflow": false
+    },
+    {
+      "title": "Mercados desatendidos",
+      "summary": "29 coincidencias · Zona por investigar. Selecciona una ficha para investigar.",
+      "kpis": [
+        "29\nCoincidencias",
+        "29\nCon referencia SBS",
+        "29\nDistritos",
+        "2\nFuentes"
+      ],
+      "tableHeaders": [
+        "Negocio / territorio",
+        "Ubicación",
+        "Señal comercial",
+        "Periodo",
+        "Estado",
+        "Acciones"
+      ],
+      "detail": "FICHA DE EVIDENCIA · 03\nUBIGEO 130103\n\nZona por investigar\n\nCerrar\nFuente\nPRODUCE 2015 · SBS 2025\nFecha / periodo\n2015 / dic. 2025\nTerritorio\n130103 · La Libertad · 130103\nMotivo de detección\nSin oficinas reportadas\nUbicación\nReferencia SBS; no domicilio comercial\nEstado de contraste\nPendiente de verificación\nEmpresas · PRODUCE 2015\n2,170\nMYPE · PRODUCE 2015\n2,170\nPuntos financieros · SBS dic. 2025\n118\nOficinas / agentes / cajeros\n0 / 117 / 1\n\nAcción ADN: Validar actividad comercial, acceso financiero y presencia de Caja. PRODUCE 2015 y SBS 2025: cortes distintos, no una tasa actual.\n\nLocalizar\nContrastar en Google Maps\nExportar ficha",
+      "map": "Sin API key",
+      "overflow": false
+    },
+    {
+      "title": "Campañas estacionales",
+      "summary": "640 coincidencias · Ventana de prospección anticipada. Selecciona una ficha para investigar.",
+      "kpis": [
+        "640\nCoincidencias",
+        "640\nCon dirección publicada",
+        "1\nDistritos",
+        "1\nFuentes"
+      ],
+      "tableHeaders": [
+        "Negocio / territorio",
+        "Ubicación",
+        "Señal comercial",
+        "Periodo",
+        "Estado",
+        "Acciones"
+      ],
+      "detail": "FICHA DE EVIDENCIA · 04\nTODO BARATO\n\nVentana de prospección anticipada\n\nCerrar\nFuente\nMunicipalidad Provincial de Arequipa\nFecha / periodo\n2025-12-31\nTerritorio\nArequipa (Cercado) · Arequipa · 040101\nMotivo de detección\nRegistro municipal fechado\nUbicación\nAVENIDA MARISCAL CASTILLA NRO. 100-B AREQUIPA\nEstado de contraste\nPendiente de verificación\nTemporada\n25/12/2026\nVentana propuesta\n01/11/2026–30/11/2026\nFuente de calendario\nPRODUCE · campaña navideña MYPE 2025 (referencia histórica)\nCriterio de anticipación\nVentana propuesta durante noviembre, antes de Navidad.\nActividad publicada\n448003-Venta al por menor en almacenes especializados en muebles y artefactos para el hogar usados\n\nAcción ADN: Verificar actividad y necesidad real antes de la temporada. Actividad publicada vinculada a una regla de calendario.\n\nLocalizar\nContrastar en Google Maps\nFuente del calendario\nPreparar Opportunity Brief\nContrastar con Places\nExportar ficha",
+      "map": "Sin API key",
+      "overflow": false
+    }
+  ],
+  "config": {
+    "sections": 2,
+    "hasKey": false
+  },
+  "uncaught": []
+}

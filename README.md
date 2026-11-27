@@ -40,3 +40,7 @@ Sistema oficial generado con UI UX Pro Max Skill (nextlevelbuilder/ui-ux-pro-max
 - python scripts/test_browser_v12.py (Chrome/Chromium/Edge)
 
 El histórico V3/V9/V10/V11 está disponible en Git (base bb3178f5). Las pruebas de esas interfaces fueron sustituidas por validaciones de la nueva navegación. Los issues de reproducibilidad, denominadores y piloto permanecen pendientes.
+
+## Auditoría de interfaz homogénea
+
+Los cuatro módulos utilizan assets/unified.js: filtros, resultados, mapa Google Maps, tabla paginada y ficha de evidencia compartidos. Localizar y contrastar son acciones explícitas para limitar consultas; sin clave los registros siguen disponibles. Consulta [evidencia y resultados](evidencia/auditoria-ui/README.md). Las capturas se generan con scripts/capture_audit.cjs (Node 22, Chromium, Python; variables GEOGROWTH_CHROME y GEOGROWTH_PYTHON).
