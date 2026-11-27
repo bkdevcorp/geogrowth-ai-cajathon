@@ -99,3 +99,7 @@ El orden de visitas del análisis general no tiene botones de ficha. La tabla y 
 ### Análisis comercial compartido en los cuatro módulos
 
 Nuevos negocios conserva 300/20. Expansión presenta seis señales y sus locales anteriores/nuevos; Mercados prioriza seis sectores ficticios por comercios simulados sin oficinas, sin clasificar territorios como clientes; Estacionales compara 12 comercios de ejemplo contra la temporada (seis en Navidad), respeta las ventanas y señala fechas pendientes. Expansión y Estacionales muestran relación Caja simulada y fuentes individuales en modal. El análisis general no contiene botones de detalle ni fichas financieras. El servicio local de GPT admite los cuatro módulos; la web pública muestra interpretación local, no GPT real. Los planes no son rutas optimizadas ni scoring crediticio.
+
+### Expansión comercial: 300 negocios procesados
+
+Dos cortes ficticios de establecimientos por ID de comercio: octubre (300 locales) y noviembre (320). Se detectan 20 posibles expansiones cuando se conserva un local previo activo y aparece una dirección distinta en los últimos 30 días; 280 no presentan cambios. Un traslado que cierra el local previo no cumple el criterio. Los resultados se recalculan según filtros. Los 20 casos tienen 40 marcadores (anterior/nuevo) y distribución sintética 5 clientes, 5 no clientes verificados, 10 pendientes. No es confirmación real de sucursal ni una ruta optimizada.

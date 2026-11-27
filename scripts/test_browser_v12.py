@@ -61,17 +61,18 @@ async function run(){
   if(i>0){
    const general=doc().querySelector('#ai-answer').textContent;
    check(!!doc().querySelector('#u-ai')&&!doc().querySelector('#u-ai [data-u-detail]')&&!general.includes('Historial crediticio'),'Panel general sin ficha '+pages[i]);
-   check(doc().querySelectorAll('#ai-visit-plan li').length===6,'Seis prioridades '+pages[i]);
+   check(doc().querySelectorAll('#ai-visit-plan li').length===(i===1?20:6),'Prioridades '+pages[i]);
    const w=f.contentWindow,original=w.fetch;
-   w.fetch=async (url,opts)=>{if(url==='/api/analyze'){const req=JSON.parse(opts.body);check(req.data.module===['Nuevos negocios','Expansión comercial','Mercados desatendidos','Campañas estacionales'][i]&&req.data.visitPlan.length===6&&!('focus' in req.data)&&!('sample' in req.data),'Payload módulo '+pages[i]);if(i===3)check(req.data.processed===12&&req.data.total===6&&req.data.calendar.window.includes('01/11/2026'),'Ventana y universo');if(i===2)check(req.data.cajaRelationship===null&&req.data.zoneMetrics.businesses===1785,'Zona sin relación individual');return {ok:true,json:async()=>({text:'Respuesta simulada del módulo',model:'mock-gpt'})};}return original(url,opts);};
+   w.fetch=async (url,opts)=>{if(url==='/api/analyze'){const req=JSON.parse(opts.body);check(req.data.module===['Nuevos negocios','Expansión comercial','Mercados desatendidos','Campañas estacionales'][i]&&req.data.visitPlan.length===(i===1?20:6)&&!('focus' in req.data)&&!('sample' in req.data),'Payload módulo '+pages[i]);if(i===1)check(req.data.processed===300&&req.data.total===20&&req.data.withoutExpansion===280&&req.data.cajaRelationship.pending===10,'Universo y detección de expansión');if(i===3)check(req.data.processed===12&&req.data.total===6&&req.data.calendar.window.includes('01/11/2026'),'Ventana y universo');if(i===2)check(req.data.cajaRelationship===null&&req.data.zoneMetrics.businesses===1785,'Zona sin relación individual');return {ok:true,json:async()=>({text:'Respuesta simulada del módulo',model:'mock-gpt'})};}return original(url,opts);};
    click('#ai-run');await until(()=>doc().querySelector('#ai-answer').textContent.includes('Respuesta simulada del módulo'),'GPT simulado '+pages[i]);click('#ai-example');w.fetch=original;
    if(i===2){check(!doc().querySelector('#caja-summary')&&doc().querySelector('#ai-visit-plan li').textContent.includes('Sector Ribera Alta'),'Prioridad territorial');}
    else {check(!!doc().querySelector('#caja-summary')&&!!doc().querySelector('.caja-legend')&&!!doc().querySelector('.u-demo-pin.caja-pending'),'Estados Caja '+pages[i]);const b=doc().querySelector('#u-rows [data-u-detail]');b.click();check(doc().querySelector('#u-detail').open&&doc().querySelector('.individual-profile').textContent.includes('SUNAT')&&doc().querySelector('.individual-profile').textContent.includes('SBS'),'Perfil de negocio '+pages[i]);click('#u-close');}
   }
   check(doc().querySelector('#u-mode-note').textContent.includes('ficticios'),'Aviso sintético');
-  check(doc().querySelectorAll('.u-demo-pin').length===(i===0?20:i===1?12:6),'Marcadores automáticos sin clave '+pages[i]);
-  check(doc().querySelector('#u-map-badge').textContent===(i===0?'20 casos simulados':'6 casos simulados'),'6 casos por módulo '+pages[i]);
+  check(doc().querySelectorAll('.u-demo-pin').length===(i===0?20:i===1?40:6),'Marcadores automáticos sin clave '+pages[i]);
+  check(doc().querySelector('#u-map-badge').textContent===(i<=1?'20 casos simulados':'6 casos simulados'),'6 casos por módulo '+pages[i]);
   check([...doc().querySelectorAll('#u-rows tr')].every(x=>x.textContent.includes('Simulado')),'Filas sintéticas');
+  if(i===1){check(doc().querySelector('#u-summary').textContent.includes('300 negocios sintéticos')&&doc().querySelector('#u-summary').textContent.includes('280 sin señales'),'Conteo expansión');check(doc().querySelectorAll('.u-demo-pin.caja-pending').length===20&&doc().querySelectorAll('.u-demo-pin.caja-client').length===10&&doc().querySelectorAll('.u-demo-pin.caja-nonclient').length===10,'Colores por par de locales');set('u-sector','Comercio');check(doc().querySelectorAll('#ai-visit-plan li').length===8&&doc().querySelectorAll('.u-demo-pin').length===16,'Expansión filtrada');click('#u-reset');}
   click('.u-demo-pin');check(doc().querySelector('#u-detail').textContent.includes('SIMULACIÓN'),'Ficha desde marcador');check(!doc().querySelector('#u-detail [data-lead],#u-contrast'),'No mezclar demo con campaña real');
   if(i===1)check(doc().querySelector('#u-detail').textContent.includes('Local anterior ficticio')&&doc().querySelector('#u-detail').textContent.includes('Local nuevo ficticio'),'Dos locales sintéticos');
   if(i===2)check(doc().querySelector('#u-detail').textContent.includes('Empresas simuladas')&&!doc().querySelector('#u-detail').textContent.includes('PRODUCE 2015'),'Métricas sintéticas separadas');
@@ -85,7 +86,7 @@ async function run(){
   class FakeBounds{extend(){}}
   w.google={maps:{importLibrary:async n=>({maps:{Map:FakeMap},marker:{AdvancedMarkerElement:FakeMarker},core:{LatLngBounds:FakeBounds}}[n]||{})}};
   G.geocodeRecord=G.placeAddressRecord=async()=>{queries++;throw Error('No se debe geocodificar demo')};G.save('AIza'+'X'.repeat(35),'DEMO_MAP_ID');click('#u-reset');
-  await until(()=>doc().querySelector('.u-google-demo-label'),'Google Maps demo '+pages[i]);check(markerCount===(i===0?20:i===1?12:6)&&queries===0,'Coordenadas sintéticas directas');
+  await until(()=>doc().querySelector('.u-google-demo-label'),'Google Maps demo '+pages[i]);check(markerCount===(i===0?20:i===1?40:6)&&queries===0,'Coordenadas sintéticas directas');
   G.clear();click('#u-reset');
  }
  set('u-mode','real');await until(()=>doc().querySelector('#u-mode')?.value==='real'&&doc().querySelector('#u-map-badge')?.textContent==='Sin API key','Cambio a datos reales');

@@ -46,7 +46,7 @@ assert.equal(aiContext.window.GeoGrowthAI.visitPlan(newRecords,'real').length,0)
 console.log('OK: visit order, pending only, no real-data ranking');
 
 for(const module of ['expansion','desatendidos','estacionales']){
- const list=demo.rows(module),plan=aiContext.window.GeoGrowthAI.visitPlan(list,'demo',module,{window:'Pendiente'});
+ const list=demo.rows(module).filter(r=>module!=='expansion'||demo.isExpansion(r)),plan=aiContext.window.GeoGrowthAI.visitPlan(list,'demo',module,{window:'Pendiente'});
  assert.equal(plan.length,list.length);
  assert(plan.every((p,i)=>p.order===i+1));
  assert.equal(aiContext.window.GeoGrowthAI.visitPlan(list,'real',module).length,0);
@@ -54,3 +54,13 @@ for(const module of ['expansion','desatendidos','estacionales']){
  else{assert(list.every(r=>r.profile.synthetic&&r.profile.joinId===r.id));assert.equal(list.find(r=>r.id===plan[0].id).cajaStatus,'pending');}
 }
 console.log('OK: module-specific analysis plans, synthetic profiles and territorial separation');
+
+const exp=demo.rows('expansion'),detected=exp.filter(demo.isExpansion);
+assert.equal(exp.length,300);assert.equal(new Set(exp.map(r=>r.id)).size,300);assert.equal(new Set(exp.map(r=>r.nombre)).size,300);
+assert.equal(detected.length,20);assert.equal(exp.filter(r=>!demo.isExpansion(r)).length,280);
+assert.equal(detected.reduce((n,r)=>n+r.locations.length,0),40);
+for(const [status,count] of [['client',5],['nonclient',5],['pending',10]])assert.equal(detected.filter(r=>r.cajaStatus===status).length,count);
+const sampleExpansion=detected[0];assert.equal(demo.isExpansion({...sampleExpansion,locations:sampleExpansion.addedLocations}),false,'A move is not expansion');
+assert.equal(demo.isExpansion({...sampleExpansion,locations:sampleExpansion.history}),false,'No added location');
+assert.equal(demo.isExpansion({...sampleExpansion,locations:sampleExpansion.locations.map(l=>({...l,fecha:'2025-03-10'}))}),false,'Old locations outside window');
+console.log('OK: 300 businesses / 20 detected expansions / 280 unchanged / 40 locations; rejects moves and old additions');
