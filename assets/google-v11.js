@@ -28,7 +28,7 @@ async function geocodeRecord(x,territory){
  const m=source.match(/^(.+?)\s+(\d+)(?=\s|$)/);if(!m||!returned.includes(m[1].trim())||!returned.split(" ").includes(m[2]))return null;
  return {position:r.geometry.location,address:r.formatted_address,label:"Dirección municipal geocodificada; identidad comercial no confirmada",matched:false,received:1,geocoded:true};
 }
-const types=[["nuevos","Nuevos negocios (licencias)"],["otros","Buscar por actividad"]];
+const types=[["nuevos","Nuevos negocios (licencias)"]];
 let filter={type:"nuevos",province:"all",district:"",custom:""};
 function panel(app){
  const deps=[...new Set(app.territories.map(r=>r.departamento))].sort((a,b)=>Number(app.territories.some(r=>r.departamento===b&&located(r.ubigeo)))-Number(app.territories.some(r=>r.departamento===a&&located(r.ubigeo)))||a.localeCompare(b,"es"));
@@ -51,15 +51,16 @@ async function mount(app,actions){
  const token=++seq,dep=$("ggV11Dep").value,prov=$("ggV11Prov").value,u=$("ggV11District").value,type=$("ggV11Type").value,q=$("ggV11Custom").value.trim().toLowerCase();filter={type,province:prov||"all",district:u,custom:q};
  if(type==="expansion"){actions.expansion();return}
  if(["desatendidos","estacionales"].includes(type)){$("ggV11Status").textContent="No hay establecimientos individualmente demostrados para esta categoría. Consulta el contexto territorial y las fuentes.";return}
- const records=app.licencias.filter(x=>x.departamento===dep&&(!prov||x.ubigeo.startsWith(prov))&&(!u||x.ubigeo===u)&&(!q||type!=="otros"||[x.nombre,x.direccion,x.sector,x.giro].join(" ").toLowerCase().includes(q)));
+ const records=app.licencias.filter(x=>(app.year==="Todos"||String(x.fecha||"").startsWith(app.year))&&(app.sector==="Todos"||x.sector===app.sector)&&(app.status!=="Vigentes"||["ACTIVA","VIGENTE"].includes(x.estado))&&x.departamento===dep&&(!prov||x.ubigeo.startsWith(prov))&&(!u||x.ubigeo===u)&&(!q||type!=="otros"||[x.nombre,x.direccion,x.sector,x.giro].join(" ").toLowerCase().includes(q)));
  if(type==="otros"&&!q){$("ggV11Status").textContent="Introduce una actividad o nombre.";return}
  const candidates=records.filter(x=>x.direccion),out=$("ggV11Results");out.innerHTML="";pins.forEach(p=>p.map=null);pins=[];
+ const apply=document.createElement("button");apply.className="btn small";apply.textContent="Ver "+records.length+" registros del territorio";apply.onclick=()=>actions.scope(dep,u,prov);out.append(apply);
  if(!candidates.length){$("ggV11Status").textContent=records.length+" registros; sin direcciones individuales disponibles.";return}
- if(!config().GOOGLE_MAPS_API_KEY){openConfig();return}
+ if(!config().GOOGLE_MAPS_API_KEY){$("ggV11Status").textContent=records.length+" registros oficiales; "+candidates.length+" con dirección. Configura la API si deseas localizarlos.";return}
  try{const m=await ensureMap(),maps=await load(),{AdvancedMarkerElement}=await maps.importLibrary("marker"),{LatLngBounds}=await maps.importLibrary("core");const bounds=new LatLngBounds();let count=0,errors=0;
  const center=app.territories.find(r=>r.ubigeo===u);if(center?.latitud_ref_sbs!=null&&center?.longitud_ref_sbs!=null){m.setCenter({lat:Number(center.latitud_ref_sbs),lng:Number(center.longitud_ref_sbs)});m.setZoom(12)}
  const list=candidates.slice(0,limit);for(const x of list){if(token!==seq||!host.isConnected)return;try{const district=app.territories.find(r=>r.ubigeo===x.ubigeo);const hit=await geocodeRecord(x,[district?.nombre_distrito,provinceNames[x.ubigeo.slice(0,4)],dep].filter(Boolean).join(", "));if(token!==seq||!host.isConnected)return;if(!hit)continue;count++;remember(x.ubigeo);bounds.extend(hit.position);pins.push(new AdvancedMarkerElement({map:m,position:hit.position,title:x.nombre||x.id}));const card=document.createElement("div");card.className="signal";card.innerHTML="<b>"+esc(x.nombre||x.id)+"</b><p>"+esc(x.direccion)+"</p><small>Dirección geocodificada; identidad por verificar</small><div class='actions-row'><button class='btn small' data-lead='"+esc(x.id)+"'>Opportunity Brief</button></div>";out.append(card);if(count>=5&&limit===30)break;}catch(e){errors++;$("ggV11Status").textContent=String(e.message||e);if(/quota|RESOURCE_EXHAUSTED|OVER_QUERY_LIMIT|DENIED/i.test(String(e.message||e)))break}}
- if(count)m.fitBounds(bounds,40);$("ggV11Status").textContent=records.length+" registros oficiales · "+count+" direcciones localizadas · "+errors+" errores. Identidad y vigencia pendientes.";if(!count)out.textContent="No se obtuvieron direcciones con precisión suficiente.";else{const next=document.createElement("button");next.className="btn small";next.textContent="Aplicar territorio a bandeja";next.onclick=()=>actions.scope(dep,u);out.prepend(next)}
+ if(count)m.fitBounds(bounds,40);$("ggV11Status").textContent=records.length+" registros oficiales · "+count+" direcciones localizadas · "+errors+" errores. Identidad y vigencia pendientes.";if(!count)out.textContent="No se obtuvieron direcciones con precisión suficiente.";else{const next=document.createElement("button");next.className="btn small";next.textContent="Aplicar territorio a bandeja";next.onclick=()=>actions.scope(dep,u,prov);out.prepend(next)}
  }catch(e){$("ggV11Status").textContent=e.message}
  }
  $("ggV11Search").onclick=()=>search(10);$("ggV11Prepare").onclick=()=>search(30);

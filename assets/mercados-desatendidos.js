@@ -22,48 +22,14 @@
 
   // Cálculo normalizado dentro de territorios compatibles (mismo departamento, periodo y ambas fuentes)
   function computeMetrics(rows, minEmpresas) {
-    const compatibles = rows.filter(r => r.ambas_fuentes && r.empresas_2015 != null && r.sbs_puntos_2025 != null && Number(r.empresas_2015) >= minEmpresas);
-    const ratios = compatibles.filter(r => r.sbs_puntos_2025 > 0).map(r => r.empresas_2015 / r.sbs_puntos_2025);
-    const maxRatio = Math.max(1, ...ratios);
-    const maxEmp = Math.max(1, ...compatibles.map(r => Math.log1p(r.empresas_2015 || 0)));
-
     return rows.map(r => {
-      const emp = r.empresas_2015;
-      const mypes = (Number(r.micro_2015) || 0) + (Number(r.pequena_2015) || 0);
-      const pts = r.sbs_puntos_2025;
-      const hasProd = emp != null;
-      const hasSbs = pts != null;
-      const zeroPts = hasSbs && Number(pts) === 0;
-
-      // Calidad de evidencia separada de oportunidad
-      let evidenciaNivel = "Baja";
-      if (r.ambas_fuentes && r.latitud_ref_sbs != null && r.nombre_distrito) evidenciaNivel = "Alta";
-      else if (r.ambas_fuentes) evidenciaNivel = "Parcial";
-
-      const elegible = hasProd && hasSbs && Number(emp) >= minEmpresas;
-      const ratio = (hasProd && hasSbs && Number(pts) > 0) ? (emp / pts) : null;
-
-      // Puntaje 0-100 (solo elegibles)
-      let score = null, compRatio = 0, compMype = 0, compSector = 0, nivel = "Insuficiente";
-      if (elegible) {
-        const normRatio = zeroPts ? 1 : Math.min(1, (ratio || 0) / maxRatio);
-        const normMype = Math.log1p(mypes) / maxEmp;
-        const mypeShare = emp > 0 ? Math.min(1, mypes / emp) : 0;
-        compRatio = Math.round(normRatio * 55 * 10) / 10;
-        compMype = Math.round(normMype * 30 * 10) / 10;
-        compSector = Math.round(mypeShare * 15 * 10) / 10;
-        score = Math.round((compRatio + compMype + compSector) * 10) / 10;
-        nivel = score >= 65 ? "Alta" : score >= 40 ? "Media" : "Baja";
-      }
-
-      return {
-        ...r,
-        distritoLabel: r.nombre_distrito || ("Distrito " + r.ubigeo),
-        mypes,
-        hasProd, hasSbs, zeroPts, elegible,
-        ratio, score, nivel, evidenciaNivel,
-        aportes: { compRatio, compMype, compSector }
-      };
+      const hasProd=r.empresas_2015!=null,hasSbs=r.sbs_puntos_2025!=null;
+      const mypes=r.micro_2015!=null&&r.pequena_2015!=null?Number(r.micro_2015)+Number(r.pequena_2015):null;
+      const zeroPts=hasSbs&&Number(r.sbs_puntos_2025)===0;
+      const elegible=hasProd&&hasSbs&&Number(r.empresas_2015)>=minEmpresas;
+      const evidenciaNivel=r.ambas_fuentes&&r.latitud_ref_sbs!=null&&r.nombre_distrito?"Alta":r.ambas_fuentes?"Parcial":"Baja";
+      const nivel=!elegible?"Insuficiente":r.sbs_oficinas_2025===0?"Sin oficinas":"Con oficinas";
+      return {...r,distritoLabel:r.nombre_distrito||("Distrito "+r.ubigeo),mypes:mypes,hasProd,hasSbs,zeroPts,elegible,nivel,evidenciaNivel};
     });
   }
 
@@ -73,7 +39,7 @@
         <div>
           <span class="eyebrow">PROSPECCIÓN · INTELIGENCIA TERRITORIAL</span>
           <h1>Mercados desatendidos</h1>
-          <p class="subtitle">Territorios con brecha relativa de cobertura financiera para orientar visitas del Asesor de Negocios.</p>
+          <p class="subtitle">Territorios con actividad empresarial histórica y presencia financiera reportada para orientar visitas del Asesor de Negocios.</p>
         </div>
         <span class="badge">Enfoque Caja Trujillo</span>
       </div>
@@ -88,13 +54,14 @@
 
     const state = {
       dep: "La Libertad",
+      province: "",
       periodo: "Último disponible (PRODUCE 2015 + SBS 2025)",
       minEmp: 20,
       nivel: "Todos",
       evidencia: "Todas",
       query: "",
       preset: "",
-      sortKey: "score",
+      sortKey: "empresas_2015",
       sortDir: "desc",
       hoverUbigeo: null,
       selectedUbigeo: null,
@@ -108,15 +75,17 @@
     const deps = [...new Set(app.territories.map(r => r.departamento))].sort((a, b) => a.localeCompare(b, "es"));
     if (!deps.includes(state.dep) && deps.length) state.dep = deps[0];
 
+    let provinceNames={};fetch("data/provincias_ubigeo_ref.json").then(r=>r.json()).then(p=>{provinceNames=p.provincias||{};if(root.isConnected)render()}).catch(()=>{});
     function getFiltered() {
       const depRows = app.territories.filter(r => r.departamento === state.dep);
       const enriched = computeMetrics(depRows, state.minEmp);
       const filtered = enriched.filter(r => {
+        if (state.province && !r.ubigeo.startsWith(state.province)) return false;
         if (state.nivel !== "Todos" && r.nivel !== state.nivel) return false;
         if (state.evidencia !== "Todas" && r.evidenciaNivel !== state.evidencia) return false;
-        if (state.preset === "solida" && !(r.nivel === "Alta" && r.evidenciaNivel === "Alta")) return false;
+        if (state.preset === "solida" && !(r.elegible && r.evidenciaNivel === "Alta")) return false;
         if (state.preset === "sin_puntos" && !r.zeroPts) return false;
-        if (state.preset === "ratio" && !(r.elegible && (r.ratio == null || r.ratio >= 15))) return false;
+        if (state.preset === "ratio" && !(r.elegible && r.sbs_oficinas_2025 === 0)) return false;
         if (state.query) {
           const q = state.query.toLowerCase();
           if (!`${r.distritoLabel} ${r.ubigeo} ${r.ciiu2_2015 || ""}`.toLowerCase().includes(q)) return false;
@@ -157,8 +126,8 @@
 
       const colorFor = r => {
         if (!r.elegible) return "url(#md-stripe)";
-        if (r.nivel === "Alta") return "#0f766e";
-        if (r.nivel === "Media") return "#0284c7";
+        if (r.nivel === "Sin oficinas") return "#0f766e";
+        if (r.nivel === "Con oficinas") return "#0284c7";
         return "#99f6e4";
       };
 
@@ -170,7 +139,7 @@
         return `<circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="${rad}"
           fill="${colorFor(r)}" stroke="${isSel ? "#0f172a" : "#ffffff"}" stroke-width="${isSel ? 3 : 1.5}"
           data-md-pin="${esc(r.ubigeo)}" style="cursor:pointer">
-          <title>${esc(r.distritoLabel)} (${esc(r.ubigeo)}) · Nivel: ${esc(r.nivel)} · Evidencia: ${esc(r.evidenciaNivel)}</title>
+          <title>${esc(r.distritoLabel)} (${esc(r.ubigeo)}) · Oficinas: ${esc(r.nivel)} · Evidencia: ${esc(r.evidenciaNivel)}</title>
         </circle>`;
       }).join("");
 
@@ -183,7 +152,7 @@
           </circle>`;
         }).join("") : "";
 
-      return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Mapa de brecha relativa de cobertura financiera en ${esc(state.dep)}">
+      return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Mapa de referencias territoriales en ${esc(state.dep)}">
         <defs>
           <pattern id="md-stripe" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
             <rect width="6" height="6" fill="#e2e8f0"></rect>
@@ -200,7 +169,6 @@
       if (!item) return "";
       const empSt = dataState(item.empresas_2015, item.hasProd);
       const ptsSt = dataState(item.sbs_puntos_2025, item.hasSbs);
-      const ratioText = item.zeroPts ? "Sin puntos financieros registrados" : (item.ratio != null ? `${item.ratio.toFixed(1)} empresas / punto` : "No comparable");
       return `
         <div class="md-drawer-backdrop" data-md-close-drawer="1">
           <aside class="md-drawer" role="dialog" aria-modal="true" aria-label="Ficha de evidencia territorial">
@@ -215,30 +183,19 @@
             </div>
 
             <div class="md-period-banner" style="margin-top:12px">
-              <b>Dónde visitar primero:</b> ${item.elegible ? `Indicador principal de <b>${esc(ratioText)}</b>. ` : `Debajo del umbral mínimo (${state.minEmp} empresas) o sin cruce completo. `}
-              Enfoque "Para tu negocio": <b>${fmt(item.mypes)}</b> micro y pequeñas empresas (PRODUCE 2015).
+              <b>Zona por investigar:</b> ${item.elegible?"Existe información en ambas fuentes.":"Evidencia insuficiente para la selección."} No se calcula una brecha vigente entre cortes de años distintos.
             </div>
-
-            <h3>Descomposición del puntaje (${item.score != null ? item.score + " / 100" : "No rankeado"})</h3>
-            <div style="display:grid;gap:8px;margin-bottom:14px">
-              <div>
-                <div style="display:flex;justify-content:space-between"><span>Brecha empresas / punto (55%)</span><b>${item.aportes.compRatio} pts</b></div>
-                <div class="md-bar" style="width:100%"><span style="width:${(item.aportes.compRatio / 55) * 100}%"></span></div>
-              </div>
-              <div>
-                <div style="display:flex;justify-content:space-between"><span>Masa MYPE · "Para tu negocio" (30%)</span><b>${item.aportes.compMype} pts</b></div>
-                <div class="md-bar" style="width:100%"><span style="width:${(item.aportes.compMype / 30) * 100}%"></span></div>
-              </div>
-              <div>
-                <div style="display:flex;justify-content:space-between"><span>Concentración micro/pequeña (15%)</span><b>${item.aportes.compSector} pts</b></div>
-                <div class="md-bar" style="width:100%"><span style="width:${(item.aportes.compSector / 15) * 100}%"></span></div>
-              </div>
-            </div>
-
+            <h3>Criterios descriptivos · sin puntaje territorial</h3>
+            <div class="stat-line"><span>Empresas · PRODUCE 2015</span><b>${fmt(item.empresas_2015)}</b></div>
+            <div class="stat-line"><span>Micro y pequeñas · PRODUCE 2015</span><b>${fmt(item.mypes)}</b></div>
+            <div class="stat-line"><span>Puntos · SBS dic. 2025</span><b>${fmt(item.sbs_puntos_2025)}</b></div>
+            <p class="muted">Motivo: contrastar actividad empresarial histórica y presencia física financiera reportada. Periodos no comparables como tasa actual. No implica exclusión financiera.</p>
+            <p class="muted">Ubicación: referencia territorial SBS, no dirección de establecimiento. Relación con Caja pendiente de validar.</p>
+            <div class="actions-row"><a class="btn" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(item.distritoLabel+', '+item.departamento+', Perú')}" target="_blank" rel="noopener noreferrer">Ver territorio en Google Maps</a><a class="btn" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent('bancos cajas y cajeros en '+item.distritoLabel+', '+item.departamento+', Perú')}" target="_blank" rel="noopener noreferrer">Contrastar entidades financieras</a></div>
             <h3>Cobertura financiera separada (SBS Dic. 2025)</h3>
             <div class="stat-line"><span>Agencias / oficinas</span><b>${fmt(item.sbs_oficinas_2025)}</b></div>
             <div class="stat-line"><span>Agentes / POS</span><b>${fmt(item.sbs_pos_2025)}</b></div>
-            <div class="stat-line"><span>ATMs y otros canales (EOB)</span><b>${fmt((item.sbs_atm_2025 || 0) + (item.sbs_eob_2025 || 0))}</b></div>
+            <div class="stat-line"><span>ATMs y otros canales (EOB)</span><b>${fmt(item.sbs_atm_2025==null||item.sbs_eob_2025==null?null:item.sbs_atm_2025+item.sbs_eob_2025)}</b></div>
             <div class="stat-line"><span>Estado empresas (PRODUCE 2015)</span><b title="${esc(empSt.tip)}">${esc(empSt.label)}</b></div>
             <div class="stat-line"><span>Estado puntos (SBS 2025)</span><b title="${esc(ptsSt.tip)}">${esc(ptsSt.label)}</b></div>
 
@@ -250,7 +207,7 @@
             </div>
 
             <div class="actions-row" style="margin-top:16px">
-              <button type="button" class="md-btn primary" data-md-go-exp="1">Ver licencias de este distrito</button>
+              <button type="button" class="md-btn primary" data-md-go-exp="1">Consultar módulo de expansión (piloto San Martín)</button>
               <button type="button" class="md-btn" data-md-export-one="${esc(item.ubigeo)}">Exportar ficha JSON</button>
             </div>
           </aside>
@@ -259,13 +216,14 @@
 
     function render() {
       const { totalDep, enriched, filtered } = getFiltered();
-      const altaSolida = enriched.filter(r => r.nivel === "Alta" && r.evidenciaNivel === "Alta").length;
+      const altaSolida = enriched.filter(r => r.elegible && r.evidenciaNivel === "Alta").length;
       const sinPuntos = enriched.filter(r => r.zeroPts).length;
       const elegibles = enriched.filter(r => r.elegible).length;
       const selectedItem = enriched.find(r => r.ubigeo === state.selectedUbigeo) || null;
       const compareItems = state.compare.map(u => enriched.find(r => r.ubigeo === u)).filter(Boolean);
 
       const chips = [];
+      if(state.province) chips.push({k:"province",label:"Provincia: "+(provinceNames[state.province]||state.province)});
       if (state.nivel !== "Todos") chips.push({ k: "nivel", label: "Nivel: " + state.nivel });
       if (state.evidencia !== "Todas") chips.push({ k: "evidencia", label: "Evidencia: " + state.evidencia });
       if (state.preset) chips.push({ k: "preset", label: "Acceso rápido activo" });
@@ -274,17 +232,17 @@
       root.innerHTML = `
         <div class="md-trust-banner">
           <div><b>Aviso de confianza:</b> No implica exclusión financiera ni evalúa crédito. Verifica en campo antes de contactar.</div>
-          <button type="button" class="md-btn" data-md-calc="1">¿Cómo se calcula?</button>
+          <button type="button" class="md-btn" data-md-calc="1">¿Cómo se interpreta?</button>
         </div>
 
         <div class="md-period-banner">
-          <b>Periodos mezclados:</b> Empresas proviene de <b>PRODUCE 2015</b> (histórico) y puntos financieros de <b>SBS Dic. 2025</b>. Compara únicamente distritos dentro de <b>${esc(state.dep)}</b>.
+          <b>Periodos mezclados:</b> Empresas proviene de <b>PRODUCE 2015</b> (histórico) y puntos financieros de <b>SBS Dic. 2025</b>. Consulta los distritos de <b>${esc(state.dep)}</b>.
         </div>
 
         <div class="md-presets" role="group" aria-label="Accesos rápidos Caja Trujillo">
-          <button type="button" class="md-preset-btn ${state.preset === "solida" ? "active" : ""}" data-md-preset="solida">Alta oportunidad + evidencia sólida</button>
+          <button type="button" class="md-preset-btn ${state.preset === "solida" ? "active" : ""}" data-md-preset="solida">Cruce de fuentes + evidencia sólida</button>
           <button type="button" class="md-preset-btn ${state.preset === "sin_puntos" ? "active" : ""}" data-md-preset="sin_puntos">Sin punto financiero registrado</button>
-          <button type="button" class="md-preset-btn ${state.preset === "ratio" ? "active" : ""}" data-md-preset="ratio">Más empresas por punto (&ge;15)</button>
+          <button type="button" class="md-preset-btn ${state.preset === "ratio" ? "active" : ""}" data-md-preset="ratio">Sin oficinas registradas</button>
           <label class="md-preset-btn" title="Carga un JSON interno con coordenadas de agencias/agentes Caja Trujillo (sin scraping)">
             Cargar agencias Caja Trujillo (JSON)
             <input type="file" id="md-caja-file" accept=".json" hidden>
@@ -297,6 +255,7 @@
               <label for="md-dep">Departamento (demo: La Libertad)</label>
               <select id="md-dep">${deps.map(d => `<option value="${esc(d)}" ${d === state.dep ? "selected" : ""}>${esc(d)}</option>`).join("")}</select>
             </div>
+            <div class="md-field"><label for="md-prov">Provincia</label><select id="md-prov"><option value="">Todas las provincias</option>${[...new Set(app.territories.filter(r=>r.departamento===state.dep).map(r=>r.ubigeo.slice(0,4)))].sort().map(p=>'<option value="'+esc(p)+'" '+(p===state.province?'selected':'')+'>'+esc(provinceNames[p]||p)+'</option>').join('')}</select></div>
             <div class="md-field">
               <label for="md-periodo">Periodo de fuentes</label>
               <select id="md-periodo" disabled title="Único corte integrado disponible actualmente">
@@ -308,8 +267,8 @@
               <input id="md-min" type="number" min="0" max="5000" step="10" value="${state.minEmp}">
             </div>
             <div class="md-field">
-              <label for="md-nivel">Nivel de oportunidad</label>
-              <select id="md-nivel">${["Todos", "Alta", "Media", "Baja", "Insuficiente"].map(v => `<option ${v === state.nivel ? "selected" : ""}>${v}</option>`).join("")}</select>
+              <label for="md-nivel">Presencia física reportada</label>
+              <select id="md-nivel">${["Todos", "Sin oficinas", "Con oficinas", "Insuficiente"].map(v => `<option ${v === state.nivel ? "selected" : ""}>${v}</option>`).join("")}</select>
             </div>
             <div class="md-field">
               <label for="md-ev">Calidad de evidencia</label>
@@ -330,15 +289,16 @@
           </div>
         </section>
 
+        <section class="card" id="expected-result" style="margin-bottom:14px"><span class="eyebrow">Resultado esperado · 03</span><h2>Zona por investigar</h2><p>${filtered.length} distritos coinciden; ${filtered.filter(r=>r.elegible&&r.sbs_oficinas_2025===0).length} con ambas fuentes, umbral y cero oficinas reportadas. No se concluye que sean mercados excluidos.</p><p>Acción ADN: comprobar oferta financiera vigente, acceso real y actividad comercial.</p>${filtered.some(r=>r.elegible)?'<button class="btn primary" data-md-row="'+esc((filtered.find(r=>r.elegible&&r.sbs_oficinas_2025===0&&r.nombre_distrito)||filtered.find(r=>r.elegible&&r.nombre_distrito)||filtered.find(r=>r.elegible)).ubigeo)+'">Ver caso sustentado</button>':'<p>Sin cruce suficiente en los filtros actuales.</p>'}</section>
         <div class="md-kpis">
           <button type="button" class="md-kpi ${state.preset === "solida" ? "active" : ""}" data-md-preset="solida">
-            <b>${altaSolida}</b><span>Alta oportunidad + evidencia sólida</span><small>${altaSolida} de ${totalDep} distritos</small>
+            <b>${altaSolida}</b><span>Cruce de fuentes + evidencia sólida</span><small>${altaSolida} de ${totalDep} distritos</small>
           </button>
           <button type="button" class="md-kpi ${state.preset === "sin_puntos" ? "active" : ""}" data-md-preset="sin_puntos">
-            <b>${sinPuntos}</b><span>Sin puntos financieros</span><small>Denominador cero verificado</small>
+            <b>${sinPuntos}</b><span>Sin puntos financieros</span><small>Cero explícito en el corte</small>
           </button>
           <button type="button" class="md-kpi" data-md-clear="1">
-            <b>${elegibles}</b><span>Elegibles para ranking</span><small>Con &ge; ${state.minEmp} empresas y ambas fuentes</small>
+            <b>${elegibles}</b><span>Con fuentes y umbral</span><small>Con &ge; ${state.minEmp} empresas y ambas fuentes</small>
           </button>
           <button type="button" class="md-kpi" disabled title="Carga el JSON interno de agencias/agentes Caja Trujillo para activar">
             <b>${state.cajaPuntos.length}</b><span>Puntos Caja Trujillo cargados</span><small>Listado interno (sin scraping)</small>
@@ -352,9 +312,9 @@
             </div>
             <div class="md-map-stage">${renderMapSVG(filtered)}</div>
             <div class="md-legend">
-              <span><i class="md-swatch" style="background:#0f766e"></i>Alta</span>
-              <span><i class="md-swatch" style="background:#0284c7"></i>Media</span>
-              <span><i class="md-swatch" style="background:#99f6e4"></i>Baja</span>
+              <span><i class="md-swatch" style="background:#0f766e"></i>Sin oficinas</span>
+              <span><i class="md-swatch" style="background:#0284c7"></i>Con oficinas</span>
+
               <span><i class="md-swatch insuf"></i>Info insuficiente</span>
               <span><i class="md-swatch caja"></i>Caja Trujillo (solo rojo)</span>
             </div>
@@ -362,16 +322,16 @@
 
           <section class="card md-table-panel">
             <div class="card-header">
-              <div><h2>Dónde visitar primero (detalle)</h2><p>Ordenable · Sincronizado con el mapa</p></div>
+              <div><h2>Zonas por investigar (detalle)</h2><p>Ordenable · Sincronizado con el mapa</p></div>
             </div>
             <table class="md-table">
               <thead>
                 <tr>
                   <th>Comp.</th>
                   <th><button type="button" data-md-sort="distritoLabel">Distrito</button></th>
-                  <th><button type="button" data-md-sort="ratio">Emp. / punto</button></th>
-                  <th><button type="button" data-md-sort="score">Puntaje</button></th>
-                  <th>Oportunidad / Evidencia</th>
+                  <th><button type="button" data-md-sort="empresas_2015">Empresas 2015</button></th>
+                  <th><button type="button" data-md-sort="sbs_puntos_2025">Puntos SBS 2025</button></th>
+                  <th>Presencia / Evidencia</th>
                 </tr>
               </thead>
               <tbody>
@@ -397,10 +357,10 @@
             <div class="md-compare-grid">
               ${compareItems.map(c => `<div class="signal">
                 <b>${esc(c.distritoLabel)} (${esc(c.ubigeo)})</b>
-                <div class="stat-line"><span>Empresas / punto</span><b>${c.zeroPts ? "Sin puntos" : (c.ratio ? c.ratio.toFixed(1) : "N/D")}</b></div>
+                <div class="stat-line"><span>Empresas 2015</span><b>${fmt(c.empresas_2015)}</b></div>
                 <div class="stat-line"><span>MYPEs (2015)</span><b>${fmt(c.mypes)}</b></div>
                 <div class="stat-line"><span>Oficinas / Agentes</span><b>${fmt(c.sbs_oficinas_2025)} / ${fmt(c.sbs_pos_2025)}</b></div>
-                <div class="stat-line"><span>Puntaje</span><b>${c.score ?? "No rankeado"}</b></div>
+                <div class="stat-line"><span>Puntos SBS 2025</span><b>${fmt(c.sbs_puntos_2025)}</b></div>
               </div>`).join("")}
             </div>
           </section>` : ""}
@@ -408,10 +368,9 @@
         ${state.showModalCalc ? `
           <div class="md-drawer-backdrop" data-md-calc="0">
             <div class="md-drawer" style="max-width:460px">
-              <div class="md-drawer-head"><h2>¿Cómo se calcula?</h2><button class="md-close" data-md-calc="0">×</button></div>
-              <p style="margin-top:12px"><b>Puntaje (0–100):</b> 55% Brecha relativa (empresas / punto financiero normalizado al máximo del departamento) + 30% Masa MYPE (logarítmica) + 15% Proporción micro/pequeña empresa.</p>
-              <p><b>Umbral mínimo:</b> Solo entran al ranking distritos con al menos <b>${state.minEmp} empresas</b> y cruce completo PRODUCE 2015 + SBS 2025.</p>
-              <p><b>Denominador cero:</b> Si un distrito elegible registra 0 puntos financieros verificados, recibe el valor máximo en el componente de brecha y muestra la insignia <i>"Sin puntos financieros registrados"</i> (nunca infinito).</p>
+              <div class="md-drawer-head"><h2>¿Cómo se interpreta?</h2><button class="md-close" data-md-calc="0">×</button></div>
+              <p>Se presentan los conteos históricos de empresas (PRODUCE 2015) y puntos físicos financieros (SBS 2025) por UBIGEO, sin dividirlos ni construir un índice territorial. Las fechas difieren: no permiten estimar penetración actual.</p>
+              <p>El umbral de empresas es solo un filtro descriptivo; N/D significa ausencia de información, no cero.</p>
             </div>
           </div>` : ""}
 
@@ -420,14 +379,15 @@
     }
 
     // Eventos en vivo (sin botón Buscar obligatorio)
-    root.addEventListener("input", e => {
+    root.addEventListener("change", e => {
       if (e.target.id === "md-q") { state.query = e.target.value; render(); }
       if (e.target.id === "md-min") { state.minEmp = Math.max(0, Number(e.target.value) || 0); render(); }
     });
 
     root.addEventListener("change", async e => {
       const id = e.target.id;
-      if (id === "md-dep") { state.dep = e.target.value; state.selectedUbigeo = null; state.compare = []; render(); }
+      if (id === "md-dep") { state.dep = e.target.value; state.province=""; state.selectedUbigeo = null; state.compare = []; render(); }
+      else if (id === "md-prov") { state.province=e.target.value;state.selectedUbigeo=null;render(); }
       else if (id === "md-nivel") { state.nivel = e.target.value; render(); }
       else if (id === "md-ev") { state.evidencia = e.target.value; render(); }
       else if (id === "md-caja-file" && e.target.files?.[0]) {
@@ -452,7 +412,7 @@
     root.addEventListener("click", e => {
       if (e.target.closest("[data-md-cmp]")) return;
       const clear = e.target.closest("[data-md-clear]");
-      if (clear) { state.nivel = "Todos"; state.evidencia = "Todas"; state.query = ""; state.preset = ""; render(); return; }
+      if (clear) { state.province=""; state.nivel = "Todos"; state.evidencia = "Todas"; state.query = ""; state.preset = ""; render(); return; }
       const rm = e.target.closest("[data-md-rm]");
       if (rm) { const k = rm.dataset.mdRm; state[k] = k === "nivel" ? "Todos" : k === "evidencia" ? "Todas" : ""; render(); return; }
       const preset = e.target.closest("[data-md-preset]");
@@ -477,7 +437,7 @@
         return;
       }
       const pinOrRow = e.target.closest("[data-md-pin],[data-md-row]");
-      if (pinOrRow) { state.selectedUbigeo = pinOrRow.dataset.mdPin || pinOrRow.dataset.mdRow; render(); }
+      if (pinOrRow) { state.selectedUbigeo = pinOrRow.dataset.mdPin || pinOrRow.dataset.mdRow; render();root.querySelector(".md-close")?.focus(); }
     });
 
     render();
