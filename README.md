@@ -83,3 +83,7 @@ El selector de comercio y las fichas enlazan el análisis al registro selecciona
 ### Ver detalle por negocio
 
 El análisis general presenta el universo y los estados de relación. Cada fila y marcador abre Ver detalle, con fuentes y perfil individual (incluye SUNARP ficticio), interpretación independiente y consulta GPT individual cuando se ejecuta el servidor local. Los tres estados simulados tienen acceso a su perfil. Los datos públicos reales no se enriquecen con perfiles inventados; INEI y MIDAGRI siguen como contexto no validado.
+
+### Análisis general únicamente
+
+GPT recibe conteos y contexto territorial agregado, sin nombres, muestras de negocios ni perfiles individuales. Ver detalle conserva los datos por fuente y la acción sugerida basada en reglas, sin consulta GPT individual. El ejemplo local de la pantalla pública también se limita al conjunto.
