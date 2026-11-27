@@ -30,3 +30,9 @@ const sources=aiContext.window.GeoGrowthAI.crossSources(newRecords,JSON.parse(re
 assert.equal(sources.territories.length,1);assert.equal(sources.sbs.metrics.sbs_puntos_2025.value,909);assert.equal(sources.sbs.metrics.sbs_oficinas_2025.value,42);assert.equal(sources.produce.metrics.empresas_2015.value,21050);assert.equal(sources.midagri.status,'pendiente');
 const unknown=aiContext.window.GeoGrowthAI.crossSources([{ubigeo:'999999'}],[],'real');assert.equal(unknown.sbs.metrics.sbs_puntos_2025.value,null);assert.equal(unknown.sbs.status,'sin cobertura');
 console.log('OK: territorial cross-source aggregates deduplicated; missing data preserved');
+
+const individual=aiContext.window.GeoGrowthAI.individual(newRecords[2],'demo');
+assert.equal(individual.profile.joinId,individual.id);assert.equal(individual.profile.sbs.months,36);assert.equal(individual.profile.finance.sales,35000);
+assert.equal(aiContext.window.GeoGrowthAI.individual(newRecords[2],'real').profile,undefined);
+assert.equal(newRecords[5].profile.sbs.debt,null);assert(newRecords.every(r=>r.profile.synthetic&&r.profile.joinId===r.id));
+console.log('OK: individual fictional source joins and unknown credit data');

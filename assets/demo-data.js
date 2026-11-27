@@ -39,7 +39,26 @@ function population(){
  // Separate simulated relationship evidence from business-opening evidence.
  const cartera=new Set([1,5,9,13,17].map(i=>'DEMO-01-'+i));
  const negativeChecks=new Set([2,6,10,14,18].map(i=>'DEMO-01-'+i));
- const recent=newBusinesses.map((x,i)=>{const r=record(x,i,true);return {...r,cajaStatus:cartera.has(r.id)?'client':negativeChecks.has(r.id)?'nonclient':'pending',cajaEvidence:cartera.has(r.id)?'Coincidencia en cartera sintética':negativeChecks.has(r.id)?'Consulta de campo simulada: no trabaja con Caja':'Sin consulta de campo ni relación confirmada'};});
+ // Fictional cross-source records joined by a scenario ID, never a real RUC.
+ const profiles=[
+ [24000,4500,24,8500,1,0],[32000,6400,18,9000,1,0],[35000,8500,36,12500,2,0],
+ [42000,7200,30,18000,2,0],[18000,3200,12,4500,1,0],[15000,2600,0,null,null,null],
+ [16000,3000,15,6500,1,0],[38000,6700,22,13000,2,1],[29000,5100,28,11000,2,0],
+ [12000,2200,0,null,null,null],[48000,7800,32,22000,2,0],[22000,4300,14,7000,1,0],
+ [26000,4900,26,9500,1,0],[19000,3100,20,8000,1,1],[14000,2500,0,null,null,null],
+ [28000,5500,30,10500,2,0],[17500,2800,16,5000,1,0],[33000,6300,24,12000,2,0],
+ [21000,3700,12,6000,1,0],[23500,3900,18,7500,1,0]];
+ function profile(r,i){
+  const [sales,net,months,debt,lenders,category]=profiles[i];
+  return {synthetic:true,joinId:r.id,
+   sunat:{source:'SUNAT · simulado',status:'Activo',condition:'Habido',activity:r.giro,identifier:r.id},
+   sbs:{source:'Central de Riesgos SBS · simulada',period:'octubre 2026',subject:'Titular ficticio vinculado al negocio nuevo',months,category,debt,lenders},
+   finance:{source:'Declaración y estados de cuenta ficticios · no SBS',period:'mes ilustrativo, proyección de operación',sales,net},
+   inei:{source:'INEI · contexto territorial',status:'Sin indicador territorial validado para esta selección'},
+   midagri:{source:'MIDAGRI · referencia sectorial',status:'Sin cruce validado',relevance:r.sector==='Alimentos y gastronomía'?'Posible vínculo con insumos agrícolas; validar proveedores y estacionalidad.':'No se ha identificado un vínculo agrícola en el escenario.'}
+  };
+ }
+ const recent=newBusinesses.map((x,i)=>{const r=record(x,i,true);return {...r,profile:profile(r,i),cajaStatus:cartera.has(r.id)?'client':negativeChecks.has(r.id)?'nonclient':'pending',cajaEvidence:cartera.has(r.id)?'Coincidencia en cartera sintética':negativeChecks.has(r.id)?'Consulta de campo simulada: no trabaja con Caja':'Sin consulta de campo ni relación confirmada'};});
  const existing=existingWords.flatMap((word,j)=>newBusinesses.map(([sector,giro,,need],i)=>record([sector,giro,giro+' '+word,need],j*20+i,false)));
  return [...recent,...existing];
 }

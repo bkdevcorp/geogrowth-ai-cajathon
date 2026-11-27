@@ -75,3 +75,7 @@ De las 20 aperturas simuladas, 5 son clientes actuales (verde), 5 no clientes ve
 ### Cruce de fuentes en el análisis GPT
 
 El contexto enviado al análisis de Nuevos negocios une los UBIGEO de los resultados con territorios_reales.json, deduplicando distritos. Incluye SBS diciembre 2025 y PRODUCE 2015 con conteos y cobertura por métrica. INEI (muestra parcial catalogada) y MIDAGRI (sin dataset territorial integrado) aparecen como pendientes, no como cruces efectuados. En demo, las oportunidades y la cartera son ficticias y el contexto territorial público es real, explícitamente separado. La respuesta local y la instrucción del servidor GPT muestran estos límites.
+
+### Interpretación individual de Nuevos negocios
+
+El selector de comercio y las fichas enlazan el análisis al registro seleccionado. Los 20 comercios demo tienen perfiles por identificador ficticio: SUNAT simulado, historial SBS del titular ficticio, cifras proyectadas de una fuente financiera separada y relación Caja simulada. INEI y MIDAGRI se mantienen como contexto no validado, no como datos personales. No se atribuyen ventas a SBS ni se presentan los datos como credit scoring. Los registros reales carecen de perfil individual autorizado; el análisis lo declara explícitamente. El contexto territorial se conserva internamente y en Mercados desatendidos.
