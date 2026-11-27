@@ -67,3 +67,7 @@ Abrir http://127.0.0.1:8765/ y pulsar Analizar con GPT. El modelo predeterminado
 ### Escenario de prospección sintético
 
 Nuevos negocios procesa 300 registros ficticios únicos de Arequipa. El criterio de detección del escenario fijo al 26/11/2026 es un primer registro dentro de los últimos 30 días (28/10–26/11) sin antecedente simulado: 20 cumplen y 280 no. El conteo se recalcula según filtros, y la tabla y el mapa muestran únicamente los candidatos (hasta 20 marcadores). Los nombres son inventados, coherentes con la actividad; cualquier coincidencia con establecimientos reales es casual. Las necesidades son hipótesis que debe investigar el ADN, no hechos ni recomendaciones crediticias. En la web pública, el texto de interpretación se calcula localmente y se identifica como ejemplo sin IA. GPT real requiere el servidor local y una credencial autorizada. Evidencia visual: evidencia/auditoria-prospeccion/despues.
+
+### Relación con Caja Trujillo · demostración
+
+De las 20 aperturas simuladas, 5 son clientes actuales (verde), 5 no clientes verificados en una consulta ficticia (plomo), y 10 negocios nuevos por consultar (rojo con pulso suave). La relación se simula por separado de la fecha de apertura. El rojo no implica ausencia confirmada de relación. Los datos reales no reciben ninguna clasificación de cartera sin evidencia interna. El pulso respeta prefers-reduced-motion. La distribución es ilustrativa y se recalcula según filtros.

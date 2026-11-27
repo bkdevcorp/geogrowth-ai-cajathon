@@ -36,7 +36,10 @@ function population(){
   const date=recent?'2026-11-'+String(24-i).padStart(2,'0'):'2026-'+String(1+i%9).padStart(2,'0')+'-'+String(1+i%27).padStart(2,'0');
   return {id:(recent?'DEMO-01-':'DEMO-HIST-')+idx,nombre:name,label:name,dep:z.dep,dist:z.dist,ubigeo:z.ubigeo,sector,giro,period:'2026',date,fecha:date,source,signal:recent?'Primera apertura registrada · simulada':'Registro anterior · simulado',kind:'business',synthetic:true,demoPosition:{lat:z.lat+Math.cos(angle)*rad,lng:z.lng+Math.sin(angle)*rad},direccion:'Sector ilustrativo '+(i%5+1)+' · referencia '+idx+' (no visitar)',estado:'VIGENTE',firstRegistration:date,priorRegistration:!recent,need};
  };
- const recent=newBusinesses.map((x,i)=>record(x,i,true));
+ // Separate simulated relationship evidence from business-opening evidence.
+ const cartera=new Set([1,5,9,13,17].map(i=>'DEMO-01-'+i));
+ const negativeChecks=new Set([2,6,10,14,18].map(i=>'DEMO-01-'+i));
+ const recent=newBusinesses.map((x,i)=>{const r=record(x,i,true);return {...r,cajaStatus:cartera.has(r.id)?'client':negativeChecks.has(r.id)?'nonclient':'pending',cajaEvidence:cartera.has(r.id)?'Coincidencia en cartera sintética':negativeChecks.has(r.id)?'Consulta de campo simulada: no trabaja con Caja':'Sin consulta de campo ni relación confirmada'};});
  const existing=existingWords.flatMap((word,j)=>newBusinesses.map(([sector,giro,,need],i)=>record([sector,giro,giro+' '+word,need],j*20+i,false)));
  return [...recent,...existing];
 }

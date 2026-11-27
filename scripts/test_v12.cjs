@@ -22,3 +22,5 @@ assert.equal(new Set(population.map(r=>r.nombre)).size,300);assert.equal(newReco
 assert.equal(population.filter(r=>r.sector==='Comercio').length,120);assert.equal(newRecords.filter(r=>r.sector==='Comercio').length,8);
 assert(population.every(r=>r.synthetic&&r.firstRegistration&&r.need));assert(newRecords.every(r=>!r.priorRegistration));
 console.log('OK: 300 distinct simulated businesses, 20 recent registrations and coherent sector filters');
+
+assert.equal(newRecords.filter(r=>r.cajaStatus==='client').length,5);assert.equal(newRecords.filter(r=>r.cajaStatus==='nonclient').length,5);assert.equal(newRecords.filter(r=>r.cajaStatus==='pending').length,10);
