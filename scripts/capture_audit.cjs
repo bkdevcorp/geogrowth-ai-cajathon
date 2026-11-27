@@ -1,5 +1,5 @@
 const fs=require('node:fs'),path=require('node:path'),cp=require('node:child_process'),os=require('node:os'),assert=require('node:assert/strict');
-const root=path.resolve(__dirname,'..'),out=path.join(root,'evidencia','auditoria-ui','despues');
+const root=path.resolve(__dirname,'..'),out=path.join(root,'evidencia',process.env.GEOGROWTH_AUDIT_MODE==='real'?'auditoria-ui':'auditoria-demo','despues');
 const chrome=process.env.GEOGROWTH_CHROME||(process.platform==='win32'?'D:\\GeoGrowth-ChromeHeadless\\chrome-headless-shell-win64\\chrome-headless-shell.exe':'google-chrome');
 const python=process.env.GEOGROWTH_PYTHON||(process.platform==='win32'?'D:\\GeoGrowth-Python\\python.exe':'python3');
 const port=18763,debug=18764,profile=fs.mkdtempSync(path.join(os.tmpdir(),'gg-audit-'));
@@ -21,7 +21,7 @@ async function run(){
  let report=[];
  for(let i=0;i<pages.length;i++){
   await send('Emulation.setDeviceMetricsOverride',{width:1440,height:1700,deviceScaleFactor:1,mobile:false});
-  await send('Page.navigate',{url:'http://127.0.0.1:'+port+'/'+pages[i]});await until('!!document.querySelector("#u-rows [data-u-detail]")');await evaljs('document.fonts.ready.then(()=>true)');await sleep(200);
+  await send('Page.navigate',{url:'http://127.0.0.1:'+port+'/'+pages[i]});await until('!!document.querySelector("#u-rows [data-u-detail]")');if(process.env.GEOGROWTH_AUDIT_MODE==='real'){await evaljs('document.querySelector("#u-mode").value="real";document.querySelector("#u-mode").dispatchEvent(new Event("change"));true');await until('!!document.querySelector("#u-rows [data-u-detail]")');}await evaljs('document.fonts.ready.then(()=>true)');await sleep(200);
   await shot(names[i]+'-pantalla');
   await evaljs('document.querySelector("#u-results").scrollIntoView({block:"start"});true');await sleep(200);await send('Emulation.setDeviceMetricsOverride',{width:1440,height:1000,deviceScaleFactor:1,mobile:false});await evaljs('document.querySelector("#u-results").scrollIntoView({block:"start"});true');await sleep(200);await shot(names[i]+'-tabla');
   await evaljs('document.querySelector("#u-case").click();true');await until('!document.querySelector("#u-detail").hidden');await evaljs('document.querySelector("#u-detail").scrollIntoView({block:"start"});true');await sleep(200);await shot(names[i]+'-ficha');
@@ -32,7 +32,7 @@ async function run(){
  }
  await send('Emulation.setDeviceMetricsOverride',{width:1440,height:1050,deviceScaleFactor:1,mobile:false});await send('Page.navigate',{url:'http://127.0.0.1:'+port+'/configuracion.html'});await until('!!document.querySelector("#configForm")');await sleep(200);await shot('05-configuracion');
  const config=await evaljs('({sections:document.querySelectorAll("#content > section").length,hasKey:!!document.querySelector("#mapsKey").value})');assert.equal(config.sections,2);assert.equal(config.hasKey,false);
- fs.writeFileSync(path.join(out,'resultados.json'),JSON.stringify({mode:'Navegador real Chromium sin API key. No se usaron datos de Google simulados en capturas.',pages:report,config,uncaught:errors},null,2));
+ fs.writeFileSync(path.join(out,'resultados.json'),JSON.stringify({mode:'Chromium sin API key. '+(process.env.GEOGROWTH_AUDIT_MODE==='real'?'Datos públicos originales.':'Datos y coordenadas sintéticas; mapa esquemático local, no Google Maps.'),pages:report,config,uncaught:errors},null,2));
  assert.deepEqual(errors,[],'Errores JavaScript sin manejar');console.log(JSON.stringify(report.map(x=>({title:x.title,summary:x.summary,kpis:x.kpis,overflow:x.overflow})),null,2));console.log('OK: 17 capturas y resultados JSON; sin excepciones JavaScript');
 }
 run().catch(e=>{console.error(e);process.exitCode=1}).finally(()=>{socket?.close();browser.kill();server.kill();setTimeout(()=>{try{fs.rmSync(profile,{recursive:true,force:true})}catch{}},500).unref();});

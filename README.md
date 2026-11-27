@@ -48,3 +48,7 @@ Los cuatro módulos utilizan assets/unified.js: filtros, resultados, mapa Google
 ### Google Maps: arranque y Demo Key
 
 Con una clave guardada, el mapa se inicializa automáticamente y se centra en las referencias del territorio filtrado. Mercados desatendidos muestra hasta 10 referencias SBS al iniciar; los domicilios comerciales se consultan explícitamente para limitar cuotas. Si Geocoder JavaScript no está autorizado, se intenta Place.searchByText (compatible con Demo Key según https://developers.google.com/maps/documentation/javascript/demo-key). Solo se aceptan coincidencias únicas de calle, número y localidad. Los errores de cuota y permisos se distinguen de una búsqueda sin coincidencias. Pruebas con adaptadores simulados; no se verificó una credencial real.
+
+## Modo demostración del hackathon
+
+El modo predeterminado muestra escenarios sintéticos separados de los registros públicos. El selector de fuente se comparte entre los cuatro módulos y se guarda en localStorage. Los datos ficticios se identifican en pantalla, fichas y JSON; no se transfieren a campañas reales. Expansión incluye marcadores de local anterior y nuevo. Sin clave se muestra un mapa esquemático interactivo; con clave se intenta Google Maps con coordenadas precargadas, sin geocodificar negocios ficticios. El modo real permanece disponible. Evidencias: evidencia/auditoria-demo/despues. Las ubicaciones y métricas demo no son verificaciones ni deben utilizarse para visitas.

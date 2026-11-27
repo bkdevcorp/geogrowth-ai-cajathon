@@ -52,6 +52,30 @@ async function common(p,i){
  assertions.push({page:p,status:'OK',result:doc().querySelector('#u-summary').textContent});
 }
 async function run(){
+ localStorage.removeItem('geogrowth.data.mode.v1');
+ for(let i=0;i<pages.length;i++){
+  await open(pages[i],'#u-form');check(doc().querySelector('#u-mode').value==='demo','Demo por defecto '+pages[i]);
+  check(doc().querySelector('#u-mode-note').textContent.includes('ficticios'),'Aviso sintético');
+  check(doc().querySelectorAll('.u-demo-pin').length===(i===1?12:6),'Marcadores automáticos sin clave '+pages[i]);
+  check(doc().querySelector('#u-map-badge').textContent==='6 casos simulados','6 casos por módulo '+pages[i]);
+  check([...doc().querySelectorAll('#u-rows tr')].every(x=>x.textContent.includes('Simulado')),'Filas sintéticas');
+  click('.u-demo-pin');check(doc().querySelector('#u-detail').textContent.includes('SIMULACIÓN'),'Ficha desde marcador');check(!doc().querySelector('#u-detail [data-lead],#u-contrast'),'No mezclar demo con campaña real');
+  if(i===1)check(doc().querySelector('#u-detail').textContent.includes('Local anterior ficticio')&&doc().querySelector('#u-detail').textContent.includes('Local nuevo ficticio'),'Dos locales sintéticos');
+  if(i===2)check(doc().querySelector('#u-detail').textContent.includes('Empresas simuladas')&&!doc().querySelector('#u-detail').textContent.includes('PRODUCE 2015'),'Métricas sintéticas separadas');
+  if(i===3){for(const r of ['escolar','verano','fiestas','agro']){set('u-extra',r);check(doc().querySelectorAll('.u-demo-pin').length>0,'Temporada demo '+r);}click('#u-reset');}
+  click('#u-locate');check(doc().querySelectorAll('.u-demo-pin').length>0,'Localizar demo sin clave');
+  doc().querySelector('#u-query').value='ZZZ_NO_EXISTE_123';click('#u-search');check(doc().querySelectorAll('.u-demo-pin').length===0&&doc().querySelector('#u-case').disabled,'Demo vacía');click('#u-reset');
+  // Verify actual Google Maps adapter receives coordinates, never geocodes demo.
+  const w=f.contentWindow,G=w.GeoGrowthGoogleV11;let markerCount=0,queries=0;
+  class FakeMap{constructor(el){el.textContent='Google Maps simulado para prueba'}setCenter(){}setZoom(){}fitBounds(){}}
+  class FakeMarker{constructor(o){Object.assign(this,o);markerCount++}addListener(){}}
+  class FakeBounds{extend(){}}
+  w.google={maps:{importLibrary:async n=>({maps:{Map:FakeMap},marker:{AdvancedMarkerElement:FakeMarker},core:{LatLngBounds:FakeBounds}}[n]||{})}};
+  G.geocodeRecord=G.placeAddressRecord=async()=>{queries++;throw Error('No se debe geocodificar demo')};G.save('AIza'+'X'.repeat(35),'DEMO_MAP_ID');click('#u-reset');
+  await until(()=>doc().querySelector('.u-google-demo-label'),'Google Maps demo '+pages[i]);check(markerCount===(i===1?12:6)&&queries===0,'Coordenadas sintéticas directas');
+  G.clear();click('#u-reset');
+ }
+ set('u-mode','real');await until(()=>doc().querySelector('#u-mode')?.value==='real'&&doc().querySelector('#u-map-badge')?.textContent==='Sin API key','Cambio a datos reales');
  for(let i=0;i<pages.length;i++)await common(pages[i],i);
  for(const p of pages){click('#nav a[href="'+p+'"]');await until(()=>doc().location.pathname.endsWith('/'+p)&&doc().querySelector('#u-form'),'Click de navegación '+p);}
  await open('index.html','#u-form');click('#u-case');click('#u-detail button[data-lead]');await until(()=>doc().querySelector('button[data-pick]'),'Opportunity Brief');
