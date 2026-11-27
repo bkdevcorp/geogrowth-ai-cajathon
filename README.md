@@ -52,3 +52,14 @@ Con una clave guardada, el mapa se inicializa automáticamente y se centra en la
 ## Modo demostración del hackathon
 
 El modo predeterminado muestra escenarios sintéticos separados de los registros públicos. El selector de fuente se comparte entre los cuatro módulos y se guarda en localStorage. Los datos ficticios se identifican en pantalla, fichas y JSON; no se transfieren a campañas reales. Expansión incluye marcadores de local anterior y nuevo. Sin clave se muestra un mapa esquemático interactivo; con clave se intenta Google Maps con coordenadas precargadas, sin geocodificar negocios ficticios. El modo real permanece disponible. Evidencias: evidencia/auditoria-demo/despues. Las ubicaciones y métricas demo no son verificaciones ni deben utilizarse para visitas.
+
+## Piloto de análisis GPT · Nuevos negocios
+
+La primera opción muestra un panel de interpretación que utiliza los conteos, sectores y una muestra de hasta 12 registros de los filtros activos. En GitHub Pages se muestra un ejemplo calculado localmente, identificado como tal. Para probar una respuesta real de GPT, ejecutar desde la raíz en PowerShell:
+
+```powershell
+$env:OPENAI_API_KEY = Read-Host 'Clave API de OpenAI' -MaskInput
+python scripts/serve_ai.py
+```
+
+Abrir http://127.0.0.1:8765/ y pulsar Analizar con GPT. El modelo predeterminado es gpt-4.1-mini y puede cambiarse mediante OPENAI_MODEL. El servidor usa Responses API y escucha solo en loopback; no es un servicio para exposición pública. Se envían datos resumidos, no nombres ni direcciones de registros reales. No se guarda la clave en el navegador ni en Git. La consulta real puede generar cargos. La API todavía no se ha probado con una credencial real.

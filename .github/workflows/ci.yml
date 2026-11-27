@@ -22,6 +22,7 @@ jobs:
       - name: Datos y estructura
         run: |
           python scripts/test_project.py
+          python scripts/test_ai.py
           python scripts/test_aggregate_convencion.py
       - name: Sintaxis y pruebas de módulos
         run: |

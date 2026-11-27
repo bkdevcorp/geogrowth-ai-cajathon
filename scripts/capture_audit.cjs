@@ -1,5 +1,5 @@
 const fs=require('node:fs'),path=require('node:path'),cp=require('node:child_process'),os=require('node:os'),assert=require('node:assert/strict');
-const root=path.resolve(__dirname,'..'),out=path.join(root,'evidencia',process.env.GEOGROWTH_AUDIT_MODE==='real'?'auditoria-ui':'auditoria-demo','despues');
+const root=path.resolve(__dirname,'..'),out=path.join(root,'evidencia',process.env.GEOGROWTH_AUDIT_MODE==='real'?'auditoria-ui':'auditoria-gpt','despues');
 const chrome=process.env.GEOGROWTH_CHROME||(process.platform==='win32'?'D:\\GeoGrowth-ChromeHeadless\\chrome-headless-shell-win64\\chrome-headless-shell.exe':'google-chrome');
 const python=process.env.GEOGROWTH_PYTHON||(process.platform==='win32'?'D:\\GeoGrowth-Python\\python.exe':'python3');
 const port=18763,debug=18764,profile=fs.mkdtempSync(path.join(os.tmpdir(),'gg-audit-'));

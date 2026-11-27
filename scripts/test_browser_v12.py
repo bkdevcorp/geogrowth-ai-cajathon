@@ -55,6 +55,9 @@ async function run(){
  localStorage.removeItem('geogrowth.data.mode.v1');
  for(let i=0;i<pages.length;i++){
   await open(pages[i],'#u-form');check(doc().querySelector('#u-mode').value==='demo','Demo por defecto '+pages[i]);
+  if(i===0){check(doc().querySelector('#ai-answer').textContent.includes('6 registros ficticios'),'GPT ejemplo basado en selección');check(doc().querySelector('#ai-origin').textContent.includes('sin IA'),'Ejemplo identificado');const w=f.contentWindow,original=w.fetch;w.fetch=async (url,opts)=>{if(url==='/api/analyze'){const req=JSON.parse(opts.body);check(req.data.total===6&&req.data.mode==='demo','Payload GPT');return {ok:true,json:async()=>({text:'Análisis GPT de prueba',model:'mock-gpt'})};}return original(url,opts);};click('#ai-run');await until(()=>doc().querySelector('#ai-answer').textContent.includes('Análisis GPT de prueba'),'Respuesta GPT simulada');click('#ai-example');check(doc().querySelector('#ai-origin').textContent.includes('sin IA'),'Volver a ejemplo');w.fetch=original;}
+  else check(!doc().querySelector('#u-ai'),'IA piloto solo Nuevos negocios');
+
   check(doc().querySelector('#u-mode-note').textContent.includes('ficticios'),'Aviso sintético');
   check(doc().querySelectorAll('.u-demo-pin').length===(i===1?12:6),'Marcadores automáticos sin clave '+pages[i]);
   check(doc().querySelector('#u-map-badge').textContent==='6 casos simulados','6 casos por módulo '+pages[i]);
