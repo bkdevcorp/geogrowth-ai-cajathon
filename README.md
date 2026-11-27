@@ -79,3 +79,7 @@ El contexto enviado al análisis de Nuevos negocios une los UBIGEO de los result
 ### Interpretación individual de Nuevos negocios
 
 El selector de comercio y las fichas enlazan el análisis al registro seleccionado. Los 20 comercios demo tienen perfiles por identificador ficticio: SUNAT simulado, historial SBS del titular ficticio, cifras proyectadas de una fuente financiera separada y relación Caja simulada. INEI y MIDAGRI se mantienen como contexto no validado, no como datos personales. No se atribuyen ventas a SBS ni se presentan los datos como credit scoring. Los registros reales carecen de perfil individual autorizado; el análisis lo declara explícitamente. El contexto territorial se conserva internamente y en Mercados desatendidos.
+
+### Ver detalle por negocio
+
+El análisis general presenta el universo y los estados de relación. Cada fila y marcador abre Ver detalle, con fuentes y perfil individual (incluye SUNARP ficticio), interpretación independiente y consulta GPT individual cuando se ejecuta el servidor local. Los tres estados simulados tienen acceso a su perfil. Los datos públicos reales no se enriquecen con perfiles inventados; INEI y MIDAGRI siguen como contexto no validado.

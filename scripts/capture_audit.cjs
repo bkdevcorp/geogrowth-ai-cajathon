@@ -1,5 +1,5 @@
 const fs=require('node:fs'),path=require('node:path'),cp=require('node:child_process'),os=require('node:os'),assert=require('node:assert/strict');
-const root=path.resolve(__dirname,'..'),out=path.join(root,'evidencia',process.env.GEOGROWTH_AUDIT_MODE==='real'?'auditoria-ui':'auditoria-perfil','despues');
+const root=path.resolve(__dirname,'..'),out=path.join(root,'evidencia',process.env.GEOGROWTH_AUDIT_MODE==='real'?'auditoria-ui':'auditoria-detalle','despues');
 const chrome=process.env.GEOGROWTH_CHROME||(process.platform==='win32'?'D:\\GeoGrowth-ChromeHeadless\\chrome-headless-shell-win64\\chrome-headless-shell.exe':'google-chrome');
 const python=process.env.GEOGROWTH_PYTHON||(process.platform==='win32'?'D:\\GeoGrowth-Python\\python.exe':'python3');
 const port=18763,debug=18764,profile=fs.mkdtempSync(path.join(os.tmpdir(),'gg-audit-'));
@@ -26,7 +26,7 @@ async function run(){
   if(i===0){await evaljs('document.querySelector("#u-ai").scrollIntoView({block:"start"});true');await sleep(200);await shot('01-nuevos-perfil-individual');}
   if(i===0){await evaljs('document.querySelector(".u-map-card").scrollIntoView({block:"start"});true');await sleep(200);await shot('01-nuevos-mapa-estados');}
   await evaljs('document.querySelector("#u-results").scrollIntoView({block:"start"});true');await sleep(200);await send('Emulation.setDeviceMetricsOverride',{width:1440,height:1000,deviceScaleFactor:1,mobile:false});await evaljs('document.querySelector("#u-results").scrollIntoView({block:"start"});true');await sleep(200);await shot(names[i]+'-tabla');
-  await evaljs('document.querySelector("#u-case").click();true');await until('!document.querySelector("#u-detail").hidden');await evaljs('document.querySelector("#u-detail").scrollIntoView({block:"start"});true');await sleep(200);await shot(names[i]+'-ficha');
+  await evaljs('document.querySelector("#u-case").click();true');await until('!document.querySelector("#u-detail").hidden');await evaljs('document.querySelector("#u-detail").scrollIntoView({block:"start"});true');await sleep(200);await shot(names[i]+'-ficha');if(i===0){await evaljs('document.querySelector(".individual-profile").scrollIntoView({block:"start"});true');await sleep(200);await shot('01-detalle-fuentes');}
   const record=await evaljs('({title:document.querySelector("h1").textContent,summary:document.querySelector("#u-summary").textContent,kpis:[...document.querySelectorAll(".u-kpis .kpi")].map(x=>x.innerText),tableHeaders:[...document.querySelectorAll(".u-table th")].map(x=>x.textContent),detail:document.querySelector("#u-detail").innerText,map:document.querySelector("#u-map-badge").textContent,overflow:document.documentElement.scrollWidth>document.documentElement.clientWidth+3})');
   assert.equal(record.overflow,false);assert.equal(record.tableHeaders.length,6);report.push(record);
   await evaljs('document.querySelector("#u-close").click();true');

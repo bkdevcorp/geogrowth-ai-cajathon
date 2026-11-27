@@ -36,3 +36,5 @@ assert.equal(individual.profile.joinId,individual.id);assert.equal(individual.pr
 assert.equal(aiContext.window.GeoGrowthAI.individual(newRecords[2],'real').profile,undefined);
 assert.equal(newRecords[5].profile.sbs.debt,null);assert(newRecords.every(r=>r.profile.synthetic&&r.profile.joinId===r.id));
 console.log('OK: individual fictional source joins and unknown credit data');
+
+assert(newRecords.every(r=>r.profile.sunarp.source.includes('ficticio')));

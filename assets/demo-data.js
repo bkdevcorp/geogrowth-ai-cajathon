@@ -52,6 +52,7 @@ function population(){
   const [sales,net,months,debt,lenders,category]=profiles[i];
   return {synthetic:true,joinId:r.id,
    sunat:{source:'SUNAT · simulado',status:'Activo',condition:'Habido',activity:r.giro,identifier:r.id},
+   sunarp:{source:'SUNARP · escenario ficticio',status:i%3===0?'Inscripción de persona jurídica simulada':'Sin asiento registral simulado',note:'No acredita propiedad, bienes ni solvencia. Verificar inscripción mediante canales autorizados.'},
    sbs:{source:'Central de Riesgos SBS · simulada',period:'octubre 2026',subject:'Titular ficticio vinculado al negocio nuevo',months,category,debt,lenders},
    finance:{source:'Declaración y estados de cuenta ficticios · no SBS',period:'mes ilustrativo, proyección de operación',sales,net},
    inei:{source:'INEI · contexto territorial',status:'Sin indicador territorial validado para esta selección'},
