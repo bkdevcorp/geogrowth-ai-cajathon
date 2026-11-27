@@ -87,3 +87,7 @@ El análisis general presenta el universo y los estados de relación. Cada fila 
 ### Análisis general únicamente
 
 GPT recibe conteos y contexto territorial agregado, sin nombres, muestras de negocios ni perfiles individuales. Ver detalle conserva los datos por fuente y la acción sugerida basada en reglas, sin consulta GPT individual. El ejemplo local de la pantalla pública también se limita al conjunto.
+
+### Orden de visitas de demostración
+
+El análisis general incluye una lista operativa de los negocios rojos: primero registros con giro y ubicación, después fecha de apertura simulada descendente. Cada posición explica la fecha y la necesidad a consultar. No usa SBS ni solvencia para ordenar visitas, no optimiza rutas y no clasifica créditos. La API solo recibe el plan con nombres ficticios en demo, no perfiles. Los filtros recalculan la lista y cada negocio enlaza a su ficha.

@@ -38,3 +38,9 @@ assert.equal(newRecords[5].profile.sbs.debt,null);assert(newRecords.every(r=>r.p
 console.log('OK: individual fictional source joins and unknown credit data');
 
 assert(newRecords.every(r=>r.profile.sunarp.source.includes('ficticio')));
+
+const plan=aiContext.window.GeoGrowthAI.visitPlan(newRecords,'demo');
+assert.equal(plan.length,10);assert.equal(plan[0].id,'DEMO-01-3');assert.equal(plan[9].id,'DEMO-01-20');
+assert(plan.every((v,i)=>v.order===i+1&&newRecords.find(r=>r.id===v.id).cajaStatus==='pending'));
+assert.equal(aiContext.window.GeoGrowthAI.visitPlan(newRecords,'real').length,0);
+console.log('OK: visit order, pending only, no real-data ranking');
