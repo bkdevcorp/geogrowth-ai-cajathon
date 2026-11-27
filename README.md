@@ -44,3 +44,7 @@ El histórico V3/V9/V10/V11 está disponible en Git (base bb3178f5). Las pruebas
 ## Auditoría de interfaz homogénea
 
 Los cuatro módulos utilizan assets/unified.js: filtros, resultados, mapa Google Maps, tabla paginada y ficha de evidencia compartidos. Localizar y contrastar son acciones explícitas para limitar consultas; sin clave los registros siguen disponibles. Consulta [evidencia y resultados](evidencia/auditoria-ui/README.md). Las capturas se generan con scripts/capture_audit.cjs (Node 22, Chromium, Python; variables GEOGROWTH_CHROME y GEOGROWTH_PYTHON).
+
+### Google Maps: arranque y Demo Key
+
+Con una clave guardada, el mapa se inicializa automáticamente y se centra en las referencias del territorio filtrado. Mercados desatendidos muestra hasta 10 referencias SBS al iniciar; los domicilios comerciales se consultan explícitamente para limitar cuotas. Si Geocoder JavaScript no está autorizado, se intenta Place.searchByText (compatible con Demo Key según https://developers.google.com/maps/documentation/javascript/demo-key). Solo se aceptan coincidencias únicas de calle, número y localidad. Los errores de cuota y permisos se distinguen de una búsqueda sin coincidencias. Pruebas con adaptadores simulados; no se verificó una credencial real.

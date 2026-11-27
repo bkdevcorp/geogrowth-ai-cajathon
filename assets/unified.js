@@ -24,7 +24,7 @@ function base(app,id){
 function mount(app,id){
  const host=document.getElementById('content'),m=meta[id],all=base(app,id),G=window.GeoGrowthGoogleV11,season=window.GeoGrowthSeasonal;
  const s=stateByPage[id]||(stateByPage[id]={dep:m[6],prov:'',dist:'',sector:'',period:'',query:'',extra:id==='estacionales'?'navidad':id==='desatendidos'?'sin_oficinas':'',page:0});
- let rows=[],selected=null,seq=0,map=null,pins=[],provinceNames={},loadedKey='',selectedStatus=new Map();
+ let rows=[],selected=null,seq=0,map=null,pins=[],provinceNames={},loadedKey='',selectedStatus=new Map(),mapPromise=null,geocoderDenied=false,mapGeneration=0;
  const $=x=>host.querySelector('#'+x),get=x=>$(x).value;
  const field=(id,label,opts,disabled=false)=>'<div class="field"><label for="'+id+'">'+E(label)+'</label><select id="'+id+'" '+(disabled?'disabled':'')+'>'+opts+'</select></div>';
  host.innerHTML='<div class="page-head"><div><span class="eyebrow">'+m[0]+' · '+E(m[2])+'</span><h1>'+E(m[1])+'</h1><p class="subtitle">'+E(m[5])+'</p></div><span class="badge">Prototipo comercial</span></div><div class="unified-workspace"><section class="card" id="u-filters"><div class="card-header"><div><h2>Buscar oportunidades</h2><p>Selecciona los filtros según la cobertura de las fuentes.</p></div></div><form id="u-form"><div class="u-filter-grid">'+field('u-dep','Departamento','')+field('u-prov','Provincia','')+field('u-dist','Distrito','')+field('u-sector','Sector','',id==='desatendidos')+field('u-period','Periodo','',id==='desatendidos')+field('u-extra',id==='estacionales'?'Temporada':id==='desatendidos'?'Presencia financiera':'Tipo de registro','')+'<div class="field u-query"><label for="u-query">Buscar nombre, dirección o UBIGEO</label><input id="u-query" type="search" placeholder="Escribe para filtrar"></div></div><div class="actions-row"><button class="btn primary" id="u-search" type="submit">Buscar oportunidades</button><button class="btn" type="button" id="u-reset">Limpiar filtros</button></div><p class="muted" id="u-coverage"></p></form></section><section class="card u-outcome" id="expected-result"><div><span class="eyebrow">Resultado esperado · '+m[0]+'</span><h2>'+E(m[3])+'</h2><p id="u-summary" role="status" aria-live="polite"></p><p class="muted" id="u-calendar"></p><p><b>Acción ADN:</b> '+E(m[4])+'</p></div><button class="btn primary" id="u-case">Ver caso sustentado</button></section><div class="u-kpis" id="u-kpis"></div><section class="card u-map-card"><div class="card-header"><div><h2>Mapa comercial · Google Maps</h2><p>Ubicaciones de la fuente, no clientes confirmados.</p></div><span class="badge" id="u-map-badge">Pendiente</span></div><div class="u-map-layout"><div id="u-map" class="u-map" aria-label="Mapa de oportunidades"></div><div class="u-map-info"><h3>Ubicación y contraste</h3><p id="u-map-status" role="status" aria-live="polite"></p><div class="u-map-actions"><button class="btn primary" id="u-locate">Localizar resultados (máx. 10)</button><a class="btn" id="u-open-map" target="_blank" rel="noopener noreferrer">Abrir en Google Maps</a><a class="btn" href="configuracion.html" id="u-config-map">Configurar API key</a></div><p class="muted">Las coordenadas territoriales SBS son referencias; nunca se usan como domicilios comerciales.</p></div></div></section><section class="card" id="u-results"><div class="card-header"><div><h2>Resultados de búsqueda</h2><p id="u-count" role="status"></p></div><button class="btn" id="u-export">Exportar resultados JSON</button></div><div class="tablewrap"><table class="u-table"><thead><tr><th>Negocio / territorio</th><th>Ubicación</th><th>Señal comercial</th><th>Periodo</th><th>Estado</th><th>Acciones</th></tr></thead><tbody id="u-rows"></tbody></table></div><div class="actions-row"><button class="btn small" id="u-prev">Anterior</button><span class="muted" id="u-page"></span><button class="btn small" id="u-next">Siguiente</button></div></section><section class="card u-detail" id="u-detail" tabindex="-1" hidden></section></div>';
@@ -47,7 +47,7 @@ function mount(app,id){
  $('u-coverage').textContent=id==='expansion'?'Cobertura de expansión: Moyobamba. Juanjuí no tiene historial suficiente para detectar expansión.':id==='desatendidos'?'Cobertura territorial: solo datos disponibles; N/D no equivale a cero. El sector no es comparable entre fuentes.':'Solo territorios con registros individuales incorporados. Las fechas no prueban actividad actual.';
  function persist(){Object.assign(s,{dep:get('u-dep'),prov:get('u-prov'),dist:get('u-dist'),sector:get('u-sector'),period:get('u-period'),extra:get('u-extra'),query:get('u-query')});}
  function search(){
-  persist();s.page=0;selected=null;selectedStatus.clear();seq++;pins.forEach(p=>p.map=null);pins=[];map=null;loadedKey='';$('u-detail').hidden=true;
+  persist();s.page=0;selected=null;selectedStatus.clear();seq++;pins.forEach(p=>p.map=null);pins=[];map=null;mapPromise=null;mapGeneration++;loadedKey='';$('u-detail').hidden=true;
   const rule=id==='estacionales'?season.rules.find(r=>r.id===s.extra):null,q=N(s.query);
   rows=all.filter(x=>(!s.dep||x.dep===s.dep)&&(!s.prov||x.ubigeo.startsWith(s.prov))&&(!s.dist||x.ubigeo===s.dist)&&(!s.sector||x.sector===s.sector)&&(!s.period||x.period===s.period)&&(!q||N([x.label,x.direccion,x.dist,x.ubigeo,x.giro,x.sector,x.id].join(' ')).includes(q))&&
   (id!=='estacionales'||rule.pattern.test([x.sector,x.giro,x.label].map(v=>String(v??'').normalize('NFD').replace(/\p{M}/gu,'').toLowerCase()).join(' ')))&&
@@ -62,7 +62,7 @@ function mount(app,id){
   $('u-kpis').innerHTML=[[rows.length,'Coincidencias'],[loc,id==='desatendidos'?'Con referencia SBS':'Con dirección publicada'],[new Set(rows.map(x=>x.ubigeo)).size,'Distritos'],[new Set(rows.flatMap(x=>x.kind==='territory'?[...(x.empresas_2015==null?[]:['PRODUCE']),...(x.sbs_puntos_2025==null?[]:['SBS'])]:[x.source])).size,'Fuentes']].map(([n,label])=>'<div class="kpi"><b>'+fmt(n)+'</b><small>'+E(label)+'</small></div>').join('');
   $('u-case').disabled=!rows.length;$('u-locate').disabled=!loc;$('u-export').disabled=!rows.length;
   $('u-open-map').href=mapsLink([s.dist?all.find(x=>x.ubigeo===s.dist)?.dist:'',s.prov?nameProv(s.prov):'',s.dep,'Perú'].filter(Boolean).join(', '));
-  resetMap();draw();
+  resetMap();draw();if(G.config().GOOGLE_MAPS_API_KEY)void initialize();
  }
  function hasLocation(r){return r.kind==='territory'?r.latitud_ref_sbs!=null&&r.longitud_ref_sbs!=null:!!r.direccion;}
  function resetMap(){const key=G.config().GOOGLE_MAPS_API_KEY;$('u-map-badge').textContent=key?'Por localizar':'Sin API key';$('u-map-status').textContent=key?'Pulsa Localizar resultados para consultar Google Maps. No hay consumo automático de geocodificación.':'Configura tu Demo Key una sola vez. Puedes revisar las fichas y abrir Google Maps sin clave.';$('u-map').innerHTML='<div class="u-map-empty"><svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg><b>'+(key?'Mapa listo para localizar':'Google Maps sin configurar')+'</b><span>Los resultados están disponibles abajo.</span></div>';$('u-config-map').hidden=!!key;}
@@ -100,23 +100,43 @@ function mount(app,id){
   if(!workspace.isConnected||token!==seq)return;selectedStatus.set(x.id,status);draw();detail(x,false);
  }
  function download(name,value){const url=URL.createObjectURL(new Blob([JSON.stringify(value,null,2)],{type:'application/json'}));const a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),500)}
+ function centerFor(){
+  const refs=app.territories.filter(t=>(!s.dep||t.departamento===s.dep)&&(!s.prov||t.ubigeo.startsWith(s.prov))&&(!s.dist||t.ubigeo===s.dist)&&t.latitud_ref_sbs!=null&&t.longitud_ref_sbs!=null&&Number.isFinite(Number(t.latitud_ref_sbs))&&Number.isFinite(Number(t.longitud_ref_sbs)));
+  const codes=new Set(rows.map(r=>r.ubigeo)),specific=refs.filter(t=>codes.has(t.ubigeo)),list=specific.length?specific:refs;
+  if(!s.dep||!list.length)return {center:{lat:-9.19,lng:-75.02},zoom:5};
+  return {center:{lat:list.reduce((a,t)=>a+Number(t.latitud_ref_sbs),0)/list.length,lng:list.reduce((a,t)=>a+Number(t.longitud_ref_sbs),0)/list.length},zoom:list.length===1?12:s.prov?10:8};
+ }
+ function errorCode(e){const raw=[e?.code,e?.status,e?.message].filter(Boolean).join(' ');if(/OVER_QUERY_LIMIT|RESOURCE_EXHAUSTED|quota|429/i.test(raw))return 'Cuota agotada';if(/REQUEST_DENIED|PERMISSION_DENIED|denied|403|not authorized|API_NOT_ACTIVATED/i.test(raw))return 'Servicio no autorizado';if(/timeout|agotado/i.test(raw))return 'Tiempo de conexión agotado';return 'Servicio no disponible';}
+ async function ensureMap(){
+  if(map)return map;if(mapPromise)return mapPromise;
+  const workspace=host.querySelector('.unified-workspace'),canvasHost=$('u-map'),key=G.config().GOOGLE_MAPS_API_KEY;const initVersion=mapGeneration;
+  const valid=()=>workspace?.isConnected&&canvasHost.isConnected&&$('u-map')===canvasHost&&mapGeneration===initVersion;
+  let denied=false;
+  window.gm_authFailure=()=>{denied=true;if(valid()){$('u-map-status').textContent='Google rechazó la clave. Revisa Configuración.';$('u-map-badge').textContent='API rechazada';}};
+  const task=(async()=>{const maps=await Promise.race([G.load(),new Promise((_,reject)=>setTimeout(()=>reject(Error('Tiempo de conexión agotado')),12000))]);const {Map:GM}=await maps.importLibrary('maps');if(!valid()||denied)throw Error('Mapa no disponible');canvasHost.replaceChildren();const canvas=document.createElement('div');canvas.className='u-map-canvas';canvasHost.append(canvas);return new GM(canvas,{...centerFor(),mapId:G.config().GOOGLE_MAPS_MAP_ID||'DEMO_MAP_ID',gestureHandling:'cooperative'});})();
+  mapPromise=task;
+  try{const result=await task;if(mapPromise!==task||!valid())throw Error('Vista actualizada');map=result;loadedKey=key;return map;}finally{if(mapPromise===task)mapPromise=null;}
+ }
+ async function initialize(){
+  const token=seq,workspace=host.querySelector('.unified-workspace');const valid=()=>workspace?.isConnected&&token===seq;
+  $('u-map-badge').textContent='Cargando mapa';$('u-map-status').textContent='Inicializando Google Maps en el territorio seleccionado…';
+  try{await ensureMap();if(!valid())return;$('u-map-badge').textContent='Mapa listo';$('u-map-status').textContent='Mapa centrado en el territorio. Pulsa Localizar resultados para consultar direcciones.';if(id==='desatendidos'&&rows.some(hasLocation))await locate(rows.filter(hasLocation).slice(0,10));}
+  catch(e){if(valid()&&$('u-map-badge').textContent!=='API rechazada'){$('u-map-badge').textContent='Mapa no disponible';$('u-map-status').textContent=errorCode(e)+'. Los resultados siguen disponibles.';}}
+ }
  async function locate(list){
-  const token=++seq,key=G.config().GOOGLE_MAPS_API_KEY; if(!key){$('u-map-status').textContent='No hay API key. Configúrala o utiliza Abrir en Google Maps.';return;}
+  const token=++seq,key=G.config().GOOGLE_MAPS_API_KEY;if(!key){$('u-map-status').textContent='No hay API key. Configúrala o utiliza Abrir en Google Maps.';return;}
   list=list.filter(hasLocation).slice(0,10);if(!list.length){$('u-map-status').textContent='Sin ubicaciones publicables en esta selección.';return;}
   const workspace=host.querySelector('.unified-workspace');const valid=()=>workspace?.isConnected&&$('u-map')&&token===seq;
-  $('u-locate').disabled=true;$('u-map-badge').textContent='Consultando';$('u-map-status').textContent='Preparando Google Maps…';
-  let denied=false;window.gm_authFailure=()=>{denied=true;if(valid()){$('u-map-status').textContent='Google rechazó la clave. Revisa Configuración.';$('u-map-badge').textContent='API rechazada';}};
+  $('u-locate').disabled=true;$('u-map-badge').textContent='Consultando';$('u-map-status').textContent='Localizando registros…';
   try{
-   const maps=await Promise.race([G.load(),new Promise((_,reject)=>setTimeout(()=>reject(Error('Tiempo de conexión agotado')),12000))]);if(!valid()||denied)return;
-   const {Map:GM}=await maps.importLibrary('maps'),{AdvancedMarkerElement}=await maps.importLibrary('marker'),{LatLngBounds}=await maps.importLibrary('core');if(!valid()||denied)return;
-   if(!map||loadedKey!==key){$('u-map').replaceChildren();const canvas=document.createElement('div');canvas.className='u-map-canvas';$('u-map').append(canvas);map=new GM(canvas,{center:{lat:-9.19,lng:-75.02},zoom:5,mapId:G.config().GOOGLE_MAPS_MAP_ID||'DEMO_MAP_ID'});loadedKey=key;}
-   pins.forEach(p=>p.map=null);pins=[];const bounds=new LatLngBounds();let found=0,errors=0;
-   for(const x of list){if(!valid()||denied)return;try{const hit=x.kind==='territory'?{position:{lat:Number(x.latitud_ref_sbs),lng:Number(x.longitud_ref_sbs)}}:await G.geocodeRecord(x,[x.dist,x.dep].join(', '));if(!valid()||denied)return;if(!hit?.position){selectedStatus.set(x.id,'Sin coincidencia');continue;}
+   await ensureMap();const maps=await G.load(),{AdvancedMarkerElement}=await maps.importLibrary('marker'),{LatLngBounds}=await maps.importLibrary('core');if(!valid())return;
+   pins.forEach(p=>p.map=null);pins=[];const bounds=new LatLngBounds();let found=0,errors=0,attempted=0,lastError='',usedPlaces=false;
+   for(const x of list){if(!valid())return;attempted++;try{let hit;if(x.kind==='territory'){hit={position:{lat:Number(x.latitud_ref_sbs),lng:Number(x.longitud_ref_sbs)}};}else{const territory=[x.dist,x.dep].join(', ');if(!geocoderDenied){try{hit=await G.geocodeRecord(x,territory)}catch(e){if(errorCode(e)==='Servicio no autorizado'){geocoderDenied=true;}else throw e;}}if(!hit){usedPlaces=true;hit=await G.placeAddressRecord(x,territory);}}if(!valid())return;if(!hit?.position){selectedStatus.set(x.id,'Sin coincidencia');continue;}
     const pin=new AdvancedMarkerElement({map,position:hit.position,title:x.label});pin.addListener?.('click',()=>detail(x));pins.push(pin);bounds.extend(hit.position);found++;selectedStatus.set(x.id,x.kind==='territory'?'Referencia SBS':'Dirección localizada');
-   }catch(e){errors++;selectedStatus.set(x.id,'Consulta no disponible');if(/quota|denied|OVER_QUERY_LIMIT|PERMISSION|REQUEST_DENIED/i.test(String(e)))break}}
-   if(!valid()||denied)return;if(found===1){map.setCenter(pins[0].position);map.setZoom(list[0]?.kind==='territory'?12:16)}else if(found)map.fitBounds(bounds,40);
-   $('u-map-badge').textContent=found+(found===1?' ubicación':' ubicaciones');$('u-map-status').textContent=found+' localizadas de '+list.length+' solicitadas; '+errors+' errores. Identidad y actividad comercial no confirmadas.';draw();if(selected)detail(selected,false);
-  }catch(e){if(valid()&&!denied){$('u-map-badge').textContent='No disponible';$('u-map-status').textContent='No se pudo consultar Google Maps. Revisa clave, API y cuota; los resultados siguen disponibles.'}}
+   }catch(e){errors++;lastError=errorCode(e);selectedStatus.set(x.id,lastError);if(lastError==='Cuota agotada'||lastError==='Servicio no autorizado')break}}
+   if(!valid())return;if(found===1){map.setCenter(pins[0].position);map.setZoom(list[0]?.kind==='territory'?12:16)}else if(found)map.fitBounds(bounds,40);
+   $('u-map-badge').textContent=found+(found===1?' ubicación':' ubicaciones');$('u-map-status').textContent=found+' localizadas · '+attempted+' de '+list.length+' consultadas · '+errors+(errors===1?' error':' errores')+(lastError?' ('+lastError+')':'')+(usedPlaces?' · Alternativa Places utilizada.':'')+'. '+(found?'Identidad y actividad comercial no confirmadas.':'Sin coincidencias verificables; el mapa sigue centrado en el territorio.');draw();if(selected)detail(selected,false);
+  }catch(e){if(valid()&&$('u-map-badge').textContent!=='API rechazada'){$('u-map-badge').textContent='No disponible';$('u-map-status').textContent=errorCode(e)+'. Revisa clave, API y cuota; los resultados siguen disponibles.'}}
   finally{if(valid())$('u-locate').disabled=!rows.some(hasLocation);}
  }
  $('u-dep').onchange=()=>{s.prov='';s.dist='';s.sector='';s.period='';dependent();search()};$('u-prov').onchange=()=>{s.prov=get('u-prov');s.dist='';s.sector='';s.period='';dependent();search()};$('u-dist').onchange=()=>{s.dist=get('u-dist');s.sector='';s.period='';dependent();search()};

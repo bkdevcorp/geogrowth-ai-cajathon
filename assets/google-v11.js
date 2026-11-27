@@ -41,6 +41,18 @@ async function geocodeRecord(x,territory){
  const m=source.match(/^(.+?)\s+(\d+)(?=\s|$)/);if(!m||!returned.includes(m[1].trim())||!returned.split(" ").includes(m[2]))return null;
  return {position:r.geometry.location,address:r.formatted_address,label:"Dirección municipal geocodificada; identidad comercial no confirmada",matched:false,received:1,geocoded:true};
 }
+async function placeAddressRecord(x,territory){
+ if(!x.direccion)return null;
+ const maps=await load(),{Place}=await maps.importLibrary("places");
+ const address=x.direccion.replace(/\s*[--]\s*REF\.?.*$/i,"");
+ const source=normalized(address),m=source.match(/^(.+?)\s+(\d+)(?=\s|$)/);
+ if(!m)return null;
+ const result=await Place.searchByText({textQuery:[address,territory,"Perú"].join(", "),fields:["formattedAddress","location","addressComponents"],maxResultCount:3,language:"es",region:"pe"});
+ const locality=normalized(territory.split(",")[0]).replace(/\bCERCADO\b/g,"").trim();
+ const matches=(result.places||[]).filter(p=>{const returned=normalized(p.formattedAddress),components=p.addressComponents||[],area=normalized(components.map(c=>c.longText||c.shortText||"").join(" ")+" "+p.formattedAddress);return p.location&&returned.includes(m[1].trim())&&returned.split(" ").includes(m[2])&&locality&&area.includes(locality);});
+ if(matches.length!==1)return null;
+ const p=matches[0];return {position:p.location,address:p.formattedAddress,label:"Dirección contrastada con Places; identidad comercial no confirmada",matched:false,received:1,geocoded:true};
+}
 const types=[["nuevos","Nuevos negocios (licencias)"]];
 let filter={type:"nuevos",province:"all",district:"",custom:""};
 function panel(app){
@@ -78,5 +90,5 @@ async function mount(app,actions){
  }
  $("ggV11Search").onclick=()=>search(10);$("ggV11Prepare").onclick=()=>search(30);
 }
-window.GeoGrowthGoogleV11={config,save,clear,load,openConfig,header,panel,mount,geocodeRecord,located};
+window.GeoGrowthGoogleV11={config,save,clear,load,openConfig,header,panel,mount,geocodeRecord,placeAddressRecord,located};
 })();

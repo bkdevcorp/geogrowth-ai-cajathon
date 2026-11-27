@@ -41,12 +41,13 @@ async function common(p,i){
  class FakeMarker{constructor(o){Object.assign(this,o);markerCount++;}addListener(){}}
  class FakeBounds{extend(){}}
  w.google={maps:{importLibrary:async n=>({maps:{Map:FakeMap},marker:{AdvancedMarkerElement:FakeMarker},core:{LatLngBounds:FakeBounds},places:{Place:{searchByText:async()=>({places:[]})}}}[n]||{})}};
- G.geocodeRecord=async()=>({position:{lat:-8.1,lng:-79.0},geocoded:true});
- click('#u-locate');await until(()=>doc().querySelector('#u-map-badge').textContent.includes('ubicaciones'),'Mapa simulado '+p);check(markerCount>0&&markerCount<=10,'Marcadores acotados '+p);check(doc().querySelector('#u-map-status').textContent.includes('localizadas'),'Diagnóstico '+p);
+ G.geocodeRecord=async()=>({position:{lat:-8.1,lng:-79.0},geocoded:true});G.placeAddressRecord=async()=>null;
+ click('#u-reset');await until(()=>doc().querySelector('#u-map-canvas')||doc().querySelector('.u-map-canvas'),'Mapa inicial automático '+p);check(doc().querySelector('#u-map-badge').textContent!=='Sin API key','Mapa sin pulsar localizar '+p);
+ if(i!==2)click('#u-locate');await until(()=>doc().querySelector('#u-map-badge').textContent.includes('ubicaciones'),'Mapa simulado '+p);check(markerCount>0&&markerCount<=10,'Marcadores acotados '+p);check(doc().querySelector('#u-map-status').textContent.includes('localizadas'),'Diagnóstico '+p);
  if(i!==2){const button=doc().querySelector('#u-rows [data-u-map]:not(:disabled)');if(button){button.click();await until(()=>doc().querySelector('#u-map-badge').textContent==='1 ubicación','Localizar una fila '+p);}}
  if(i!==2){click('#u-case');const contrast=doc().querySelector('#u-contrast');if(contrast){contrast.click();await until(()=>doc().querySelector('#u-detail').textContent.includes('Sin coincidencia'),'Places sin coincidencia '+p);}}
  // Test unavailable service without spending quota: browser rejects geocoder.
- if(i!==2){G.geocodeRecord=async()=>{throw Error('REQUEST_DENIED')};click('#u-locate');await until(()=>doc().querySelector('#u-map-status').textContent.includes('1 errores'),'Fallo de servicio controlado '+p);check(doc().querySelector('#u-rows [data-u-detail]'),'Resultados conservados tras fallo '+p);}
+ if(i!==2){G.geocodeRecord=async()=>{throw Error('REQUEST_DENIED')};G.placeAddressRecord=async()=>({position:{lat:-8.1,lng:-79},geocoded:true});click('#u-locate');await until(()=>doc().querySelector('#u-map-status').textContent.includes('Alternativa Places utilizada'),'Alternativa Places '+p);G.placeAddressRecord=async()=>{throw Error('REQUEST_DENIED')};click('#u-locate');await until(()=>doc().querySelector('#u-map-status').textContent.includes('Servicio no autorizado'),'Fallo de servicio controlado '+p);check(doc().querySelector('#u-rows [data-u-detail]'),'Resultados conservados tras fallo '+p);}
  G.clear();click('#u-reset');check(doc().querySelector('#u-map-badge').textContent==='Sin API key','Limpiar mapa '+p);
  assertions.push({page:p,status:'OK',result:doc().querySelector('#u-summary').textContent});
 }
