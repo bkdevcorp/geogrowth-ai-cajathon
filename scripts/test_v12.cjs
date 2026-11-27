@@ -24,3 +24,9 @@ assert(population.every(r=>r.synthetic&&r.firstRegistration&&r.need));assert(new
 console.log('OK: 300 distinct simulated businesses, 20 recent registrations and coherent sector filters');
 
 assert.equal(newRecords.filter(r=>r.cajaStatus==='client').length,5);assert.equal(newRecords.filter(r=>r.cajaStatus==='nonclient').length,5);assert.equal(newRecords.filter(r=>r.cajaStatus==='pending').length,10);
+
+const aiContext={window:{}};vm.createContext(aiContext);vm.runInContext(read('assets/ai-analysis.js'),aiContext);
+const sources=aiContext.window.GeoGrowthAI.crossSources(newRecords,JSON.parse(read('data/territorios_reales.json')),'demo');
+assert.equal(sources.territories.length,1);assert.equal(sources.sbs.metrics.sbs_puntos_2025.value,909);assert.equal(sources.sbs.metrics.sbs_oficinas_2025.value,42);assert.equal(sources.produce.metrics.empresas_2015.value,21050);assert.equal(sources.midagri.status,'pendiente');
+const unknown=aiContext.window.GeoGrowthAI.crossSources([{ubigeo:'999999'}],[],'real');assert.equal(unknown.sbs.metrics.sbs_puntos_2025.value,null);assert.equal(unknown.sbs.status,'sin cobertura');
+console.log('OK: territorial cross-source aggregates deduplicated; missing data preserved');

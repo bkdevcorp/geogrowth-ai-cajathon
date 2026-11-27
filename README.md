@@ -71,3 +71,7 @@ Nuevos negocios procesa 300 registros ficticios únicos de Arequipa. El criterio
 ### Relación con Caja Trujillo · demostración
 
 De las 20 aperturas simuladas, 5 son clientes actuales (verde), 5 no clientes verificados en una consulta ficticia (plomo), y 10 negocios nuevos por consultar (rojo con pulso suave). La relación se simula por separado de la fecha de apertura. El rojo no implica ausencia confirmada de relación. Los datos reales no reciben ninguna clasificación de cartera sin evidencia interna. El pulso respeta prefers-reduced-motion. La distribución es ilustrativa y se recalcula según filtros.
+
+### Cruce de fuentes en el análisis GPT
+
+El contexto enviado al análisis de Nuevos negocios une los UBIGEO de los resultados con territorios_reales.json, deduplicando distritos. Incluye SBS diciembre 2025 y PRODUCE 2015 con conteos y cobertura por métrica. INEI (muestra parcial catalogada) y MIDAGRI (sin dataset territorial integrado) aparecen como pendientes, no como cruces efectuados. En demo, las oportunidades y la cartera son ficticias y el contexto territorial público es real, explícitamente separado. La respuesta local y la instrucción del servidor GPT muestran estos límites.
