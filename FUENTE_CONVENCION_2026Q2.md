@@ -1,3 +1,5 @@
+> Documento histórico anterior a V12. Para navegación y ejecución actuales consulta README.md. Los datos y limitaciones históricas se conservan.
+
 # Nueva fuente municipal: Santa Ana (La Convención), 2026-T2
 
 ## Origen y cobertura

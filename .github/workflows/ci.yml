@@ -1,61 +1,33 @@
-name: GeoGrowth AI - pruebas
+name: GeoGrowth AI - pruebas V12
 on:
   push:
-    branches: [main, "fix/**"]
+    branches: [main]
   pull_request:
     branches: [main]
   workflow_dispatch:
-
 permissions:
   contents: read
-
 jobs:
   validacion:
-    name: Datos y componentes web
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - name: Obtener repositorio
-        uses: actions/checkout@v4
-      - name: Preparar Python
-        uses: actions/setup-python@v5
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - name: Preparar Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: "22"
-      - name: Auditoría de datos
-        run: python scripts/test_project.py
-      - name: Verificar sintaxis JavaScript
-        run: find assets -type f -name '*.js' -print0 | xargs -0 -n1 node --check
-      - name: Smoke test del mapa V11
-        run: node scripts/test_map.cjs
-      - name: Regresión del mapa V5 y flujo V9 ampliado
-        run: node scripts/test_v9_extension.cjs
-      - name: Verificar sintaxis de módulos opcionales V9
+      - name: Datos y estructura
         run: |
-          node --check geogrowth-v9-extensiones.js
-          node --check geogrowth-opportunity-brief-v2.js
-          node --check geogrowth-campaign-guide-v1.js
-          node --check geogrowth-agent-demo-v1.js
-          node --check geogrowth-filtros-v1.js
-          node --check geogrowth-licencias-convencion-v1.js
-          node --check geogrowth-licencias-arequipa-v1.js
-          node --check geogrowth-google-maps-v1.js
-      - name: Validar licencias Santa Ana 2026-T2 y minimización de datos
+          python scripts/test_project.py
+          python scripts/test_aggregate_convencion.py
+      - name: Sintaxis y pruebas de módulos
         run: |
-          python -m unittest scripts/test_aggregate_convencion.py
-          node scripts/test_licencias_convencion.cjs
-      - name: Fuente Arequipa 2026 y Google Maps JavaScript API
-        run: |
-          node scripts/test_arequipa_2026.cjs
-          node scripts/test_google_maps_adapter.cjs
-      - name: Validar Opportunity Brief por territorio e IIT
-        run: node scripts/test_opportunity_brief.cjs
-      - name: Simulación de agentes en cinco casos y 25 departamentos
-        run: node scripts/test_agent_demo.cjs
-      - name: Validar 196 provincias y filtros de oportunidad
-        run: node scripts/test_filters_v9.cjs
-      - name: Prueba real de navegador de V9 ampliado
-        run: python scripts/test_browser_v9.py
+          find assets -type f -name '*.js' -print0 | xargs -0 -n1 node --check
+          node scripts/test_map.cjs
+          node scripts/test_expansion_places.cjs
+          node scripts/test_v12.cjs
+      - name: Regresión en navegador V12
+        run: python scripts/test_browser_v12.py

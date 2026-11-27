@@ -1,3 +1,5 @@
+> Documento histórico anterior a V12. Para navegación y ejecución actuales consulta README.md. Los datos y limitaciones históricas se conservan.
+
 # Filtros territoriales de GeoGrowth — V9 ampliada
 
 ## Respaldo antes de intervenir

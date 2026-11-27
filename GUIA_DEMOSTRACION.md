@@ -1,3 +1,5 @@
+> Documento histórico anterior a V12. Para navegación y ejecución actuales consulta README.md. Los datos y limitaciones históricas se conservan.
+
 # GeoGrowth AI V9 — Flujo operativo por secciones
 
 El flujo se divide en cinco secciones independientes; al seleccionar un distrito, las demás reutilizan ese mismo UBIGEO. La cartografía V5, los CSV y los datos públicos no se modificaron.

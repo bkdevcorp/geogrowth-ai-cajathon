@@ -3,7 +3,7 @@ const source=fs.readFileSync(path.join(__dirname,'../assets/expansion.js'),'utf8
 const start=source.indexOf(' function normalizeName('),end=source.indexOf('async function mapResults(rows){',start);
 assert(start>=0&&end>start);
 const calls=[];let response={places:[]},error=null;
-const context={google:{maps:{importLibrary:async()=>({Place:{searchByText:async req=>{calls.push(req);if(error)throw error;return response;}}})}}};
+const context={window:{},google:{maps:{importLibrary:async()=>({Place:{searchByText:async req=>{calls.push(req);if(error)throw error;return response;}}})}}};
 vm.createContext(context);vm.runInContext(source.slice(start,end),context);
 const {resolveBusiness,safeError}=context;
 const x={nombre:'Tesla Academy',direccion:'Jr. Alonso de Alvarado Nº 339 - Barrio de Calvario'},ref={lat:-6.024149,lng:-76.984401};

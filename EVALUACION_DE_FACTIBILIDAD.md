@@ -1,3 +1,5 @@
+> Documento histórico anterior a V12. Para navegación y ejecución actuales consulta README.md. Los datos y limitaciones históricas se conservan.
+
 # GeoGrowth AI V3 — Evaluación de viabilidad y brechas para desarrollo real
 **Reto COM-01 / Eje 2 — Caja Trujillo**  
 **Fecha de análisis:** 23 de noviembre de 2026  

@@ -1,3 +1,5 @@
+> Documento histórico anterior a V12. Para navegación y ejecución actuales consulta README.md. Los datos y limitaciones históricas se conservan.
+
 # Tickets recomendados — Product Owner Caja Trujillo / COM-01
 
 Ya decidimos adquirir y procesar por cuenta propia los datos públicos. **No solicitar datasets como requisito inicial**. Quedan dudas de definición de éxito y restricciones comerciales.

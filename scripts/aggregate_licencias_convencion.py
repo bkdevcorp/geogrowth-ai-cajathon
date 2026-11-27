@@ -23,7 +23,7 @@ def summarize(source: Path) -> dict:
     raw = source.read_bytes()
     # La fuente de 2026 está codificada como ISO-8859-1.
     with source.open(encoding="latin-1", newline="") as stream:
-        records = list(csv.DictReader(stream, delimiter=";"))
+        records = [{k.replace("\r\n", "\n").replace("\r", "\n") if k else k: v for k,v in row.items()} for row in csv.DictReader(stream, delimiter=";")]
     if not records:
         raise ValueError("No hay registros para procesar")
     month_counts = collections.Counter()

@@ -1,3 +1,5 @@
+> Documento histórico anterior a V12. Para navegación y ejecución actuales consulta README.md. Los datos y limitaciones históricas se conservan.
+
 # Arequipa 2026 y Google Maps JavaScript API — V9 ampliada
 
 ## Respaldo verificable antes de modificar

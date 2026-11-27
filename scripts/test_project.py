@@ -13,8 +13,8 @@ checks={
  'Lima licencia solo Lima Cercado':sum(x['fuente_licencias']=='MML 2024-2026' for x in r)==1,
  'Arequipa solo una licencia territorial':sum(x['fuente_licencias']=='MPA 2025' for x in r)==1,
  'No exportan RUC':all('ruc' not in x for x in r),
- 'HTML incrusta dataset':all(x in (R/'GeoGrowth_AI_Dashboard_V3.html').read_text(encoding='utf-8') for x in ('150101','130101','100514')),
- 'Mobile import JSON': 'GeoGrowthCampaignV3' in (R/'GeoGrowth_AI_Campo_V3.html').read_text(encoding='utf-8'),
+ 'Cinco HTML vigentes':{p.name for p in R.glob('*.html') if not p.name.startswith('__')}=={'index.html','expansion-comercial.html','mercados-desatendidos.html','campanas-estacionales.html','configuracion.html'},
+ 'Mobile import JSON': 'GeoGrowthCampaignV3' in (R/'assets/campo.js').read_text(encoding='utf-8'),
 }
 for name,success in checks.items():print(('OK' if success else 'ERROR'),name)
 assert all(checks.values())

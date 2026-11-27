@@ -1,2 +1,0 @@
-GeoGrowth AI V11
-Mapa territorial V5 integrado en la vista Administrador y Analista. El mapa V5 original permanece sin cambios.

@@ -1,3 +1,5 @@
+> Documento histórico anterior a V12. Para navegación y ejecución actuales consulta README.md. Los datos y limitaciones históricas se conservan.
+
 # GeoGrowth AI V10 — Cómo demostrar el circuito completo
 
 ## Acceso

@@ -1,79 +1,40 @@
-# GeoGrowth AI — COM-01, Eje 2 (prototipo público)
+# GeoGrowth AI — CAJATHON 2026 · COM-01
 
-Demo de inteligencia territorial para captación e inclusión financiera, construida con información pública y una aplicación de campo de **uso demostrativo**. No es una solución oficial de Caja Trujillo.
+**Prototipo del equipo Glitch.** Inteligencia geoespacial para investigar oportunidades de captación. No es una solución oficial o productiva de Caja Trujillo.
 
-## Sitio web
+## Navegación V12
 
-- `index.html` — portada
-- `GeoGrowth_AI_Dashboard_V3.html` — exploración, scoring, fichas de evidencia, campañas y comparación M0/M1/M2
-- `GeoGrowth_AI_Campo_V3.html` — importa campañas JSON, registra observaciones y exporta resultados.
+| Módulo | Página |
+|---|---|
+| 01. Nuevos negocios | [index.html](index.html) |
+| 02. Expansión comercial | [expansion-comercial.html](expansion-comercial.html) |
+| 03. Mercados desatendidos | [mercados-desatendidos.html](mercados-desatendidos.html) |
+| 04. Campañas estacionales | [campanas-estacionales.html](campanas-estacionales.html) |
+| Configuración | [configuracion.html](configuracion.html) |
 
-## Datos y alcance
+Opportunity Brief, Mi campaña, Seguimiento y registro de campo son herramientas auxiliares, no opciones adicionales del menú. La campaña y resultados se transfieren por JSON o almacenamiento local del navegador. No existe sincronización multiusuario.
 
-- 25 departamentos; 1,879 UBIGEO en la unión SBS/PRODUCE; 1,725 con registros coincidentes.
-- SBS 2025: infraestructura financiera georreferenciada.
-- PRODUCE 2015: distribución empresarial **histórica** (no padrón vigente).
-- Lima: licencias 2024–2026, **solo Cercado de Lima**.
-- Arequipa: licencias municipales de un periodo localizado.
-- Datos públicos procesados y manifiesto de procedencia: carpeta `data/`.
-- **No incorpora prospectos nominales, datos de clientes de Caja Trujillo ni evaluaciones crediticias reales.**
+## Ejecutar
 
-## Uso online
+Desde la raíz: python -m http.server 8000, luego abrir http://localhost:8000/. Publicación estática en GitHub Pages.
 
-1. Abre el Dashboard y elige *Todo el Perú* o uno de los 25 departamentos.
-2. Filtra UBIGEO o distrito, revisa fuentes y limitaciones de la ficha.
-3. En *Priorización*, cambia ponderaciones y presupuesto supuesto, compara M0/M1/M2 y exporta JSON.
-4. Abre la App de campo, importa JSON, registra observaciones sintéticas y exporta los resultados.
-5. En el Dashboard, importa los resultados en *Campañas y retorno*.
+En Configuración introduce una **clave de navegador restringida por HTTP referrer** (dominio GitHub Pages y localhost solo si corresponde), Map ID opcional, límites de cuota y facturación. La clave se conserva en sessionStorage de la pestaña y no se publica en Git. Maps y Geocoding pueden probarse desde la configuración. No se ha comprobado una clave real en CI. El módulo estacional y el buscador usan direcciones de los registros; no inventan ubicaciones.
 
-No usa Google Maps ni las teselas de OpenStreetMap: el mapa es una vista SVG geográfica esquemática **local**, así que no se producen errores 403 del proveedor de teselas. Los símbolos NO identifican domicilios de negocios.
+## Diseño
 
-## Publicar con GitHub Pages
+Sistema oficial generado con UI UX Pro Max Skill (nextlevelbuilder/ui-ux-pro-max-skill): design-system/geogrowth-ai/MASTER.md. Data-Dense Dashboard, Fira Sans/Fira Code, teal y naranja, navegación consistente, foco visible y movimiento reducido.
 
-1. Crea el repositorio público `geogrowth-ai-cajathon`.
-2. Sube los archivos manteniendo `index.html` en la raíz.
-3. En `Settings > Pages`, selecciona `Deploy from a branch`, `main` y `/(root)`.
-4. La dirección pública será `https://<usuario>.github.io/geogrowth-ai-cajathon/`.
+## Datos y limitaciones
 
-## Validez de resultados
+25 departamentos incluido Callao; 1,879 UBIGEO en la unión SBS 2025/PRODUCE 2015 y 1,725 en ambas fuentes. Registros municipales con cobertura parcial; San Martín incluye Moyobamba y Juanjuí. Consultar data/ y los documentos de fuentes. La licencia no prueba apertura, actividad actual ni interés de crédito. Mercados desatendidos utiliza una comparación histórica de empresas y puntos financieros, no una brecha validada. Campañas estacionales aplica reglas explícitas de actividad y temporada, no predice demanda. No hay IIT operativo en el menú, scoring crediticio, productos recomendados, CRM, autenticación ni backend productivo.
 
-El índice es exploratorio; las variables cruzadas no son comparables temporalmente. Los costos por territorio son hipotéticos. Los datos no permiten inferir demanda real, probabilidad de captación, elegibilidad crediticia o necesidades de financiamiento individuales. Para producción faltan población adulta comparable, empresas actuales, catálogo oficial de productos y resultados históricos de campañas.
+## Pruebas
 
-Consulta `EVALUACION_DE_FACTIBILIDAD.md` y `data/fuentes_y_transformaciones.json` para auditoría y limitaciones.
+- python scripts/test_project.py
+- python -m unittest scripts/test_aggregate_convencion.py
+- node scripts/test_map.cjs
+- node scripts/test_expansion_places.cjs
+- node scripts/test_v12.cjs
+- python scripts/test_browser_v12.py (Chrome/Chromium/Edge)
 
-
-## Mapa interactivo: OpenFreeMap o Google Maps
-
-En el dashboard se puede alternar entre **OpenFreeMap** (predeterminado, sin clave) y
-**Google Maps** (modo opcional de prueba). En el panel inferior derecho del mapa,
-elige **Google Maps**, introduce una clave **restringida de Maps JavaScript API**
-y pulsa **Activar Google Maps**.
-
-La clave se conserva solamente en la memoria de esa pestaña: **no se incluye
-en el repositorio, no se guarda en localStorage y no se exporta a los datos**.
-Por tanto, cada sesión nueva requerirá introducirla de nuevo. Las personas que
-visiten la página sin clave seguirán viendo OpenFreeMap.
-
-Configuración en Google Cloud Console:
-1. Habilitar **Maps JavaScript API** en el proyecto.
-2. Verificar que exista una cuenta de facturación activa y establecer límites/cuotas.
-3. Restringir la clave por **Websites (HTTP referrers)**:
-   \`https://bkdevcorp.github.io/*\`
-4. Restringir la clave a **Maps JavaScript API** exclusivamente.
-5. Si se compartió una clave sin restricciones, crear una nueva y deshabilitar la anterior.
-
-Google Maps se utiliza **solo como cartografía**, no como fuente de prospectos:
-los puntos siguen siendo coordenadas medias de la infraestructura reportada
-por SBS 2025; no corresponden a ubicaciones empresariales individuales.
-
-## Filtros por provincia y respaldo V9
-
-En el modo ampliado del Analista, la búsqueda territorial incluye Departamento, Provincia (UBIGEO), Distrito y tipo de oportunidad para investigar. Los resultados y campañas solo usan datos realmente disponibles; las referencias municipales externas no se presentan como negocios captados. Consultar [metodología, fuentes, pruebas y respaldo](FILTROS_TERRITORIALES_Y_RESPALDO.md).
-
-## Licencias de Santa Ana (La Convención), 2026-T2
-
-Se integró un resumen **sin RUC ni nombres** de las licencias municipales de Santa Ana (Cusco): 56 emisiones en abril–junio 2026 y un registro adicional de 2024. El CSV declara `070901`, homologado a UBIGEO INEI `080901` para el enlace territorial. Consultar [fuente, metodología, limitaciones y respaldo](FUENTE_CONVENCION_2026Q2.md).
-
-## Google Maps JavaScript API y fuente Arequipa 2026
-
-El modo ampliado incorpora un mapa Google Maps opcional con las bibliotecas `maps`, `core`, `marker` y `geometry`; `places` y `routes` se ejecutan solo bajo demanda. Es necesaria una API key de navegador con restricciones HTTP referrer y facturación habilitada. Sin clave permanece el mapa V5. Además se integra **sin PII** el resumen MPA Arequipa Cercado enero–junio 2026 (824 trámites, julio sin emisiones), independiente de la fuente 2025. Ver [metodología, configuración, límites y restauración](GOOGLE_MAPS_Y_MPA_2026.md).
+El histórico V3/V9/V10/V11 está disponible en Git (base bb3178f5). Las pruebas de esas interfaces fueron sustituidas por validaciones de la nueva navegación. Los issues de reproducibilidad, denominadores y piloto permanecen pendientes.

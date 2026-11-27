@@ -10,15 +10,11 @@ let pending=null;
 function load(){
  if(window.google?.maps?.importLibrary)return Promise.resolve(window.google.maps);
  if(pending)return pending;
- const key=config().GOOGLE_MAPS_API_KEY;if(!key)return Promise.reject(Error("Configura Google Maps en la cabecera."));
+ const key=config().GOOGLE_MAPS_API_KEY;if(!key)return Promise.reject(Error("Configura Google Maps en Configuración."));
  pending=new Promise((resolve,reject)=>{const s=document.createElement("script"),cb="__ggV11Ready";window[cb]=()=>{delete window[cb];resolve(window.google.maps)};s.onerror=()=>{pending=null;s.remove();reject(Error("No se pudo cargar Google Maps."))};s.src="https://maps.googleapis.com/maps/api/js?loading=async&v=weekly&key="+encodeURIComponent(key)+"&callback="+cb;s.async=true;document.head.append(s)});return pending;
 }
-function openConfig(){
- let d=document.getElementById("gg-v11-config");
- if(!d){d=document.createElement("dialog");d.id="gg-v11-config";d.style.cssText="border:1px solid #dfe7f0;border-radius:14px;padding:24px;width:min(460px,92vw)";d.innerHTML='<form><h2>Configuración Google Maps</h2><p class="muted">Una clave para ambos módulos. Se conserva en esta pestaña.</p><div class="field"><label>GOOGLE_MAPS_API_KEY</label><input type="password" id="gg-v11-key" required autocomplete="off"></div><div class="field"><label>Map ID (opcional)</label><input id="gg-v11-mapid"></div><div class="actions-row"><button type="button" class="btn" id="gg-v11-cancel">Cancelar</button><button type="submit" class="btn primary">Guardar y conectar</button></div></form>';document.body.append(d);d.querySelector("#gg-v11-cancel").onclick=()=>d.close();d.querySelector("form").onsubmit=e=>{e.preventDefault();const key=d.querySelector("#gg-v11-key").value.trim();if(!/^AIza[A-Za-z0-9_-]{30,60}$/.test(key)){d.querySelector("#gg-v11-key").setCustomValidity("Clave inválida");d.querySelector("#gg-v11-key").reportValidity();return;}save(key,d.querySelector("#gg-v11-mapid").value.trim());location.reload()};d.querySelector("#gg-v11-key").oninput=e=>e.target.setCustomValidity("");}
- d.querySelector("#gg-v11-key").value=config().GOOGLE_MAPS_API_KEY||"";d.querySelector("#gg-v11-mapid").value=config().GOOGLE_MAPS_MAP_ID||"DEMO_MAP_ID";d.showModal();
-}
-function header(){const h=document.getElementById("roleSwitch");if(!h||h.querySelector("[data-gg-config]"))return;const b=document.createElement("button");b.className="btn small";b.dataset.ggConfig="1";b.textContent="Configuración API";b.onclick=openConfig;h.prepend(b)}
+function openConfig(){location.assign('configuracion.html');}
+function header(){}
 function normalized(s){return String(s||"").normalize("NFD").replace(/\p{M}/gu,"").toUpperCase().replace(/\b(AVENIDA|AV|CALLE|CL|JIRON|JR|NRO|NUMERO|NO)\b/g," ").replace(/[^A-Z0-9]+/g," ").trim()}
 function located(u){return read(localStorage,INDEX,[]).includes(String(u))}
 function remember(u){try{localStorage.setItem(INDEX,JSON.stringify([...new Set([...read(localStorage,INDEX,[]),String(u)])]))}catch(_){}}
@@ -32,8 +28,8 @@ async function geocodeRecord(x,territory){
  const m=source.match(/^(.+?)\s+(\d+)(?=\s|$)/);if(!m||!returned.includes(m[1].trim())||!returned.split(" ").includes(m[2]))return null;
  return {position:r.geometry.location,address:r.formatted_address,label:"Dirección municipal geocodificada; identidad comercial no confirmada",matched:false,received:1,geocoded:true};
 }
-const types=[["todas","Todas las oportunidades"],["nuevos","Nuevos negocios (licencias)"],["expansion","Expansión comercial"],["desatendidos","Mercados desatendidos"],["estacionales","Campañas estacionales"],["otros","Otros"]];
-let filter={type:"todas",province:"all",district:"",custom:""};
+const types=[["nuevos","Nuevos negocios (licencias)"],["otros","Buscar por actividad"]];
+let filter={type:"nuevos",province:"all",district:"",custom:""};
 function panel(app){
  const deps=[...new Set(app.territories.map(r=>r.departamento))].sort((a,b)=>Number(app.territories.some(r=>r.departamento===b&&located(r.ubigeo)))-Number(app.territories.some(r=>r.departamento===a&&located(r.ubigeo)))||a.localeCompare(b,"es"));
  return '<section class="card"><div class="card-header"><div><h2>Seleccionar territorio para análisis</h2><p>Datos municipales → Google Maps. Los marcadores solo corresponden a direcciones del dataset.</p></div></div><div class="form-grid"><div class="field"><label>Departamento</label><select id="ggV11Dep">'+deps.map(d=>'<option '+(app.dept===d?'selected':'')+'>'+esc(d)+'</option>').join("")+'</select></div><div class="field"><label>Provincia</label><select id="ggV11Prov"></select></div><div class="field"><label>Distrito</label><select id="ggV11District"></select></div><div class="field"><label>Tipo de oportunidad</label><select id="ggV11Type">'+types.map(([v,n])=>'<option value="'+v+'" '+(filter.type===v?'selected':'')+'>'+esc(n)+'</option>').join("")+'</select></div></div><div class="field" id="ggV11Other" hidden><label>Sector o actividad presente en la fuente</label><input id="ggV11Custom" value="'+esc(filter.custom)+'"></div><div class="actions-row"><button class="btn primary" id="ggV11Search">Buscar oportunidades</button><button class="btn" id="ggV11Prepare">Preparar demo (30 direcciones máx.)</button></div><p class="muted" id="ggV11Status">Selecciona un territorio.</p></section><section class="card"><div class="card-header"><h2>Mapa comercial · Google Maps</h2><span class="badge">Direcciones oficiales</span></div><div class="grid-2" style="grid-template-columns:minmax(0,1.6fr) minmax(230px,1fr)"><div id="ggV11Map" style="height:420px;border-radius:12px;background:#edf3f8"></div><div id="ggV11Results" style="max-height:420px;overflow:auto"></div></div></section>';
@@ -50,7 +46,7 @@ async function mount(app,actions){
  provinces();$("ggV11Other").hidden=filter.type!=="otros";
  $("ggV11Dep").onchange=()=>{filter.province="all";filter.district="";provinces()};$("ggV11Prov").onchange=()=>{filter.province=$("ggV11Prov").value||"all";filter.district="";districts()};$("ggV11Type").onchange=()=>{$("ggV11Other").hidden=$("ggV11Type").value!=="otros"};
  async function ensureMap(){if(map)return map;const maps=await load(),{Map}=await maps.importLibrary("maps");if(!host.isConnected)throw Error("Vista cerrada");map=new Map(host,{center:{lat:-9.19,lng:-75.02},zoom:5,mapId:config().GOOGLE_MAPS_MAP_ID||"DEMO_MAP_ID"});return map}
- if(config().GOOGLE_MAPS_API_KEY)ensureMap().catch(e=>{$("ggV11Status").textContent=e.message});else host.textContent="Configura la API en la cabecera para activar Google Maps.";
+ if(config().GOOGLE_MAPS_API_KEY)ensureMap().catch(e=>{$("ggV11Status").textContent=e.message});else host.textContent="Configura Google Maps desde el menú Configuración. Los registros siguen disponibles sin mapa.";
  async function search(limit){
  const token=++seq,dep=$("ggV11Dep").value,prov=$("ggV11Prov").value,u=$("ggV11District").value,type=$("ggV11Type").value,q=$("ggV11Custom").value.trim().toLowerCase();filter={type,province:prov||"all",district:u,custom:q};
  if(type==="expansion"){actions.expansion();return}
