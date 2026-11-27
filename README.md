@@ -63,3 +63,7 @@ python scripts/serve_ai.py
 ```
 
 Abrir http://127.0.0.1:8765/ y pulsar Analizar con GPT. El modelo predeterminado es gpt-4.1-mini y puede cambiarse mediante OPENAI_MODEL. El servidor usa Responses API y escucha solo en loopback; no es un servicio para exposición pública. Se envían datos resumidos, no nombres ni direcciones de registros reales. No se guarda la clave en el navegador ni en Git. La consulta real puede generar cargos. La API todavía no se ha probado con una credencial real.
+
+### Escenario de prospección sintético
+
+Nuevos negocios procesa 300 registros ficticios únicos de Arequipa. El criterio de detección del escenario fijo al 26/11/2026 es un primer registro dentro de los últimos 30 días (28/10–26/11) sin antecedente simulado: 20 cumplen y 280 no. El conteo se recalcula según filtros, y la tabla y el mapa muestran únicamente los candidatos (hasta 20 marcadores). Los nombres son inventados, coherentes con la actividad; cualquier coincidencia con establecimientos reales es casual. Las necesidades son hipótesis que debe investigar el ADN, no hechos ni recomendaciones crediticias. En la web pública, el texto de interpretación se calcula localmente y se identifica como ejemplo sin IA. GPT real requiere el servidor local y una credencial autorizada. Evidencia visual: evidencia/auditoria-prospeccion/despues.

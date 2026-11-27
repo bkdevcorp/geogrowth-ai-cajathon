@@ -55,12 +55,13 @@ async function run(){
  localStorage.removeItem('geogrowth.data.mode.v1');
  for(let i=0;i<pages.length;i++){
   await open(pages[i],'#u-form');check(doc().querySelector('#u-mode').value==='demo','Demo por defecto '+pages[i]);
-  if(i===0){check(doc().querySelector('#ai-answer').textContent.includes('6 registros ficticios'),'GPT ejemplo basado en selección');check(doc().querySelector('#ai-origin').textContent.includes('sin IA'),'Ejemplo identificado');const w=f.contentWindow,original=w.fetch;w.fetch=async (url,opts)=>{if(url==='/api/analyze'){const req=JSON.parse(opts.body);check(req.data.total===6&&req.data.mode==='demo','Payload GPT');return {ok:true,json:async()=>({text:'Análisis GPT de prueba',model:'mock-gpt'})};}return original(url,opts);};click('#ai-run');await until(()=>doc().querySelector('#ai-answer').textContent.includes('Análisis GPT de prueba'),'Respuesta GPT simulada');click('#ai-example');check(doc().querySelector('#ai-origin').textContent.includes('sin IA'),'Volver a ejemplo');w.fetch=original;}
+  if(i===0){check(doc().querySelector('#ai-answer').textContent.includes('Se procesaron 300 comercios sintéticos'),'GPT ejemplo basado en selección');check(doc().querySelector('#ai-origin').textContent.includes('sin IA'),'Ejemplo identificado');const w=f.contentWindow,original=w.fetch;w.fetch=async (url,opts)=>{if(url==='/api/analyze'){const req=JSON.parse(opts.body);check(req.data.total===20&&req.data.processed===300&&req.data.notNew===280&&req.data.mode==='demo','Payload GPT');return {ok:true,json:async()=>({text:'Análisis GPT de prueba',model:'mock-gpt'})};}return original(url,opts);};click('#ai-run');await until(()=>doc().querySelector('#ai-answer').textContent.includes('Análisis GPT de prueba'),'Respuesta GPT simulada');click('#ai-example');check(doc().querySelector('#ai-origin').textContent.includes('sin IA'),'Volver a ejemplo');w.fetch=original;}
   else check(!doc().querySelector('#u-ai'),'IA piloto solo Nuevos negocios');
 
+  if(i===0){check(doc().querySelector('#u-summary').textContent.includes('20 posibles aperturas'),'20 aperturas');check(doc().querySelector('#ai-answer').textContent.includes('Taller Misti Motors'),'Giro y nombre coherentes');set('u-sector','Comercio');check(doc().querySelector('#u-summary').textContent.includes('120 comercios sintéticos')&&doc().querySelector('#u-summary').textContent.includes('8 posibles aperturas'),'Conteo filtrado');click('#u-reset');}
   check(doc().querySelector('#u-mode-note').textContent.includes('ficticios'),'Aviso sintético');
-  check(doc().querySelectorAll('.u-demo-pin').length===(i===1?12:6),'Marcadores automáticos sin clave '+pages[i]);
-  check(doc().querySelector('#u-map-badge').textContent==='6 casos simulados','6 casos por módulo '+pages[i]);
+  check(doc().querySelectorAll('.u-demo-pin').length===(i===0?20:i===1?12:6),'Marcadores automáticos sin clave '+pages[i]);
+  check(doc().querySelector('#u-map-badge').textContent===(i===0?'20 casos simulados':'6 casos simulados'),'6 casos por módulo '+pages[i]);
   check([...doc().querySelectorAll('#u-rows tr')].every(x=>x.textContent.includes('Simulado')),'Filas sintéticas');
   click('.u-demo-pin');check(doc().querySelector('#u-detail').textContent.includes('SIMULACIÓN'),'Ficha desde marcador');check(!doc().querySelector('#u-detail [data-lead],#u-contrast'),'No mezclar demo con campaña real');
   if(i===1)check(doc().querySelector('#u-detail').textContent.includes('Local anterior ficticio')&&doc().querySelector('#u-detail').textContent.includes('Local nuevo ficticio'),'Dos locales sintéticos');
@@ -75,7 +76,7 @@ async function run(){
   class FakeBounds{extend(){}}
   w.google={maps:{importLibrary:async n=>({maps:{Map:FakeMap},marker:{AdvancedMarkerElement:FakeMarker},core:{LatLngBounds:FakeBounds}}[n]||{})}};
   G.geocodeRecord=G.placeAddressRecord=async()=>{queries++;throw Error('No se debe geocodificar demo')};G.save('AIza'+'X'.repeat(35),'DEMO_MAP_ID');click('#u-reset');
-  await until(()=>doc().querySelector('.u-google-demo-label'),'Google Maps demo '+pages[i]);check(markerCount===(i===1?12:6)&&queries===0,'Coordenadas sintéticas directas');
+  await until(()=>doc().querySelector('.u-google-demo-label'),'Google Maps demo '+pages[i]);check(markerCount===(i===0?20:i===1?12:6)&&queries===0,'Coordenadas sintéticas directas');
   G.clear();click('#u-reset');
  }
  set('u-mode','real');await until(()=>doc().querySelector('#u-mode')?.value==='real'&&doc().querySelector('#u-map-badge')?.textContent==='Sin API key','Cambio a datos reales');
