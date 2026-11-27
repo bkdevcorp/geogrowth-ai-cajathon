@@ -46,7 +46,7 @@ function visitPlan(rows,mode){
 }
 function planMarkup(plan){
  if(!plan.length)return '';
- return '<section class="ai-visit-plan" aria-label="Orden de visitas recomendado"><h3>Orden recomendado de visitas</h3><p class="muted">Solo negocios rojos. Primero los que cuentan con giro y ubicación; luego por apertura más reciente. No es una ruta optimizada ni una evaluación crediticia. Escenario sintético.</p><ol>'+plan.map(v=>'<li><span class="visit-number">'+v.order+'</span><div><strong>'+E(v.name)+'</strong><p>'+E(v.reason)+'</p></div><button type="button" class="btn small" data-u-detail="'+E(v.id)+'">Ver detalle</button></li>').join('')+'</ol></section>';
+ return '<section class="ai-visit-plan" aria-label="Orden de visitas recomendado"><h3>Orden recomendado de visitas</h3><p class="muted">Solo negocios rojos. Primero los que cuentan con giro y ubicación; luego por apertura más reciente. No es una ruta optimizada ni una evaluación crediticia. Escenario sintético.</p><ol>'+plan.map(v=>'<li><span class="visit-number">'+v.order+'</span><div><strong>'+E(v.name)+'</strong><p>'+E(v.reason)+'</p></div></li>').join('')+'</ol></section>';
 }
 function snapshot(rows,mode,filters,processed=rows.length,territories=[]){
  const counts={};for(const r of rows){const k=r.sector||'No clasificado';counts[k]=(counts[k]||0)+1;}

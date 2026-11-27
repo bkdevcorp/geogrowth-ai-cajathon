@@ -91,3 +91,7 @@ GPT recibe conteos y contexto territorial agregado, sin nombres, muestras de neg
 ### Orden de visitas de demostración
 
 El análisis general incluye una lista operativa de los negocios rojos: primero registros con giro y ubicación, después fecha de apertura simulada descendente. Cada posición explica la fecha y la necesidad a consultar. No usa SBS ni solvencia para ordenar visitas, no optimiza rutas y no clasifica créditos. La API solo recibe el plan con nombres ficticios en demo, no perfiles. Los filtros recalculan la lista y cada negocio enlaza a su ficha.
+
+### Detalle en modal
+
+El orden de visitas del análisis general no tiene botones de ficha. La tabla y los marcadores abren un diálogo modal común a los cuatro módulos, con cierre por botón, Escape y clic fuera, y restauración de foco. Los perfiles no cambian. Localizar desde el modal lo cierra para mostrar el mapa.
