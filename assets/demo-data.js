@@ -29,6 +29,25 @@ const commercialNames={expansion:['Distribuidora Alto Mayo','Restaurante Sabor d
 const existingWords=['La Alameda','El Mirador','Cumbre del Sur','Valle Alegre','Los Sauces','Portal Andino','La Pradera','El Molino','Las Terrazas','Sol Naciente','Los Olivos','La Ribera','Camino Real','El Bosque'];
 const districtLabels=['Sector Mirador del Valle','Sector Alameda del Norte','Sector Camino del Sol','Sector Portal Verde','Sector Los Sauces','Sector Ribera Alta'];
 const cutoff='2026-10-28',asOf='2026-11-26';
+ const profiles=[
+ [24000,4500,24,8500,1,0],[32000,6400,18,9000,1,0],[35000,8500,36,12500,2,0],
+ [42000,7200,30,18000,2,0],[18000,3200,12,4500,1,0],[15000,2600,0,null,null,null],
+ [16000,3000,15,6500,1,0],[38000,6700,22,13000,2,1],[29000,5100,28,11000,2,0],
+ [12000,2200,0,null,null,null],[48000,7800,32,22000,2,0],[22000,4300,14,7000,1,0],
+ [26000,4900,26,9500,1,0],[19000,3100,20,8000,1,1],[14000,2500,0,null,null,null],
+ [28000,5500,30,10500,2,0],[17500,2800,16,5000,1,0],[33000,6300,24,12000,2,0],
+ [21000,3700,12,6000,1,0],[23500,3900,18,7500,1,0]];
+ function profile(r,i,module="bandeja"){
+  const [sales,net,months,debt,lenders,category]=profiles[i];
+  return {synthetic:true,joinId:r.id,
+   sunat:{source:'SUNAT · simulado',status:'Activo',condition:'Habido',activity:r.giro,identifier:r.id},
+   sunarp:{source:'SUNARP · escenario ficticio',status:i%3===0?'Inscripción de persona jurídica simulada':'Sin asiento registral simulado',note:'No acredita propiedad, bienes ni solvencia. Verificar inscripción mediante canales autorizados.'},
+   sbs:{source:'Central de Riesgos SBS · simulada',period:'octubre 2026',subject:module==='bandeja'?'Titular ficticio vinculado al negocio nuevo':'Titular ficticio del comercio seleccionado',months,category,debt,lenders},
+   finance:{source:'Declaración y estados de cuenta ficticios · no SBS',period:'mes ilustrativo, proyección de operación',sales,net},
+   inei:{source:'INEI · contexto territorial',status:'Sin indicador territorial validado para esta selección'},
+   midagri:{source:'MIDAGRI · referencia sectorial',status:'Sin cruce validado',relevance:['Alimentos y gastronomía','Agricultura'].includes(r.sector)?'Posible vínculo con insumos agrícolas; validar proveedores y estacionalidad.':'No se ha identificado un vínculo agrícola en el escenario.'}
+  };
+ }
 function population(){
  const z=zones.bandeja;
  const record=(entry,i,recent)=>{
@@ -40,25 +59,6 @@ function population(){
  const cartera=new Set([1,5,9,13,17].map(i=>'DEMO-01-'+i));
  const negativeChecks=new Set([2,6,10,14,18].map(i=>'DEMO-01-'+i));
  // Fictional cross-source records joined by a scenario ID, never a real RUC.
- const profiles=[
- [24000,4500,24,8500,1,0],[32000,6400,18,9000,1,0],[35000,8500,36,12500,2,0],
- [42000,7200,30,18000,2,0],[18000,3200,12,4500,1,0],[15000,2600,0,null,null,null],
- [16000,3000,15,6500,1,0],[38000,6700,22,13000,2,1],[29000,5100,28,11000,2,0],
- [12000,2200,0,null,null,null],[48000,7800,32,22000,2,0],[22000,4300,14,7000,1,0],
- [26000,4900,26,9500,1,0],[19000,3100,20,8000,1,1],[14000,2500,0,null,null,null],
- [28000,5500,30,10500,2,0],[17500,2800,16,5000,1,0],[33000,6300,24,12000,2,0],
- [21000,3700,12,6000,1,0],[23500,3900,18,7500,1,0]];
- function profile(r,i){
-  const [sales,net,months,debt,lenders,category]=profiles[i];
-  return {synthetic:true,joinId:r.id,
-   sunat:{source:'SUNAT · simulado',status:'Activo',condition:'Habido',activity:r.giro,identifier:r.id},
-   sunarp:{source:'SUNARP · escenario ficticio',status:i%3===0?'Inscripción de persona jurídica simulada':'Sin asiento registral simulado',note:'No acredita propiedad, bienes ni solvencia. Verificar inscripción mediante canales autorizados.'},
-   sbs:{source:'Central de Riesgos SBS · simulada',period:'octubre 2026',subject:'Titular ficticio vinculado al negocio nuevo',months,category,debt,lenders},
-   finance:{source:'Declaración y estados de cuenta ficticios · no SBS',period:'mes ilustrativo, proyección de operación',sales,net},
-   inei:{source:'INEI · contexto territorial',status:'Sin indicador territorial validado para esta selección'},
-   midagri:{source:'MIDAGRI · referencia sectorial',status:'Sin cruce validado',relevance:r.sector==='Alimentos y gastronomía'?'Posible vínculo con insumos agrícolas; validar proveedores y estacionalidad.':'No se ha identificado un vínculo agrícola en el escenario.'}
-  };
- }
  const recent=newBusinesses.map((x,i)=>{const r=record(x,i,true);return {...r,profile:profile(r,i),cajaStatus:cartera.has(r.id)?'client':negativeChecks.has(r.id)?'nonclient':'pending',cajaEvidence:cartera.has(r.id)?'Coincidencia en cartera sintética':negativeChecks.has(r.id)?'Consulta de campo simulada: no trabaja con Caja':'Sin consulta de campo ni relación confirmada'};});
  const existing=existingWords.flatMap((word,j)=>newBusinesses.map(([sector,giro,,need],i)=>record([sector,giro,giro+' '+word,need],j*20+i,false)));
  return [...recent,...existing];
@@ -69,7 +69,8 @@ function rows(id){
  if(id==='bandeja')return population();
  const z=zones[id];
  if(id==='desatendidos')return offsets.slice(0,6).map(([a,b],i)=>({id:'DEMO-03-'+(i+1),label:districtLabels[i],dep:z.dep,dist:z.dist,ubigeo:z.ubigeo,sector:'',period:'2026',date:'2026 · simulado',source,signal:'Actividad comercial simulada · 0 oficinas',kind:'territory',synthetic:true,demoPosition:{lat:z.lat+a,lng:z.lng+b},empresas_2015:null,sbs_puntos_2025:null,demoMetrics:{businesses:180+i*47,mypes:165+i*41,offices:0,agents:2+i,cashiers:i%2}}));
- return names[id].map(([sector,giro],i)=>{const [a,b]=offsets[i],label=commercialNames[id][i],date='2026-11-'+String(24-i).padStart(2,'0'),p={lat:z.lat+a,lng:z.lng+b};return {id:'DEMO-'+({bandeja:'01',expansion:'02',estacionales:'04'}[id])+'-'+(i+1),nombre:label,label,dep:z.dep,dist:z.dist,ubigeo:z.ubigeo,sector,giro,period:'2026',date,fecha:date,source,signal:id==='expansion'?'Local adicional simulado':id==='estacionales'?'Actividad estacional simulada':'Apertura simulada',kind:'business',synthetic:true,demoSeasons:id==='estacionales'?([['navidad'],['navidad','escolar'],['navidad','fiestas'],['navidad'],['navidad','fiestas'],['navidad','escolar'],['escolar'],['escolar'],['verano','fiestas'],['verano','fiestas'],['agro'],['agro']][i]):[],demoPosition:p,direccion:'Ubicación ficticia '+String.fromCharCode(65+i)+' (no visitar)',estado:'VIGENTE',...(id==='expansion'?{fecha_anterior:'2025-03-10',direcciones_anteriores:1,direcciones_nuevas:1,history:[{fecha:'2025-03-10',direccion:'Local anterior ficticio '+String.fromCharCode(65+i),demoPosition:{lat:p.lat-.0018,lng:p.lng-.0025}}]}:{})};});
+ const needs=id==='expansion'?['abastecimiento del nuevo local','equipamiento de cocina','equipamiento veterinario','inventario de materiales','capacidad de producción','mobiliario y material educativo']:['inventario de juguetes','stock de prendas','insumos de panificación','inventario de regalos','ingredientes y hornos','abastecimiento textil','útiles escolares','papel y útiles','preparación de habitaciones','insumos de cocina','insumos para cultivo','semillas y fertilizantes'];
+ return names[id].map(([sector,giro],i)=>{const [a,b]=offsets[i],label=commercialNames[id][i],date='2026-11-'+String(24-i).padStart(2,'0'),p={lat:z.lat+a,lng:z.lng+b};const r={id:'DEMO-'+({bandeja:'01',expansion:'02',estacionales:'04'}[id])+'-'+(i+1),nombre:label,label,dep:z.dep,dist:z.dist,ubigeo:z.ubigeo,sector,giro,period:'2026',date,fecha:date,source,signal:id==='expansion'?'Local adicional simulado':id==='estacionales'?'Actividad estacional simulada':'Apertura simulada',kind:'business',synthetic:true,demoSeasons:id==='estacionales'?([['navidad'],['navidad','escolar'],['navidad','fiestas'],['navidad'],['navidad','fiestas'],['navidad','escolar'],['escolar'],['escolar'],['verano','fiestas'],['verano','fiestas'],['agro'],['agro']][i]):[],demoPosition:p,direccion:'Ubicación ficticia '+String.fromCharCode(65+i)+' (no visitar)',estado:'VIGENTE',...(id==='expansion'?{fecha_anterior:'2025-03-10',direcciones_anteriores:1,direcciones_nuevas:1,history:[{fecha:'2025-03-10',direccion:'Local anterior ficticio '+String.fromCharCode(65+i),demoPosition:{lat:p.lat-.0018,lng:p.lng-.0025}}]}:{})};const cajaStatus=['pending','client','nonclient','pending','client','nonclient'][i%6];return {...r,need:needs[i],cajaStatus,cajaEvidence:cajaStatus==='client'?'Coincidencia en cartera sintética':cajaStatus==='nonclient'?'Consulta de campo simulada: no trabaja con Caja':'Relación con Caja pendiente de consulta',profile:profile(r,i,id)};});
 }
 window.GeoGrowthDemo={rows,source,isNew,cutoff,asOf};
 })();

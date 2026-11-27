@@ -44,3 +44,13 @@ assert.equal(plan.length,10);assert.equal(plan[0].id,'DEMO-01-3');assert.equal(p
 assert(plan.every((v,i)=>v.order===i+1&&newRecords.find(r=>r.id===v.id).cajaStatus==='pending'));
 assert.equal(aiContext.window.GeoGrowthAI.visitPlan(newRecords,'real').length,0);
 console.log('OK: visit order, pending only, no real-data ranking');
+
+for(const module of ['expansion','desatendidos','estacionales']){
+ const list=demo.rows(module),plan=aiContext.window.GeoGrowthAI.visitPlan(list,'demo',module,{window:'Pendiente'});
+ assert.equal(plan.length,list.length);
+ assert(plan.every((p,i)=>p.order===i+1));
+ assert.equal(aiContext.window.GeoGrowthAI.visitPlan(list,'real',module).length,0);
+ if(module==='desatendidos'){assert.equal(plan[0].id,'DEMO-03-6');assert(list.every(r=>!r.cajaStatus));}
+ else{assert(list.every(r=>r.profile.synthetic&&r.profile.joinId===r.id));assert.equal(list.find(r=>r.id===plan[0].id).cajaStatus,'pending');}
+}
+console.log('OK: module-specific analysis plans, synthetic profiles and territorial separation');

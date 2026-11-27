@@ -15,6 +15,14 @@ class TestAI(unittest.TestCase):
         self.assertEqual(result["text"],"Ejemplo de prueba")
     def test_reject_individual(self):
         with self.assertRaises(ValueError):analyze({"data":{"module":"Nuevos negocios","mode":"demo","total":1,"focus":{"name":"Ficticio"}}},"TEST")
+    def test_other_modules(self):
+        for name,prefix in [("Expansión comercial","02"),("Mercados desatendidos","03"),("Campañas estacionales","04")]:
+            plan=[{"order":1,"id":"DEMO-"+prefix+"-1","name":"Caso ficticio","activity":"Comercio","date":"2026","reason":"Consultar"}]
+            def transport(req,timeout):
+                self.assertIn(name,json.loads(req.data)["input"])
+                return io.BytesIO(json.dumps({"output":[{"type":"message","content":[{"type":"output_text","text":"OK"}]}]}).encode())
+            self.assertEqual(analyze({"data":{"module":name,"mode":"demo","total":1,"visitPlan":plan}},"TEST",transport)["text"],"OK")
+            with self.assertRaises(ValueError):analyze({"data":{"module":name,"mode":"real","total":1,"visitPlan":plan}},"TEST")
     def test_invalid(self):
         with self.assertRaises(ValueError):analyze({"data":{"module":"otro","mode":"demo","total":1}},"TEST")
 if __name__=="__main__":unittest.main()

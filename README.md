@@ -95,3 +95,7 @@ El análisis general incluye una lista operativa de los negocios rojos: primero 
 ### Detalle en modal
 
 El orden de visitas del análisis general no tiene botones de ficha. La tabla y los marcadores abren un diálogo modal común a los cuatro módulos, con cierre por botón, Escape y clic fuera, y restauración de foco. Los perfiles no cambian. Localizar desde el modal lo cierra para mostrar el mapa.
+
+### Análisis comercial compartido en los cuatro módulos
+
+Nuevos negocios conserva 300/20. Expansión presenta seis señales y sus locales anteriores/nuevos; Mercados prioriza seis sectores ficticios por comercios simulados sin oficinas, sin clasificar territorios como clientes; Estacionales compara 12 comercios de ejemplo contra la temporada (seis en Navidad), respeta las ventanas y señala fechas pendientes. Expansión y Estacionales muestran relación Caja simulada y fuentes individuales en modal. El análisis general no contiene botones de detalle ni fichas financieras. El servicio local de GPT admite los cuatro módulos; la web pública muestra interpretación local, no GPT real. Los planes no son rutas optimizadas ni scoring crediticio.

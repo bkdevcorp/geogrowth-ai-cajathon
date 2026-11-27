@@ -1,5 +1,5 @@
 const fs=require('node:fs'),path=require('node:path'),cp=require('node:child_process'),os=require('node:os'),assert=require('node:assert/strict');
-const root=path.resolve(__dirname,'..'),out=path.join(root,'evidencia',process.env.GEOGROWTH_AUDIT_MODE==='real'?'auditoria-ui':'auditoria-modal','despues');
+const root=path.resolve(__dirname,'..'),out=path.join(root,'evidencia',process.env.GEOGROWTH_AUDIT_MODE==='real'?'auditoria-ui':'auditoria-cuatro-modulos','despues');
 const chrome=process.env.GEOGROWTH_CHROME||(process.platform==='win32'?'D:\\GeoGrowth-ChromeHeadless\\chrome-headless-shell-win64\\chrome-headless-shell.exe':'google-chrome');
 const python=process.env.GEOGROWTH_PYTHON||(process.platform==='win32'?'D:\\GeoGrowth-Python\\python.exe':'python3');
 const port=18763,debug=18764,profile=fs.mkdtempSync(path.join(os.tmpdir(),'gg-audit-'));
@@ -23,6 +23,7 @@ async function run(){
   await send('Emulation.setDeviceMetricsOverride',{width:1440,height:1700,deviceScaleFactor:1,mobile:false});
   await send('Page.navigate',{url:'http://127.0.0.1:'+port+'/'+pages[i]});await until('!!document.querySelector("#u-rows [data-u-detail]")');if(process.env.GEOGROWTH_AUDIT_MODE==='real'){await evaljs('document.querySelector("#u-mode").value="real";document.querySelector("#u-mode").dispatchEvent(new Event("change"));true');await until('!!document.querySelector("#u-rows [data-u-detail]")');}await evaljs('document.fonts.ready.then(()=>true)');await sleep(200);
   await shot(names[i]+'-pantalla');
+  if(i>0){await evaljs('document.querySelector("#u-ai").scrollIntoView({block:"start"});true');await sleep(200);await shot(names[i]+'-analisis');await evaljs('document.querySelector(".ai-visit-plan").scrollIntoView({block:"start"});true');await sleep(200);await shot(names[i]+'-prioridades');}
   if(i===0){await evaljs('document.querySelector("#u-ai").scrollIntoView({block:"start"});true');await sleep(200);await shot('01-nuevos-perfil-individual');await evaljs('document.querySelector(".ai-visit-plan").scrollIntoView({block:"start"});true');await sleep(200);await shot('01-orden-visitas');}
   if(i===0){await evaljs('document.querySelector(".u-map-card").scrollIntoView({block:"start"});true');await sleep(200);await shot('01-nuevos-mapa-estados');}
   await evaljs('document.querySelector("#u-results").scrollIntoView({block:"start"});true');await sleep(200);await send('Emulation.setDeviceMetricsOverride',{width:1440,height:1000,deviceScaleFactor:1,mobile:false});await evaljs('document.querySelector("#u-results").scrollIntoView({block:"start"});true');await sleep(200);await shot(names[i]+'-tabla');

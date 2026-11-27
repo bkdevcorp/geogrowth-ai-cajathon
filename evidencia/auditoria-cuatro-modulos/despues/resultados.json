@@ -1,0 +1,94 @@
+{
+  "mode": "Chromium sin API key. Datos y coordenadas sintéticas; mapa esquemático local, no Google Maps.",
+  "pages": [
+    {
+      "title": "Nuevos negocios",
+      "summary": "Se procesaron 300 comercios sintéticos y se identificaron 20 posibles aperturas nuevas (últimos 30 días del escenario). De ellos: 5 clientes actuales, 5 no clientes verificados y 10 por consultar (relación simulada).",
+      "kpis": [
+        "300\nComercios procesados",
+        "20\nNuevos negocios detectados",
+        "280\nRegistros anteriores",
+        "20\nUbicaciones simuladas"
+      ],
+      "tableHeaders": [
+        "Negocio / territorio",
+        "Ubicación",
+        "Señal comercial",
+        "Periodo",
+        "Estado",
+        "Acciones"
+      ],
+      "detail": "FICHA DE EVIDENCIA · 01\nTaller Misti Motors\n\nPosible apertura · SIMULACIÓN\n\nCerrar\nFuente\nEscenario sintético · GeoGrowth AI\nFecha / periodo\n2026-11-22\nTerritorio\nArequipa (Cercado) · Arequipa · 040101\nMotivo de detección\nPrimera apertura registrada · simulada\nUbicación\nCoordenadas ficticias · no visitar\nEstado de contraste\nEscenario simulado, no verificado\nRelación con Caja Trujillo\nRelación con Caja pendiente de consulta (simulado)\nEvidencia de relación\nSin consulta de campo ni relación confirmada\nAcción según relación\nVisitar o consultar si trabaja con Caja Trujillo antes de clasificarlo.\nCriterio de detección\nPrimer registro simulado en los últimos 30 días; sin registro anterior\nNecesidad a explorar\nherramientas y repuestos\nActividad simulada\nTaller automotriz\n\nAcción ADN: Visitar o consultar si trabaja con Caja Trujillo antes de clasificarlo. Caso ficticio para demostrar la acción esperada.\n\nLocalizar\nExportar ficha\nCRUCE DE FUENTES POR NEGOCIO\nPerfil individual\n\nDatos sintéticos · no corresponden a una persona o empresa real.\n\nNegocio seleccionado · Taller Misti Motors\n\nTaller automotriz · Arequipa (Cercado). Fecha del registro simulado: 2026-11-22.\n\nIdentidad comercial · SUNAT (simulado)\n\nActividad: Taller automotriz. Estado Activo, condición Habido. Identificador ficticio: DEMO-01-3 (no es RUC).\n\nRegistro empresarial · SUNARP (simulado)\n\nSin asiento registral simulado. No acredita propiedad, bienes ni solvencia. Verificar inscripción mediante canales autorizados.\n\nHistorial crediticio · SBS (simulado)\n\nTitular ficticio vinculado al negocio nuevo · octubre 2026. Normal (0), 36 meses de historial, deuda S/ 12,500, 2 entidades acreedoras. No constituye una evaluación crediticia.\n\nActividad financiera · fuente autorizada simulada\n\nVentas mensuales proyectadas: S/ 35,000. Flujo neto proyectado: S/ 8,500. Son cifras ficticias de operación futura, no transferencias ni datos obtenidos de SBS.\n\nRelación con Caja Trujillo\n\nNuevo por consultar (rojo) · Sin consulta de campo ni relación confirmada.\n\nINEI / MIDAGRI · contexto aplicable\n\nSin indicador territorial validado para esta selección. No se ha identificado un vínculo agrícola en el escenario. Sin cruce validado. No son fuentes de historial individual.\n\nInterpretación comercial y próxima acción\n\nPor su giro, conviene explorar herramientas y repuestos. Consultar primero si trabaja con Caja Trujillo; todavía no se sabe. Validar cifras y operación con consentimiento; no ofrecer ni aprobar crédito basándose en esta simulación.",
+      "map": "20 casos simulados",
+      "overflow": false
+    },
+    {
+      "title": "Expansión comercial",
+      "summary": "6 coincidencias · Posible local adicional. Selecciona una ficha para investigar. De ellos: 2 clientes actuales, 2 no clientes verificados y 2 por consultar (relación simulada).",
+      "kpis": [
+        "6\nSeñales revisadas",
+        "6\nPosibles expansiones",
+        "6\nCon historial de locales",
+        "12\nUbicaciones ilustrativas"
+      ],
+      "tableHeaders": [
+        "Negocio / territorio",
+        "Ubicación",
+        "Señal comercial",
+        "Periodo",
+        "Estado",
+        "Acciones"
+      ],
+      "detail": "FICHA DE EVIDENCIA · 02\nDistribuidora Alto Mayo\n\nPosible local adicional · SIMULACIÓN\n\nCerrar\nFuente\nEscenario sintético · GeoGrowth AI\nFecha / periodo\n2026-11-24\nTerritorio\nMoyobamba · San Martín · 220101\nMotivo de detección\nLocal adicional simulado\nUbicación\nCoordenadas ficticias · no visitar\nEstado de contraste\nEscenario simulado, no verificado\nÚltima fecha anterior\n2025-03-10\nLocal anterior ficticio\n2025-03-10 · Local anterior ficticio A\nLocal nuevo ficticio\nUbicación ficticia A (no visitar)\nConteos de ubicaciones\n1 anteriores · 1 nuevas\nRelación con Caja Trujillo\nRelación con Caja pendiente (simulado)\nEvidencia de relación\nRelación con Caja pendiente de consulta\nAcción según relación\nVisitar o consultar si trabaja con Caja Trujillo antes de clasificarlo.\nActividad simulada\nDistribuidora\n\nAcción ADN: Visitar o consultar si trabaja con Caja Trujillo antes de clasificarlo. Caso ficticio para demostrar la acción esperada.\n\nLocalizar\nExportar ficha\nCRUCE DE FUENTES POR NEGOCIO\nPerfil individual\n\nDatos sintéticos · no corresponden a una persona o empresa real.\n\nNegocio seleccionado · Distribuidora Alto Mayo\n\nDistribuidora · Moyobamba. Fecha del registro simulado: 2026-11-24.\n\nIdentidad comercial · SUNAT (simulado)\n\nActividad: Distribuidora. Estado Activo, condición Habido. Identificador ficticio: DEMO-02-1 (no es RUC).\n\nRegistro empresarial · SUNARP (simulado)\n\nInscripción de persona jurídica simulada. No acredita propiedad, bienes ni solvencia. Verificar inscripción mediante canales autorizados.\n\nHistorial crediticio · SBS (simulado)\n\nTitular ficticio del comercio seleccionado · octubre 2026. Normal (0), 24 meses de historial, deuda S/ 8,500, 1 entidades acreedoras. No constituye una evaluación crediticia.\n\nActividad financiera · fuente autorizada simulada\n\nVentas mensuales proyectadas: S/ 24,000. Flujo neto proyectado: S/ 4,500. Son cifras ficticias de operación futura, no transferencias ni datos obtenidos de SBS.\n\nRelación con Caja Trujillo\n\nRelación por consultar (rojo) · Relación con Caja pendiente de consulta.\n\nINEI / MIDAGRI · contexto aplicable\n\nSin indicador territorial validado para esta selección. No se ha identificado un vínculo agrícola en el escenario. Sin cruce validado. No son fuentes de historial individual.\n\nInterpretación comercial y próxima acción\n\nPor su giro, conviene explorar abastecimiento del nuevo local. Consultar primero si trabaja con Caja Trujillo; todavía no se sabe. Validar cifras y operación con consentimiento; no ofrecer ni aprobar crédito basándose en esta simulación.",
+      "map": "6 casos simulados",
+      "overflow": false
+    },
+    {
+      "title": "Mercados desatendidos",
+      "summary": "6 coincidencias · Zona por investigar. Selecciona una ficha para investigar.",
+      "kpis": [
+        "6\nZonas por investigar",
+        "1,785\nComercios simulados",
+        "0\nOficinas simuladas",
+        "27\nAgentes simulados"
+      ],
+      "tableHeaders": [
+        "Negocio / territorio",
+        "Ubicación",
+        "Señal comercial",
+        "Periodo",
+        "Estado",
+        "Acciones"
+      ],
+      "detail": "FICHA DE EVIDENCIA · 03\nSector Mirador del Valle\n\nZona por investigar · SIMULACIÓN\n\nCerrar\nFuente\nEscenario sintético · GeoGrowth AI\nFecha / periodo\n2026 · simulado\nTerritorio\nTrujillo · La Libertad · 130101\nMotivo de detección\nActividad comercial simulada · 0 oficinas\nUbicación\nCoordenadas ficticias · no visitar\nEstado de contraste\nEscenario simulado, no verificado\nEmpresas simuladas\n180\nMYPE simuladas\n165\nOficinas / agentes / cajeros simulados\n0 / 2 / 0\n\nAcción ADN: Validar actividad comercial, acceso financiero y presencia de Caja. Caso ficticio para demostrar la acción esperada.\n\nLocalizar\nExportar ficha",
+      "map": "6 casos simulados",
+      "overflow": false
+    },
+    {
+      "title": "Campañas estacionales",
+      "summary": "6 coincidencias · Ventana de prospección anticipada. Selecciona una ficha para investigar. De ellos: 2 clientes actuales, 2 no clientes verificados y 2 por consultar (relación simulada).",
+      "kpis": [
+        "12\nComercios analizados",
+        "6\nCompatibles con temporada",
+        "6\nNo compatibles",
+        "6\nUbicaciones simuladas"
+      ],
+      "tableHeaders": [
+        "Negocio / territorio",
+        "Ubicación",
+        "Señal comercial",
+        "Periodo",
+        "Estado",
+        "Acciones"
+      ],
+      "detail": "FICHA DE EVIDENCIA · 04\nJuguetería Mundo de Colores\n\nVentana de prospección anticipada · SIMULACIÓN\n\nCerrar\nFuente\nEscenario sintético · GeoGrowth AI\nFecha / periodo\n2026-11-24\nTerritorio\nArequipa (Cercado) · Arequipa · 040101\nMotivo de detección\nActividad estacional simulada\nUbicación\nCoordenadas ficticias · no visitar\nEstado de contraste\nEscenario simulado, no verificado\nTemporada\n25/12/2026\nVentana propuesta\n01/11/2026–30/11/2026\nFuente de calendario\nPRODUCE · campaña navideña MYPE 2025 (referencia histórica)\nCriterio de anticipación\nVentana propuesta durante noviembre, antes de Navidad.\nRelación con Caja Trujillo\nRelación con Caja pendiente (simulado)\nEvidencia de relación\nRelación con Caja pendiente de consulta\nAcción según relación\nVisitar o consultar si trabaja con Caja Trujillo antes de clasificarlo.\nActividad simulada\nJuguetería\n\nAcción ADN: Visitar o consultar si trabaja con Caja Trujillo antes de clasificarlo. Caso ficticio para demostrar la acción esperada.\n\nLocalizar\nFuente del calendario\nExportar ficha\nCRUCE DE FUENTES POR NEGOCIO\nPerfil individual\n\nDatos sintéticos · no corresponden a una persona o empresa real.\n\nNegocio seleccionado · Juguetería Mundo de Colores\n\nJuguetería · Arequipa (Cercado). Fecha del registro simulado: 2026-11-24.\n\nIdentidad comercial · SUNAT (simulado)\n\nActividad: Juguetería. Estado Activo, condición Habido. Identificador ficticio: DEMO-04-1 (no es RUC).\n\nRegistro empresarial · SUNARP (simulado)\n\nInscripción de persona jurídica simulada. No acredita propiedad, bienes ni solvencia. Verificar inscripción mediante canales autorizados.\n\nHistorial crediticio · SBS (simulado)\n\nTitular ficticio del comercio seleccionado · octubre 2026. Normal (0), 24 meses de historial, deuda S/ 8,500, 1 entidades acreedoras. No constituye una evaluación crediticia.\n\nActividad financiera · fuente autorizada simulada\n\nVentas mensuales proyectadas: S/ 24,000. Flujo neto proyectado: S/ 4,500. Son cifras ficticias de operación futura, no transferencias ni datos obtenidos de SBS.\n\nRelación con Caja Trujillo\n\nRelación por consultar (rojo) · Relación con Caja pendiente de consulta.\n\nINEI / MIDAGRI · contexto aplicable\n\nSin indicador territorial validado para esta selección. No se ha identificado un vínculo agrícola en el escenario. Sin cruce validado. No son fuentes de historial individual.\n\nInterpretación comercial y próxima acción\n\nPor su giro, conviene explorar inventario de juguetes. Consultar primero si trabaja con Caja Trujillo; todavía no se sabe. Validar cifras y operación con consentimiento; no ofrecer ni aprobar crédito basándose en esta simulación.",
+      "map": "6 casos simulados",
+      "overflow": false
+    }
+  ],
+  "config": {
+    "sections": 2,
+    "hasKey": false
+  },
+  "uncaught": []
+}

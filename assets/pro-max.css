@@ -39,3 +39,5 @@ html:has(dialog.u-detail-modal[open]){overflow:hidden}
 @media(max-width:650px){dialog.u-detail-modal{width:calc(100vw - 20px);max-width:calc(100vw - 20px);max-height:calc(100dvh - 20px);padding:14px}dialog.u-detail-modal>.card-header{top:-14px;margin:-14px -14px 14px;padding:14px}}
 
 dialog.u-detail-modal{overflow-x:hidden}dialog.u-detail-modal>.card-header{margin-left:0;margin-right:0;padding-left:0;padding-right:0;min-width:0}dialog.u-detail-modal .brief-grid,dialog.u-detail-modal .individual-source-grid{min-width:0}dialog.u-detail-modal .card-header>div{min-width:0;overflow-wrap:anywhere}
+
+.ai-visit-plan.neutral-order .visit-number{background:#e2e8f0;color:#334155}
